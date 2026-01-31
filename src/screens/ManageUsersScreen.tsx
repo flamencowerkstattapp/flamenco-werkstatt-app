@@ -677,7 +677,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingBottom: 100, // Add padding for bottom tabs
   },
   header: {
     flexDirection: 'row',
@@ -709,6 +708,7 @@ const styles = StyleSheet.create({
   },
   usersGrid: {
     padding: theme.spacing.md,
+    paddingBottom: 100,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
