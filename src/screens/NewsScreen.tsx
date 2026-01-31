@@ -139,8 +139,11 @@ export const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         </View>
       ) : (
         <ScrollView 
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.newsGrid}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => loadNews(true)} />
           }
