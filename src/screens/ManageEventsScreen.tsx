@@ -65,7 +65,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
   
   const getCardWidth = () => {
     const columns = getColumns();
-    const gap = columns > 1 ? 2 : 0; // 2% gap for multi-column
+    if (columns === 1) return 100; // Full width for single column
+    const gap = 2; // 2% gap for multi-column
     return (100 - gap * (columns - 1)) / columns;
   };
 
