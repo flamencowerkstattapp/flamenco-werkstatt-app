@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isSignedIn() && (
+        request.auth.token.role == role || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.role == 'admin' || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function isInstructor() {
+      return hasRole('instructor');
+    }
+
+    function isStaff() {
+      return isAdmin() || isInstructor();
+    }
+
+    // Users collection - Allow read access for messaging purposes and admin management
+    match /users/{userId} {
+      // Admin can list all users
+      allow list: if isAdmin();
+      
+      // Admin can get any user, users can get their own profile
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      
+      // Users can read their own profile
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      // All authenticated users can read active users for messaging
+      allow read: if isSignedIn() && resource.data.isActive == true;
+
+      // User can create their own profile
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.role == 'member';
+
+      // User can update their own profile, but cannot change privileged fields
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role;
+
+      // Admin can manage user records (including role)
+      allow write: if isAdmin();
+    }
+    
+    // Anyone can read events
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    
+    // Users can read bookings and write their own bookings
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn(); // All authenticated users can read bookings to see availability
+      
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.userId;
+
+      // Owner can update their own booking; staff can update any booking
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
+        isStaff()
+      );
+
+      allow delete: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
+        isAdmin()
+      );
+    }
+    
+    // Special events rules
+    match /specialEvents/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Messages rules - Allow full messaging functionality
+    match /messages/{messageId} {
+      // Users can read their own messages (sent or received)
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId ||
+        request.auth.uid in resource.data.recipientIds ||
+        isAdmin()
+      );
+      
+      // Users can create messages
+      allow create: if isSignedIn() && 
+        request.auth.uid == request.resource.data.senderId &&
+        request.resource.data.recipientIds is list &&
+        request.resource.data.subject is string &&
+        request.resource.data.body is string;
+      
+      // Users can update their own messages (for read status, etc.)
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId ||
+        request.auth.uid in resource.data.recipientIds ||
+        isAdmin()
+      );
+      
+      // Users can delete their own messages (both sent and received)
+      allow delete: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId ||
+        request.auth.uid in resource.data.recipientIds ||
+        isAdmin()
+      );
+    }
+    
+    // News rules
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
