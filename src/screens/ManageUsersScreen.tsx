@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl, SafeAreaView, TextInput, Modal, TouchableOpacity, ViewStyle, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl, SafeAreaView, TextInput, Modal, TouchableOpacity, ViewStyle, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, getDocs, where, updateDoc, doc } from 'firebase/firestore';
 import { getFirestoreDB } from '../services/firebase';
@@ -13,6 +13,8 @@ import { STUDIOS } from '../constants/studios';
 import { t } from '../locales';
 import { User, UserRole } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
+import { parseCSV } from '../utils/csvParser';
+import { importUsersFromCSV, downloadCSVTemplate, ImportResult } from '../services/csvImportService';
 
 const MEMBERSHIP_OPTIONS = [
   { value: '1-class', labelKey: 'user.membershipTypes.1-class', priceKey: 'user.membershipPricing.1-class' },
@@ -33,7 +35,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{userId: string; currentRole: UserRole; userName: string} | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [completedActions, setCompletedActions] = useState<Set<string>>(new Set()); // Track completed actions
+  const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null); // Track completed actions
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -306,6 +311,48 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     }
   };
 
+  const handleCSVImport = async (event: any) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+    setShowImportModal(true);
+
+    try {
+      const text = await file.text();
+      const parseResult = parseCSV(text);
+
+      if (!parseResult.success) {
+        Alert.alert('CSV Parse Error', parseResult.errors.join('\n'));
+        setImporting(false);
+        return;
+      }
+
+      if (parseResult.data.length === 0) {
+        Alert.alert('No Data', 'CSV file contains no valid data rows');
+        setImporting(false);
+        return;
+      }
+
+      const result = await importUsersFromCSV(parseResult.data, user?.id || '');
+      setImportResult(result);
+      
+      if (result.success) {
+        await loadUsers();
+      }
+    } catch (error) {
+      Alert.alert('Import Error', error instanceof Error ? error.message : 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    downloadCSVTemplate();
+  };
+
   const handleScroll = (event: any) => {
     const yOffset = event.nativeEvent?.contentOffset?.y || 0;
     setShowScrollTop(yOffset > 200);
@@ -321,12 +368,34 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
             <Text style={styles.totalUsers}>{t('admin.totalUsers')}: {users.length}</Text>
             <Text style={styles.activeUsers}>{t('admin.activeUsers')}: {users.filter(u => u.isActive).length}</Text>
           </View>
-          <Button
-            title={t('admin.addUser')}
-            onPress={openAddUserModal}
-            variant="primary"
-            style={styles.addButton}
-          />
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.templateButton}
+              onPress={handleDownloadTemplate}
+            >
+              <Ionicons name="download-outline" size={16} color={theme.colors.primary} />
+              <Text style={styles.templateButtonText}>CSV Template</Text>
+            </TouchableOpacity>
+            <label htmlFor="csv-upload" style={{ cursor: 'pointer' }}>
+              <View style={styles.importButton}>
+                <Ionicons name="cloud-upload-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.importButtonText}>Import CSV</Text>
+              </View>
+            </label>
+            <input
+              id="csv-upload"
+              type="file"
+              accept=".csv"
+              onChange={handleCSVImport}
+              style={{ display: 'none' }}
+            />
+            <Button
+              title={t('admin.addUser')}
+              onPress={openAddUserModal}
+              variant="primary"
+              style={styles.addButton}
+            />
+          </View>
         </View>
 
         {loading ? (
@@ -622,6 +691,70 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       </Modal>
 
       {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+
+      {/* CSV Import Result Modal */}
+      <Modal
+        visible={showImportModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowImportModal(false)}
+      >
+        <View style={styles.importModalOverlay}>
+          <View style={styles.importModalContent}>
+            <View style={styles.importModalHeader}>
+              <Text style={styles.importModalTitle}>CSV Import</Text>
+              <TouchableOpacity onPress={() => setShowImportModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {importing ? (
+              <View style={styles.importingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.importingText}>Importing users...</Text>
+              </View>
+            ) : importResult ? (
+              <ScrollView style={styles.importResultScroll}>
+                <View style={styles.importSummary}>
+                  <Text style={styles.importSummaryTitle}>Import Summary</Text>
+                  <View style={styles.importSummaryRow}>
+                    <Text style={styles.importSummaryLabel}>Total Rows:</Text>
+                    <Text style={styles.importSummaryValue}>{importResult.totalRows}</Text>
+                  </View>
+                  <View style={styles.importSummaryRow}>
+                    <Text style={[styles.importSummaryLabel, { color: theme.colors.success }]}>Imported:</Text>
+                    <Text style={[styles.importSummaryValue, { color: theme.colors.success }]}>{importResult.imported}</Text>
+                  </View>
+                  <View style={styles.importSummaryRow}>
+                    <Text style={[styles.importSummaryLabel, { color: theme.colors.warning }]}>Skipped:</Text>
+                    <Text style={[styles.importSummaryValue, { color: theme.colors.warning }]}>{importResult.skipped}</Text>
+                  </View>
+                  <View style={styles.importSummaryRow}>
+                    <Text style={[styles.importSummaryLabel, { color: theme.colors.error }]}>Failed:</Text>
+                    <Text style={[styles.importSummaryValue, { color: theme.colors.error }]}>{importResult.failed}</Text>
+                  </View>
+                </View>
+
+                {importResult.errors.length > 0 && (
+                  <View style={styles.importErrors}>
+                    <Text style={styles.importErrorsTitle}>Errors:</Text>
+                    {importResult.errors.map((error, index) => (
+                      <Text key={index} style={styles.importErrorText}>{error}</Text>
+                    ))}
+                  </View>
+                )}
+
+                <Button
+                  title="Close"
+                  onPress={() => setShowImportModal(false)}
+                  variant="primary"
+                  style={styles.importCloseButton}
+                />
+              </ScrollView>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
 
       {/* Role Change Confirmation Modal */}
       <Modal
@@ -963,5 +1096,130 @@ const styles = StyleSheet.create({
   },
   confirmModalButton: {
     flex: 1,
+  },
+  // CSV Import styles
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  templateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surface,
+  },
+  templateButtonText: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  importButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surface,
+  },
+  importButtonText: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  importModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  importModalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    width: '90%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    ...theme.shadows.large,
+  },
+  importModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  importModalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  importingContainer: {
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  importingText: {
+    marginTop: theme.spacing.md,
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  importResultScroll: {
+    maxHeight: 400,
+  },
+  importSummary: {
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  importSummaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  importSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.xs,
+  },
+  importSummaryLabel: {
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  importSummaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  importErrors: {
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  importErrorsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.error,
+    marginBottom: theme.spacing.xs,
+  },
+  importErrorText: {
+    fontSize: 12,
+    color: theme.colors.error,
+    marginBottom: theme.spacing.xs,
+  },
+  importCloseButton: {
+    marginTop: theme.spacing.md,
   },
 });

@@ -176,7 +176,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                     <Text style={[
                       styles.eventDescription,
                       {
-                        marginBottom: screenWidth >= 768 ? 4 : 2, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 4 : screenWidth >= 480 ? 2 : 1, // Tighter on mobile single column
                       }
                     ]} numberOfLines={2}>
                       {item.description}
@@ -185,7 +185,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                     <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                       <Ionicons name="location-outline" size={12} color={theme.colors.textSecondary} />
@@ -197,7 +197,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                     <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                       <Ionicons name="calendar-outline" size={12} color={theme.colors.textSecondary} />
@@ -210,7 +210,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                         <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
@@ -224,7 +224,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                         <Ionicons name="alarm-outline" size={12} color={theme.colors.textSecondary} />
@@ -238,7 +238,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                         <Ionicons name="people-outline" size={12} color={theme.colors.textSecondary} />
@@ -252,7 +252,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                         <Ionicons name="cash-outline" size={12} color={theme.colors.textSecondary} />
@@ -264,7 +264,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       <View style={[
                       styles.eventDetail,
                       {
-                        marginBottom: screenWidth >= 768 ? 2 : 1, // Less margin on mobile
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0, // Minimal spacing on mobile single column
                       }
                     ]}>
                         <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
