@@ -674,7 +674,6 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
   },
   eventCard: {
-    width: '23.5%',
     minHeight: 400,
     maxHeight: 440,
     flexGrow: 0,

@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
   },
   newsCard: {
-    width: '23.5%',
     aspectRatio: 1,
     flexGrow: 0,
     flexShrink: 0,

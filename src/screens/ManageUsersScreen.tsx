@@ -715,7 +715,6 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
   },
   userCard: {
-    width: '23.5%',
     flexGrow: 0,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
