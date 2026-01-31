@@ -32,6 +32,44 @@ import { StatisticsScreen } from './src/screens/StatisticsScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const CalendarStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CalendarMain" component={CalendarScreen} />
+      <Stack.Screen name="BookStudio" component={BookStudioScreen} />
+      <Stack.Screen name="BookingDetails" component={BookingDetailsScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const MessagesStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MessagesList" component={MessagesScreen} />
+      <Stack.Screen name="MessageDetails" component={MessageDetailsScreen} />
+      <Stack.Screen name="ComposeMessage" component={ComposeMessageScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const NewsStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="NewsList" component={NewsScreen} />
+      <Stack.Screen name="NewsDetails" component={NewsDetailsScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const EventsStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="EventsList" component={EventsScreen} />
+      <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+    </Stack.Navigator>
+  );
+};
+
 const AdminStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -44,43 +82,13 @@ const AdminStack = () => {
   );
 };
 
-// Wrapper components for Tab Navigator
-const MessageDetailsWrapper = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  
-  return <MessageDetailsScreen navigation={navigation} route={route} />;
-};
-
-const ComposeMessageWrapper = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  
-  return <ComposeMessageScreen navigation={navigation} route={route} />;
-};
-
-const NewsDetailsWrapper = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  
-  return <NewsDetailsScreen navigation={navigation} route={route} />;
-};
-
-const EventDetailsWrapper = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  
-  return <EventDetailsScreen navigation={navigation} route={route} />;
-};
 
 const MainTabs = () => {
   const { user } = useAuth();
 
   return (
     <Tab.Navigator
-      sceneContainerStyle={{ flex: 1, backgroundColor: '#fff' }}
       screenOptions={({ route }) => ({
-        tabBarPosition: 'bottom',
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
@@ -105,26 +113,10 @@ const MainTabs = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ title: t('navigation.calendar') }} />
-      <Tab.Screen name="Messages" component={MessagesScreen} options={{ title: t('navigation.messages') }} />
-      <Tab.Screen name="MessageDetails" component={MessageDetailsWrapper} options={{ 
-        title: t('messages.messageDetails'),
-        tabBarButton: () => null, // Hide from tab bar
-      }} />
-      <Tab.Screen name="ComposeMessage" component={ComposeMessageWrapper} options={{ 
-        title: t('messages.composeMessage'),
-        tabBarButton: () => null, // Hide from tab bar
-      }} />
-      <Tab.Screen name="News" component={NewsScreen} options={{ title: t('navigation.news') }} />
-      <Tab.Screen name="NewsDetails" component={NewsDetailsWrapper} options={{ 
-        title: t('news.title'),
-        tabBarButton: () => null, // Hide from tab bar
-      }} />
-      <Tab.Screen name="Events" component={EventsScreen} options={{ title: t('navigation.events') }} />
-      <Tab.Screen name="EventDetails" component={EventDetailsWrapper} options={{ 
-        title: t('events.title'),
-        tabBarButton: () => null, // Hide from tab bar
-      }} />
+      <Tab.Screen name="Calendar" component={CalendarStack} options={{ title: t('navigation.calendar') }} />
+      <Tab.Screen name="Messages" component={MessagesStack} options={{ title: t('navigation.messages') }} />
+      <Tab.Screen name="News" component={NewsStack} options={{ title: t('navigation.news') }} />
+      <Tab.Screen name="Events" component={EventsStack} options={{ title: t('navigation.events') }} />
       {user?.role === 'admin' && (
         <Tab.Screen name="Admin" component={AdminStack} options={{ title: t('navigation.admin') }} />
       )}
