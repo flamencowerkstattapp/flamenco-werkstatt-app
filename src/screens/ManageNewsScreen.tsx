@@ -558,7 +558,6 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     width: '23.5%',
-    minWidth: 200,
     flexGrow: 0,
     flexShrink: 0,
     backgroundColor: theme.colors.surface,

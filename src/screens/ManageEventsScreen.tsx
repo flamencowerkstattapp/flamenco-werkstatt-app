@@ -674,7 +674,6 @@ const styles = StyleSheet.create({
   },
   eventCard: {
     width: '23.5%',
-    minWidth: 200,
     minHeight: 400,
     maxHeight: 440,
     flexGrow: 0,

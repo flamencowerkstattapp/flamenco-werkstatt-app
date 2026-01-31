@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     width: '23.5%',
-    minWidth: 200,
     aspectRatio: 1,
     flexGrow: 0,
     flexShrink: 0,
