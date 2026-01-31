@@ -44,9 +44,9 @@ export const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   // Determine columns based on screen width
   const getColumns = () => {
     if (screenWidth >= 768) return 4; // Desktop - 4 columns
-    if (screenWidth >= 480) return 3; // Tablet - 3 columns
-    if (screenWidth >= 360) return 2; // Large mobile - 2 columns
-    return 1; // Small mobile - 1 column (very narrow screens)
+    if (screenWidth >= 600) return 3; // Tablet - 3 columns
+    if (screenWidth >= 480) return 2; // Large mobile - 2 columns
+    return 1; // Small mobile (<480px / <7.5cm) - 1 column
   };
   
   const getCardWidth = () => {
