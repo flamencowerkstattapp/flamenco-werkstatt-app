@@ -670,8 +670,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
   },
   eventCard: {
     minHeight: 400,
@@ -680,7 +679,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xs,
-    marginBottom: 0,
+    marginBottom: theme.spacing.md,
+    marginRight: '1%',
     ...theme.shadows.small,
   },
   eventImageContainer: {

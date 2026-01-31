@@ -711,8 +711,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    alignContent: 'flex-start',
+    justifyContent: 'flex-start',
   },
   userCard: {
     flexGrow: 0,
@@ -720,6 +719,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
+    marginRight: '1%',
     ...theme.shadows.small,
   },
   userInfo: {
