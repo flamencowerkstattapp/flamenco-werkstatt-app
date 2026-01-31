@@ -327,7 +327,6 @@ const styles = StyleSheet.create({
   eventCard: {
     aspectRatio: 1,
     flexGrow: 0,
-    flexShrink: 0,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     marginBottom: 0,

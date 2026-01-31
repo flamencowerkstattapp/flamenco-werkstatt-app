@@ -677,7 +677,6 @@ const styles = StyleSheet.create({
     minHeight: 400,
     maxHeight: 440,
     flexGrow: 0,
-    flexShrink: 0,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xs,

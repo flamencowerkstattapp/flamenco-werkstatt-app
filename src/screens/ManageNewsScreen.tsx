@@ -559,7 +559,6 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     flexGrow: 0,
-    flexShrink: 0,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.xs,
