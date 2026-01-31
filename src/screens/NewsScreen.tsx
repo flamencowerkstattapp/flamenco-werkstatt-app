@@ -147,7 +147,7 @@ export const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           {news.map((item) => (
             <TouchableOpacity 
               key={item.id} 
-              style={styles.newsCard}
+              style={[styles.newsCard, { width: `${getCardWidth()}%` }]}
               onPress={() => navigation.navigate('NewsDetails', { newsId: item.id })}
             >
               {item.imageUrl && !item.imageUrl.startsWith('blob:') && (

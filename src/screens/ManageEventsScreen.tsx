@@ -476,7 +476,7 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
           }
         >
           {events.map((event) => (
-            <View key={event.id} style={styles.eventCard}>
+            <View key={event.id} style={[styles.eventCard, { width: `${getCardWidth()}%` }]}>
               <View style={styles.eventHeader}>
                 <Text style={styles.eventTitle}>
                   {event.title || 'Untitled Event'}

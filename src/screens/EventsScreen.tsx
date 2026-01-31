@@ -139,6 +139,7 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                   style={[
                     styles.eventCard,
                     {
+                      width: `${getCardWidth()}%`,
                       aspectRatio: screenWidth >= 768 ? 1 : 0.65, // Even taller on mobile to fit all content
                     }
                   ]}

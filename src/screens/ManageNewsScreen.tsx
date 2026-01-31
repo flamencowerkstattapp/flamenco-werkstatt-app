@@ -382,7 +382,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
           }
         >
           {news.map((newsItem) => (
-            <View key={newsItem.id} style={styles.newsCard}>
+            <View key={newsItem.id} style={[styles.newsCard, { width: `${getCardWidth()}%` }]}>
               <View style={styles.newsHeader}>
                 <Text style={styles.newsTitle}>{newsItem.title}</Text>
                 <View style={[styles.statusBadge, { 
