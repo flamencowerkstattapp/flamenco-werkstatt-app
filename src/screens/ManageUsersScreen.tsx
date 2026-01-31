@@ -364,11 +364,11 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
         <AppHeader title={t('admin.manageUsers')} />
 
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerStats}>
             <Text style={styles.totalUsers}>{t('admin.totalUsers')}: {users.length}</Text>
             <Text style={styles.activeUsers}>{t('admin.activeUsers')}: {users.filter(u => u.isActive).length}</Text>
           </View>
-          <View style={styles.headerActions}>
+          <View style={[styles.headerActions, { flexWrap: 'wrap' }]}>
             <TouchableOpacity
               style={styles.templateButton}
               onPress={handleDownloadTemplate}
@@ -814,11 +814,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: theme.spacing.md,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  headerStats: {
+    minWidth: 120,
   },
   totalUsers: {
     fontSize: 16,
@@ -1102,6 +1107,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+    flexWrap: 'wrap',
   },
   templateButton: {
     flexDirection: 'row',
@@ -1113,6 +1119,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
+    minWidth: 100,
   },
   templateButtonText: {
     fontSize: 12,
@@ -1129,6 +1136,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
+    minWidth: 100,
   },
   importButtonText: {
     fontSize: 12,
