@@ -6,15 +6,17 @@ import { getFirestoreDB } from '../services/firebase';
 import { Button } from '../components/Button';
 import { ScrollToTopButton } from '../components/ScrollToTopButton';
 import { FlamencoLoading } from '../components/FlamencoLoading';
+import { PaymentModal } from '../components/PaymentModal';
 import { useAuth } from '../contexts/AuthContext';
 import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { STUDIOS } from '../constants/studios';
 import { t } from '../locales';
-import { User, UserRole } from '../types';
+import { User, UserRole, Payment, PaymentType } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
 import { parseCSV } from '../utils/csvParser';
 import { importUsersFromCSV, downloadCSVTemplate, ImportResult } from '../services/csvImportService';
+import { createPayment, getUserPayments, checkMonthlyPaymentStatus } from '../services/paymentService';
 
 const MEMBERSHIP_OPTIONS = [
   { value: '1-class', labelKey: 'user.membershipTypes.1-class', priceKey: 'user.membershipPricing.1-class' },
@@ -38,7 +40,12 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null); // Track completed actions
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedUserForPayment, setSelectedUserForPayment] = useState<User | null>(null);
+  const [paymentType, setPaymentType] = useState<PaymentType>('monthly-membership');
+  const [userPayments, setUserPayments] = useState<{[userId: string]: Payment[]}>({});
+  const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<Set<string>>(new Set()); // Track completed actions
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -79,9 +86,81 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     return (100 - gap * (columns - 1)) / columns;
   };
 
+  const formatMonthDisplay = (monthStr: string | undefined, language: 'de' | 'en' | 'es') => {
+    if (!monthStr) return '';
+    const [year, month] = monthStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const locale = language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  };
+
   useEffect(() => {
     loadUsers();
   }, []);
+
+  const loadUserPayments = async (userId: string) => {
+    try {
+      const payments = await getUserPayments(userId, 5);
+      setUserPayments(prev => ({ ...prev, [userId]: payments }));
+    } catch (error) {
+      console.error('Error loading user payments:', error);
+    }
+  };
+
+  const togglePaymentHistory = (userId: string) => {
+    const newExpanded = new Set(expandedPaymentHistory);
+    if (newExpanded.has(userId)) {
+      newExpanded.delete(userId);
+    } else {
+      newExpanded.add(userId);
+      if (!userPayments[userId]) {
+        loadUserPayments(userId);
+      }
+    }
+    setExpandedPaymentHistory(newExpanded);
+  };
+
+  const openPaymentModal = (user: User, type: PaymentType) => {
+    setSelectedUserForPayment(user);
+    setPaymentType(type);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData: any) => {
+    if (!selectedUserForPayment || !user) return;
+
+    try {
+      const paymentNote = paymentData.membershipType 
+        ? `${t(`user.membershipTypes.${paymentData.membershipType}`)}${paymentData.notes ? ` - ${paymentData.notes}` : ''}`
+        : paymentData.notes;
+
+      await createPayment({
+        userId: selectedUserForPayment.id,
+        userName: `${selectedUserForPayment.firstName} ${selectedUserForPayment.lastName}`,
+        amount: paymentData.amount,
+        paymentMethod: paymentData.paymentMethod,
+        paymentType: paymentData.paymentType,
+        date: paymentData.date,
+        month: paymentData.month,
+        classId: paymentData.classId,
+        notes: paymentNote,
+        recordedBy: user.id,
+        recordedByName: `${user.firstName} ${user.lastName}`,
+      });
+
+      Alert.alert(
+        t('common.success'),
+        t('payments.paymentRecorded')
+      );
+
+      loadUserPayments(selectedUserForPayment.id);
+      setShowPaymentModal(false);
+      setSelectedUserForPayment(null);
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      Alert.alert(t('common.error'), t('payments.errorRecordingPayment'));
+    }
+  };
 
   const getRoleButtonStyle = (userRole: UserRole): ViewStyle => {
     return {
@@ -461,6 +540,79 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     <Text style={styles.detailText}>Language: {user.preferredLanguage.toUpperCase()}</Text>
                   </View>
                 </View>
+              </View>
+
+              <View style={styles.paymentSection}>
+                <View style={styles.paymentButtons}>
+                  <TouchableOpacity
+                    style={styles.paymentButton}
+                    onPress={() => openPaymentModal(user, 'monthly-membership')}
+                  >
+                    <View style={styles.paymentButtonContent}>
+                      <Ionicons name="card-outline" size={18} color={theme.colors.success} />
+                      <Text style={styles.paymentButtonText}>{t('payments.recordMonthly')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.paymentButton}
+                    onPress={() => openPaymentModal(user, 'single-class')}
+                  >
+                    <View style={styles.paymentButtonContent}>
+                      <Ionicons name="cash-outline" size={18} color={theme.colors.primary} />
+                      <Text style={styles.paymentButtonText}>{t('payments.recordClass')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.paymentHistoryToggle}
+                  onPress={() => togglePaymentHistory(user.id)}
+                >
+                  <View style={styles.paymentHistoryToggleContent}>
+                    <Text style={styles.paymentHistoryToggleText}>{t('payments.paymentHistory')}</Text>
+                    <Ionicons 
+                      name={expandedPaymentHistory.has(user.id) ? "chevron-up" : "chevron-down"} 
+                      size={16} 
+                      color={theme.colors.textSecondary} 
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {expandedPaymentHistory.has(user.id) && (
+                  <View style={styles.paymentHistoryContainer}>
+                    {userPayments[user.id] && userPayments[user.id].length > 0 ? (
+                      userPayments[user.id].map((payment) => (
+                        <View key={payment.id} style={styles.paymentHistoryItem}>
+                          <View style={styles.paymentHistoryHeader}>
+                            <View style={styles.paymentHistoryLeft}>
+                              <Ionicons 
+                                name={payment.paymentMethod === 'cash' ? "cash-outline" : "card-outline"} 
+                                size={16} 
+                                color={theme.colors.primary} 
+                                style={styles.paymentHistoryIcon}
+                              />
+                              <Text style={styles.paymentHistoryAmount}>€{payment.amount.toFixed(2)}</Text>
+                            </View>
+                            <Text style={styles.paymentHistoryDate}>
+                              {formatDateTime(payment.date)}
+                            </Text>
+                          </View>
+                          <Text style={styles.paymentHistoryType}>
+                            {payment.paymentType === 'monthly-membership' 
+                              ? `${t('payments.monthly')} - ${formatMonthDisplay(payment.month, user.preferredLanguage)}` 
+                              : t('payments.singleClass')}
+                          </Text>
+                          {payment.notes && (
+                            <Text style={styles.paymentHistoryNotes}>{payment.notes}</Text>
+                          )}
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.noPaymentsText}>{t('payments.noPayments')}</Text>
+                    )}
+                  </View>
+                )}
               </View>
 
               <View style={styles.userActions}>
@@ -884,6 +1036,20 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           </View>
         </View>
       </Modal>
+
+      {/* Payment Modal */}
+      {selectedUserForPayment && (
+        <PaymentModal
+          visible={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedUserForPayment(null);
+          }}
+          onSubmit={handlePaymentSubmit}
+          user={selectedUserForPayment}
+          defaultType={paymentType}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -1398,5 +1564,100 @@ const styles = StyleSheet.create({
   },
   importCloseButton: {
     marginTop: theme.spacing.md,
+  },
+  paymentSection: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  paymentButtons: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.sm,
+  },
+  paymentButton: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    marginRight: theme.spacing.xs,
+  },
+  paymentButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginLeft: theme.spacing.xs,
+  },
+  paymentHistoryToggle: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  paymentHistoryToggleContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  paymentHistoryToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  paymentHistoryContainer: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+  },
+  paymentHistoryItem: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+  },
+  paymentHistoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  paymentHistoryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentHistoryIcon: {
+    marginRight: theme.spacing.xs,
+  },
+  paymentHistoryAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  paymentHistoryDate: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  paymentHistoryType: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+  },
+  paymentHistoryNotes: {
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  noPaymentsText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    padding: theme.spacing.md,
   },
 });

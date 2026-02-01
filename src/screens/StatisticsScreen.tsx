@@ -9,6 +9,7 @@ import { FlamencoLoading } from '../components/FlamencoLoading';
 import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
+import { getPaymentStats } from '../services/paymentService';
 
 const DEMO_MODE = false;
 
@@ -28,6 +29,10 @@ interface Statistics {
   completedBookings: number;
   totalRevenue: number;
   monthlyRevenue: number;
+  yearlyRevenue: number;
+  expectedMonthlyRevenue: number;
+  cashPayments: number;
+  bankPayments: number;
   upcomingEvents: number;
   publishedNews: number;
   studioUtilization: {
@@ -94,8 +99,12 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
           totalBookings: 156,
           pendingBookings: 3,
           completedBookings: 153,
-          totalRevenue: monthlyRevenue * 12, // Annual revenue
+          totalRevenue: monthlyRevenue * 12,
           monthlyRevenue: monthlyRevenue,
+          yearlyRevenue: monthlyRevenue * 12,
+          expectedMonthlyRevenue: monthlyRevenue,
+          cashPayments: monthlyRevenue * 0.4,
+          bankPayments: monthlyRevenue * 0.6,
           upcomingEvents: 3,
           publishedNews: 4,
           studioUtilization: {
@@ -200,6 +209,21 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       const bigStudioUtilization = Math.min(Math.round((bigStudioHours / monthHours) * 100), 100);
       const smallStudioUtilization = Math.min(Math.round((smallStudioHours / monthHours) * 100), 100);
 
+      // Get actual payment data
+      let paymentStats = {
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        yearlyRevenue: 0,
+        cashPayments: 0,
+        bankPayments: 0,
+      };
+
+      try {
+        paymentStats = await getPaymentStats();
+      } catch (error) {
+        console.error('Error loading payment stats:', error);
+      }
+
       // Calculate statistics from real data
       const stats: Statistics = {
         totalUsers: usersSnapshot.size,
@@ -207,8 +231,12 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         totalBookings: bookingsSnapshot.size,
         pendingBookings: bookingsSnapshot.docs.filter(doc => doc.data().status === 'pending').length,
         completedBookings: bookingsSnapshot.docs.filter(doc => doc.data().status === 'completed').length,
-        totalRevenue: membershipRevenue * 12, // Annual revenue from memberships
-        monthlyRevenue: membershipRevenue, // Monthly revenue from memberships
+        totalRevenue: paymentStats.totalRevenue,
+        monthlyRevenue: paymentStats.monthlyRevenue,
+        yearlyRevenue: paymentStats.yearlyRevenue,
+        expectedMonthlyRevenue: membershipRevenue,
+        cashPayments: paymentStats.cashPayments,
+        bankPayments: paymentStats.bankPayments,
         upcomingEvents: eventsSnapshot.docs.filter(doc => doc.data().isPublished).length,
         publishedNews: newsSnapshot.docs.filter(doc => doc.data().isPublished).length,
         studioUtilization: {

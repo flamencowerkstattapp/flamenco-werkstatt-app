@@ -202,3 +202,23 @@ export interface NotificationPreferences {
   fcmToken?: string;
   updatedAt: Date;
 }
+
+export type PaymentMethod = 'cash' | 'bank';
+export type PaymentType = 'monthly-membership' | 'single-class';
+
+export interface Payment {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentType: PaymentType;
+  date: Date;
+  month?: string;
+  classId?: string;
+  notes?: string;
+  recordedBy: string;
+  recordedByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
