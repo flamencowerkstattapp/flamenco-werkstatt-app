@@ -14,7 +14,8 @@ import {
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { imageService } from './imageService';
-import { NewsItem } from '../types';
+import { NewsItem, User } from '../types';
+import { notificationHelpers } from '../utils/notificationHelpers';
 
 const NEWS_CATEGORIES = ['announcement', 'update', 'info'] as const;
 export type NewsCategory = typeof NEWS_CATEGORIES[number];
@@ -196,9 +197,47 @@ export class NewsService {
         // Set publishedAt when publishing for the first time
         ...(currentStatus === false && { publishedAt: serverTimestamp() }),
       });
+
+      if (!currentStatus) {
+        const newsItem = await this.getNewsById(id);
+        if (newsItem) {
+          const users = await this.getAllActiveUsers();
+          const userIds = users.map(u => u.id);
+          
+          notificationHelpers.notifyNewNews(
+            userIds,
+            newsItem.title,
+            id,
+            newsItem.imageUrl || undefined
+          ).catch(err => console.error('Failed to send news notifications:', err));
+        }
+      }
     } catch (error) {
       console.error('Error toggling publish status:', error);
       throw new Error('Failed to update publish status');
+    }
+  }
+
+  private async getAllActiveUsers(): Promise<User[]> {
+    try {
+      const usersQuery = query(
+        collection(this.db, 'users'),
+        where('isActive', '==', true)
+      );
+      const snapshot = await getDocs(usersQuery);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          memberSince: data.memberSince?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as User;
+      });
+    } catch (error) {
+      console.error('Error getting active users:', error);
+      return [];
     }
   }
 

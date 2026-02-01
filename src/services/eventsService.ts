@@ -14,7 +14,8 @@ import {
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { imageService } from './imageService';
-import { SpecialEvent } from '../types';
+import { SpecialEvent, User } from '../types';
+import { notificationHelpers } from '../utils/notificationHelpers';
 
 export class EventsService {
   private db = getFirestoreDB();
@@ -191,9 +192,47 @@ export class EventsService {
         isPublished: !currentStatus,
         updatedAt: serverTimestamp(),
       });
+
+      if (!currentStatus) {
+        const event = await this.getEventById(id);
+        if (event) {
+          const users = await this.getAllActiveUsers();
+          const userIds = users.map(u => u.id);
+          
+          notificationHelpers.notifyNewEvent(
+            userIds,
+            event.title,
+            id,
+            event.imageUrl
+          ).catch(err => console.error('Failed to send event notifications:', err));
+        }
+      }
     } catch (error) {
       console.error('Error toggling publish status:', error);
       throw new Error('Failed to update publish status');
+    }
+  }
+
+  private async getAllActiveUsers(): Promise<User[]> {
+    try {
+      const usersQuery = query(
+        collection(this.db, 'users'),
+        where('isActive', '==', true)
+      );
+      const snapshot = await getDocs(usersQuery);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          memberSince: data.memberSince?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as User;
+      });
+    } catch (error) {
+      console.error('Error getting active users:', error);
+      return [];
     }
   }
 

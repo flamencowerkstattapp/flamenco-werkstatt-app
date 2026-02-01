@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { Message, User } from '../types';
+import { notificationHelpers } from '../utils/notificationHelpers';
 
 export interface CreateMessageData {
   senderId: string;
@@ -98,7 +99,16 @@ export class MessageService {
         updatedAt: Timestamp.now(),
       });
 
-      return docRef.id;
+      const messageId = docRef.id;
+
+      notificationHelpers.notifyNewMessage(
+        messageData.recipientIds,
+        messageData.senderName,
+        messageData.subject,
+        messageId
+      ).catch(err => console.error('Failed to send message notifications:', err));
+
+      return messageId;
     } catch (error) {
       console.error('Error creating message:', error);
       throw new Error('Failed to create message');

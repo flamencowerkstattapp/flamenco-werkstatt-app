@@ -176,3 +176,29 @@ export interface GermanSchoolHoliday {
   year: number;
   state: 'Berlin';
 }
+
+export type NotificationType = 'message' | 'news' | 'event' | 'system';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  referenceId?: string;
+  imageUrl?: string;
+  isRead: boolean;
+  createdAt: Date;
+  readAt?: Date;
+}
+
+export interface NotificationPreferences {
+  userId: string;
+  enablePushNotifications: boolean;
+  enableMessageNotifications: boolean;
+  enableNewsNotifications: boolean;
+  enableEventNotifications: boolean;
+  enableSystemNotifications: boolean;
+  fcmToken?: string;
+  updatedAt: Date;
+}
