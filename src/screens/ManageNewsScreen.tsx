@@ -32,6 +32,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -67,8 +68,10 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     return (100 - gap * (columns - 1)) / columns; // Return number for percentage
   };
 
-  // Request camera permissions
+  // Request camera permissions (admin only)
   useEffect(() => {
+    if (user?.role !== 'admin') return;
+    
     (async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -78,9 +81,18 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         );
       }
     })();
-  }, []);
+  }, [user]);
 
   const pickImage = async () => {
+    // Admin role check
+    if (user?.role !== 'admin') {
+      Alert.alert(
+        t('admin.imageUploadAccessDenied'),
+        t('admin.imageUploadAdminOnly')
+      );
+      return;
+    }
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -90,6 +102,16 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       });
 
       if (!result.canceled && result.assets[0]) {
+        // Check file size before setting (approximate check)
+        const asset = result.assets[0];
+        if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+          Alert.alert(
+            t('admin.imageFileTooLarge'),
+            t('admin.imageFileSizeExceeded', { size: (asset.fileSize / 1024 / 1024).toFixed(2) })
+          );
+          return;
+        }
+        
         setFormData(prev => ({ 
           ...prev, 
           imageUrl: result.assets[0].uri 
@@ -138,6 +160,11 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     setRefreshing(true);
     await loadNews();
     setRefreshing(false);
+  };
+
+  const handleScroll = (event: any) => {
+    const yOffset = event.nativeEvent?.contentOffset?.y || 0;
+    setShowScrollTop(yOffset > 200);
   };
 
   const toggleNewsStatus = async (newsId: string, currentStatus: boolean) => {
@@ -246,6 +273,8 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       <ScrollView 
         ref={scrollViewRef}
         contentContainerStyle={styles.container}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -302,13 +331,15 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
                 style={styles.urlInput}
               />
               
-              <TouchableOpacity 
-                style={styles.imagePickerButton} 
-                onPress={pickImage}
-              >
-                <Ionicons name="camera-outline" size={20} color={theme.colors.primary} />
-                <Text style={styles.imagePickerText}>From Device</Text>
-              </TouchableOpacity>
+              {user?.role === 'admin' && (
+                <TouchableOpacity 
+                  style={styles.imagePickerButton} 
+                  onPress={pickImage}
+                >
+                  <Ionicons name="camera-outline" size={20} color={theme.colors.primary} />
+                  <Text style={styles.imagePickerText}>{t('admin.uploadFromDevice')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {formData.imageUrl && (
@@ -462,7 +493,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       )}
       </ScrollView>
       
-      <ScrollToTopButton scrollViewRef={scrollViewRef} />
+      {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
     </SafeAreaView>
   );
 };

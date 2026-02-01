@@ -23,6 +23,12 @@ export class ImageService {
       const response = await fetch(uri);
       const blob = await response.blob();
       
+      // Enforce 5MB maximum file size
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+      if (blob.size > MAX_FILE_SIZE) {
+        throw new Error(`Image size (${(blob.size / 1024 / 1024).toFixed(2)}MB) exceeds the maximum allowed size of 5MB. Please choose a smaller image.`);
+      }
+      
       // Create a reference to the file in Firebase Storage using the correct path structure
       // Your rules expect: /temp/uploads/{userId}/{allPaths=**}
       const userPath = userId || `temp-${Date.now()}`;

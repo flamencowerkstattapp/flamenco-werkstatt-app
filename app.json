@@ -7,25 +7,13 @@
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#8B0000"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.antoniodias.werkstatt",
-      "icon": "./assets/icon.png"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#8B0000",
-        "foregroundImage": "./assets/adaptive-icon.png"
-      },
-      "package": "com.antoniodias.werkstatt",
-      "icon": "./assets/icon.png"
-    },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png",
@@ -44,12 +32,6 @@
     },
     "plugins": [
       "expo-secure-store"
-    ],
-    "scheme": "antoniodiaswerkstatt",
-    "extra": {
-      "eas": {
-        "projectId": "8f610b56-2b6e-4625-ab8b-df3e83c64651"
-      }
-    }
+    ]
   }
 }

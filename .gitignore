@@ -12,6 +12,11 @@ web-build/
 .env
 .env.local
 
+# Native build folders (PWA-only project)
+android/
+ios/
+eas.json
+
 # Firebase Admin SDK keys (never commit)
 serviceAccount*.json
 firebase-adminsdk*.json

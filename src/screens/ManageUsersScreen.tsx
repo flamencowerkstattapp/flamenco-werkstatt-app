@@ -393,7 +393,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               title={screenWidth < 360 ? '+' : t('admin.addUser')}
               onPress={openAddUserModal}
               variant="primary"
-              style={[styles.addButton, screenWidth < 360 && styles.addButtonNarrow]}
+              style={[styles.addButton, screenWidth < 360 ? styles.addButtonNarrow : undefined]}
             />
           </View>
         </View>
@@ -444,35 +444,51 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               </View>
 
               <View style={styles.userActions}>
-                <Button
-                  title={t('common.edit')}
+                <TouchableOpacity
                   onPress={() => openEditUserModal(user)}
-                  variant="outline"
-                  size="small"
-                  style={styles.actionButton}
-                />
+                  style={styles.iconButton}
+                >
+                  <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+                  <Text style={styles.iconButtonText}>{t('common.edit')}</Text>
+                </TouchableOpacity>
                 
-                <Button
-                  title={user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
+                <TouchableOpacity
                   onPress={() => toggleUserRole(user.id, user.role)}
-                  variant="outline"
-                  size="small"
                   disabled={completedActions.has(`role-${user.id}`)}
-                  style={getRoleButtonStyle(user.role)}
-                  textStyle={{
-                    color: '#000',
-                    fontWeight: '600'
-                  }}
-                />
+                  style={[
+                    styles.iconButton,
+                    { backgroundColor: user.role === 'admin' ? STUDIOS.SMALL.color : STUDIOS.BIG.color },
+                    completedActions.has(`role-${user.id}`) && styles.iconButtonDisabled
+                  ]}
+                >
+                  <Ionicons 
+                    name={user.role === 'admin' ? "person-outline" : "shield-checkmark-outline"} 
+                    size={20} 
+                    color="#000" 
+                  />
+                  <Text style={[styles.iconButtonText, { color: '#000' }]}>
+                    {user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
+                  </Text>
+                </TouchableOpacity>
                 
-                <Button
-                  title={user.isActive ? t('admin.deactivate') : t('admin.activate')}
+                <TouchableOpacity
                   onPress={() => toggleUserStatus(user.id, user.isActive)}
-                  variant={user.isActive ? 'danger' : 'success'}
-                  size="small"
                   disabled={completedActions.has(`status-${user.id}`)}
-                  style={styles.actionButton}
-                />
+                  style={[
+                    styles.iconButton,
+                    { backgroundColor: user.isActive ? theme.colors.error : theme.colors.success },
+                    completedActions.has(`status-${user.id}`) && styles.iconButtonDisabled
+                  ]}
+                >
+                  <Ionicons 
+                    name={user.isActive ? "close-circle-outline" : "checkmark-circle-outline"} 
+                    size={20} 
+                    color="#FFFFFF" 
+                  />
+                  <Text style={[styles.iconButtonText, { color: '#FFFFFF' }]}>
+                    {user.isActive ? t('admin.deactivate') : t('admin.activate')}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -907,11 +923,36 @@ const styles = StyleSheet.create({
   },
   userActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
     marginTop: theme.spacing.md,
+    flexWrap: 'wrap',
   },
   actionButton: {
     flex: 1,
+  },
+  iconButton: {
+    flex: 1,
+    minWidth: 80,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    gap: 4,
+  },
+  iconButtonDisabled: {
+    opacity: 0.5,
+  },
+  iconButtonText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: theme.colors.text,
+    textAlign: 'center',
+    lineHeight: 12,
   },
   addButton: {
     minWidth: 100,
