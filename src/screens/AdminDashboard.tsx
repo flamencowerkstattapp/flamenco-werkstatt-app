@@ -30,6 +30,7 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
     const [stats, setStats] = useState({
     totalMembers: 0,
     pendingBookings: 0,
@@ -143,6 +144,16 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       let upcomingEvents = 0;
       
       try {
+        const usersQuery = query(collection(db!, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        totalMembers = usersSnapshot.size;
+      } catch (usersError) {
+        // Silently handle users query failure
+        console.error('Error loading users count:', usersError);
+        totalMembers = 0;
+      }
+      
+      try {
         const eventsQuery = query(collection(db!, 'specialEvents'), where('endDate', '>=', new Date()));
         const eventsSnapshot = await getDocs(eventsQuery);
         upcomingEvents = eventsSnapshot.size;
@@ -215,7 +226,12 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       loadDashboardData();
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
-    }
+    };
+  };
+
+  const handleScroll = (event: any) => {
+    const yOffset = event.nativeEvent?.contentOffset?.y || 0;
+    setShowScrollTop(yOffset > 200);
   };
 
   
@@ -227,7 +243,12 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         <AdminFirebaseAuth onAuthenticated={() => {}} />
       ) : (
         <>
-          <ScrollView ref={scrollViewRef} style={styles.scrollView}>
+          <ScrollView 
+            ref={scrollViewRef} 
+            style={styles.scrollView}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
             <AppHeader title={t('admin.title')} />
 
             <View style={styles.statsContainer}>
@@ -359,7 +380,7 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         </View>
         </ScrollView>
         
-        <ScrollToTopButton scrollViewRef={scrollViewRef} />
+        {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
         </>
       )}
     </View>

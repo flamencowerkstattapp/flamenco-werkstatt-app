@@ -368,18 +368,18 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
             <Text style={styles.totalUsers}>{t('admin.totalUsers')}: {users.length}</Text>
             <Text style={styles.activeUsers}>{t('admin.activeUsers')}: {users.filter(u => u.isActive).length}</Text>
           </View>
-          <View style={[styles.headerActions, { flexWrap: 'wrap' }]}>
+          <View style={[styles.headerActions, screenWidth < 360 && styles.headerActionsNarrow]}>
             <TouchableOpacity
-              style={styles.templateButton}
+              style={[styles.templateButton, screenWidth < 360 && styles.iconOnlyButton]}
               onPress={handleDownloadTemplate}
             >
-              <Ionicons name="download-outline" size={16} color={theme.colors.primary} />
-              <Text style={styles.templateButtonText}>CSV Template</Text>
+              <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
+              {screenWidth >= 360 && <Text style={styles.templateButtonText}>CSV Template</Text>}
             </TouchableOpacity>
             <label htmlFor="csv-upload" style={{ cursor: 'pointer' }}>
-              <View style={styles.importButton}>
-                <Ionicons name="cloud-upload-outline" size={16} color={theme.colors.primary} />
-                <Text style={styles.importButtonText}>Import CSV</Text>
+              <View style={[styles.importButton, screenWidth < 360 && styles.iconOnlyButton]}>
+                <Ionicons name="cloud-upload-outline" size={20} color={theme.colors.primary} />
+                {screenWidth >= 360 && <Text style={styles.importButtonText}>Import CSV</Text>}
               </View>
             </label>
             <input
@@ -390,10 +390,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               style={{ display: 'none' }}
             />
             <Button
-              title={t('admin.addUser')}
+              title={screenWidth < 360 ? '+' : t('admin.addUser')}
               onPress={openAddUserModal}
               variant="primary"
-              style={styles.addButton}
+              style={[styles.addButton, screenWidth < 360 && styles.addButtonNarrow]}
             />
           </View>
         </View>
@@ -823,7 +823,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   headerStats: {
-    minWidth: 120,
+    minWidth: 100,
+    flex: 1,
   },
   totalUsers: {
     fontSize: 16,
@@ -1109,6 +1110,11 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     flexWrap: 'wrap',
   },
+  headerActionsNarrow: {
+    width: '100%',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.xs,
+  },
   templateButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1120,6 +1126,15 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
     minWidth: 100,
+  },
+  iconOnlyButton: {
+    minWidth: 40,
+    width: 40,
+    height: 40,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   templateButtonText: {
     fontSize: 12,
@@ -1137,6 +1152,10 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
     minWidth: 100,
+  },
+  addButtonNarrow: {
+    minWidth: 40,
+    paddingHorizontal: theme.spacing.sm,
   },
   importButtonText: {
     fontSize: 12,

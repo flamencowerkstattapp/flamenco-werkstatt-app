@@ -10,7 +10,7 @@ import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 // Membership pricing structure
 const MEMBERSHIP_PRICING = {
@@ -51,6 +51,7 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     loadStatistics();
@@ -60,6 +61,11 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     setRefreshing(true);
     await loadStatistics();
     setRefreshing(false);
+  };
+
+  const handleScroll = (event: any) => {
+    const yOffset = event.nativeEvent?.contentOffset?.y || 0;
+    setShowScrollTop(yOffset > 200);
   };
 
   const loadStatistics = async () => {
@@ -115,10 +121,10 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
 
     try {
       // In a real app, these would be actual Firebase queries
-      const usersQuery = query(collection(db, 'users'));
-      const bookingsQuery = query(collection(db, 'bookings'));
-      const eventsQuery = query(collection(db, 'specialEvents'));
-      const newsQuery = query(collection(db, 'news'));
+      const usersQuery = query(collection(db!, 'users'));
+      const bookingsQuery = query(collection(db!, 'bookings'));
+      const eventsQuery = query(collection(db!, 'specialEvents'));
+      const newsQuery = query(collection(db!, 'news'));
 
       const [usersSnapshot, bookingsSnapshot, eventsSnapshot, newsSnapshot] = await Promise.all([
         getDocs(usersQuery),
@@ -136,6 +142,64 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         return total;
       }, 0);
 
+      // Calculate user growth
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+      const thisMonthUsers = usersData.filter(user => {
+        const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+        return createdAt >= thisMonthStart;
+      }).length;
+
+      const lastMonthUsers = usersData.filter(user => {
+        const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+        return createdAt >= lastMonthStart && createdAt <= lastMonthEnd;
+      }).length;
+
+      // Calculate booking trends
+      const bookingsData = bookingsSnapshot.docs.map(doc => doc.data());
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const dailyBookings = bookingsData.filter(booking => {
+        const createdAt = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date(booking.createdAt);
+        return createdAt >= todayStart;
+      }).length;
+
+      const weeklyBookings = bookingsData.filter(booking => {
+        const createdAt = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date(booking.createdAt);
+        return createdAt >= weekStart;
+      }).length;
+
+      const monthlyBookings = bookingsData.filter(booking => {
+        const createdAt = booking.createdAt?.toDate ? booking.createdAt.toDate() : new Date(booking.createdAt);
+        return createdAt >= thisMonthStart;
+      }).length;
+
+      // Calculate studio utilization (percentage of time booked)
+      const monthHours = 30 * 12; // Assume 12 hours/day available for 30 days
+      const bigStudioBookings = bookingsData.filter(b => b.studioId === 'studio-1-big');
+      const smallStudioBookings = bookingsData.filter(b => b.studioId === 'studio-2-small');
+
+      const bigStudioHours = bigStudioBookings.reduce((total, booking) => {
+        const start = booking.startTime?.toDate ? booking.startTime.toDate() : new Date(booking.startTime);
+        const end = booking.endTime?.toDate ? booking.endTime.toDate() : new Date(booking.endTime);
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        return total + hours;
+      }, 0);
+
+      const smallStudioHours = smallStudioBookings.reduce((total, booking) => {
+        const start = booking.startTime?.toDate ? booking.startTime.toDate() : new Date(booking.startTime);
+        const end = booking.endTime?.toDate ? booking.endTime.toDate() : new Date(booking.endTime);
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        return total + hours;
+      }, 0);
+
+      const bigStudioUtilization = Math.min(Math.round((bigStudioHours / monthHours) * 100), 100);
+      const smallStudioUtilization = Math.min(Math.round((smallStudioHours / monthHours) * 100), 100);
+
       // Calculate statistics from real data
       const stats: Statistics = {
         totalUsers: usersSnapshot.size,
@@ -148,17 +212,17 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         upcomingEvents: eventsSnapshot.docs.filter(doc => doc.data().isPublished).length,
         publishedNews: newsSnapshot.docs.filter(doc => doc.data().isPublished).length,
         studioUtilization: {
-          studioBig: 0, // Calculate from bookings
-          studioSmall: 0, // Calculate from bookings
+          studioBig: bigStudioUtilization,
+          studioSmall: smallStudioUtilization,
         },
         userGrowth: {
-          thisMonth: 0, // Calculate from user creation dates
-          lastMonth: 0, // Calculate from user creation dates
+          thisMonth: thisMonthUsers,
+          lastMonth: lastMonthUsers,
         },
         bookingTrends: {
-          daily: 0, // Calculate from booking dates
-          weekly: 0, // Calculate from booking dates
-          monthly: 0, // Calculate from booking dates
+          daily: dailyBookings,
+          weekly: weeklyBookings,
+          monthly: monthlyBookings,
         },
       };
 
@@ -243,6 +307,8 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       <ScrollView 
         ref={scrollViewRef}
         contentContainerStyle={styles.container}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -373,7 +439,7 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         </View>
       </ScrollView>
       
-      <ScrollToTopButton scrollViewRef={scrollViewRef} />
+      {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
     </SafeAreaView>
   );
 };
