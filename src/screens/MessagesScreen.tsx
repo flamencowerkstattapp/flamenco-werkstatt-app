@@ -162,7 +162,7 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         <View style={styles.messageHeader}>
           <View style={styles.messageFrom}>
             <Ionicons
-              name={isInbox ? 'mail-outline' : 'send-outline'}
+              name={isInbox ? (isRead ? 'mail-open-outline' : 'mail-outline') : 'send-outline'}
               size={20}
               color={theme.colors.primary}
             />
