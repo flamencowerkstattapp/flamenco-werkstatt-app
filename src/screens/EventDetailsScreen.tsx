@@ -288,9 +288,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   metaInfo: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
+    flexDirection: 'row',  },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -317,9 +315,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.md,
-  },
+    marginBottom: theme.spacing.md,  },
   detailContent: {
     flex: 1,
   },
@@ -345,9 +341,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.xl,  },
   registerButtonText: {
     color: '#FFFFFF',
     fontSize: 16,

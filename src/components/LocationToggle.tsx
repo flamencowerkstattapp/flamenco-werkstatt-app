@@ -264,9 +264,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   toggleText: {
     flex: 1,
     fontSize: 16,
@@ -312,9 +310,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.md,
   },
-  locationOptions: {
-    gap: theme.spacing.md,
-  },
+  locationOptions: {  },
   locationOption: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
@@ -329,9 +325,7 @@ const styles = StyleSheet.create({
   optionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
-    gap: theme.spacing.md,
-  },
+    padding: theme.spacing.md,  },
   optionContent: {
     flex: 1,
   },
@@ -366,9 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: theme.colors.primary,
   },
-  studioOptions: {
-    gap: theme.spacing.md,
-  },
+  studioOptions: {  },
   studioButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -376,9 +368,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.md,
-  },
+    padding: theme.spacing.md,  },
   studioButtonActive: {
     borderColor: theme.colors.primary,
     backgroundColor: '#F0F7FF',
@@ -414,9 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#E3F2FD',
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-    alignItems: 'flex-start',
+    borderRadius: theme.borderRadius.md,    alignItems: 'flex-start',
   },
   infoTextContainer: {
     flex: 1,
@@ -429,9 +417,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    gap: theme.spacing.sm,
-  },
+    borderTopColor: theme.colors.border,  },
   actionButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,

@@ -190,9 +190,7 @@ const styles = StyleSheet.create({
   },
   repliedIndicator: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
+    alignItems: 'center',  },
   repliedText: {
     fontSize: 11,
     color: theme.colors.primary,

@@ -682,11 +682,11 @@ const styles = StyleSheet.create({
   },
   formActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
     marginTop: theme.spacing.md,
   },
   formButton: {
     flex: 1,
+    marginRight: theme.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
@@ -755,24 +755,24 @@ const styles = StyleSheet.create({
     minHeight: 28, // Ensure space for 2 lines
   },
   eventDetails: {
-    gap: 2,
     marginBottom: 2,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    marginBottom: 2,
   },
   detailText: {
     fontSize: 9,
     color: theme.colors.textSecondary,
+    marginLeft: 2,
   },
   eventActions: {
     flexDirection: 'column',
-    gap: theme.spacing.xs,
   },
   actionButton: {
     flex: 1,
+    marginBottom: theme.spacing.xs,
   },
   switchContainer: {
     flexDirection: 'column',
@@ -822,18 +822,18 @@ const styles = StyleSheet.create({
   },
   imageInputContainer: {
     flexDirection: 'column',
-    gap: theme.spacing.sm,
   },
   urlInput: {
     width: '100%',
+    marginBottom: theme.spacing.sm,
   },
   imagePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     borderWidth: 1,
+    marginBottom: theme.spacing.sm,
     borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,
@@ -867,14 +867,13 @@ const styles = StyleSheet.create({
   uploadIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
-    gap: theme.spacing.xs,
   },
   uploadIndicatorText: {
     fontSize: 12,
+    marginLeft: theme.spacing.xs,
     color: '#FFFFFF',
     fontWeight: '600',
   },

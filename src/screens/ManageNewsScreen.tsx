@@ -559,18 +559,19 @@ const styles = StyleSheet.create({
   categoryButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
   },
   categoryButton: {
     minWidth: 80,
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   formActions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
     marginTop: theme.spacing.md,
   },
   formButton: {
     flex: 1,
+    marginRight: theme.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
@@ -647,24 +648,24 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   newsDetails: {
-    gap: 2,
     marginBottom: 2,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    marginBottom: 2,
   },
   detailText: {
     fontSize: 9, // Increased from 8
     color: theme.colors.textSecondary,
+    marginLeft: 2,
   },
   newsActions: {
     flexDirection: 'column',
-    gap: theme.spacing.xs,
   },
   actionButton: {
     flex: 1,
+    marginBottom: theme.spacing.xs,
   },
   imageSection: {
     marginBottom: theme.spacing.md,
@@ -677,18 +678,18 @@ const styles = StyleSheet.create({
   },
   imageInputContainer: {
     flexDirection: 'column',
-    gap: theme.spacing.sm,
   },
   urlInput: {
     width: '100%',
+    marginBottom: theme.spacing.sm,
   },
   imagePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     borderWidth: 1,
+    marginBottom: theme.spacing.sm,
     borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,
@@ -726,10 +727,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
-    gap: theme.spacing.xs,
   },
   uploadIndicatorText: {
     fontSize: 12,
+    marginLeft: theme.spacing.xs,
     color: '#FFFFFF',
     fontWeight: '600',
   },

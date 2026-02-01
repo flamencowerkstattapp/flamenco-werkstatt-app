@@ -684,18 +684,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    gap: theme.spacing.md,
-  },
+    borderTopColor: theme.colors.border,  },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
+    borderRadius: theme.borderRadius.md,  },
   cancelButton: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
@@ -874,9 +870,7 @@ const styles = StyleSheet.create({
   },
   sendingContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
+    alignItems: 'center',  },
   sendingAnimation: {
     fontSize: 16,
   },

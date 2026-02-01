@@ -32,6 +32,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
+  isInstructor: boolean;
   phone?: string;
   memberSince: Date;
   isActive: boolean;

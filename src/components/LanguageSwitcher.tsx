@@ -109,9 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.xs,
-    ...theme.shadows.small,
+    borderRadius: theme.borderRadius.md,    ...theme.shadows.small,
   },
   buttonLight: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -161,9 +159,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.xs,
-    gap: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.xs,  },
   languageOptionActive: {
     backgroundColor: theme.colors.border,
   },

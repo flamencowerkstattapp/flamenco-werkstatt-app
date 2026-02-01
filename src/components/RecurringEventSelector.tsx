@@ -225,9 +225,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   selectorText: {
     flex: 1,
     fontSize: 16,
@@ -236,9 +234,7 @@ const styles = StyleSheet.create({
   removeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.xs,
-  },
+    marginTop: theme.spacing.sm,  },
   removeText: {
     fontSize: 14,
     color: theme.colors.error,
@@ -280,9 +276,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   frequencyOptions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
+    flexDirection: 'row',  },
   frequencyButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,
@@ -312,9 +306,7 @@ const styles = StyleSheet.create({
   intervalControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.lg,
-  },
+    justifyContent: 'center',  },
   intervalButton: {
     width: 40,
     height: 40,
@@ -333,9 +325,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   daysGrid: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
+    flexDirection: 'row',  },
   dayButton: {
     flex: 1,
     paddingVertical: theme.spacing.sm,
@@ -360,9 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    gap: theme.spacing.sm,
-  },
+    borderTopColor: theme.colors.border,  },
   actionButton: {
     flex: 1,
   },

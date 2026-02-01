@@ -219,7 +219,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   };
 
   const handleSaveUser = async () => {
-    if (!formData.firstName || !formData.email || !formData.phone) {
+    if (!formData.firstName || !formData.email || (!editingUserId && !formData.phone)) {
       Alert.alert(t('common.error'), t('admin.fillRequiredFields'));
       return;
     }
@@ -373,13 +373,17 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               style={[styles.templateButton, screenWidth < 360 && styles.iconOnlyButton]}
               onPress={handleDownloadTemplate}
             >
-              <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
-              {screenWidth >= 360 && <Text style={styles.templateButtonText}>CSV Template</Text>}
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
+                {screenWidth >= 360 && <Text style={styles.templateButtonText}>CSV Template</Text>}
+              </View>
             </TouchableOpacity>
             <label htmlFor="csv-upload" style={{ cursor: 'pointer' }}>
               <View style={[styles.importButton, screenWidth < 360 && styles.iconOnlyButton]}>
-                <Ionicons name="cloud-upload-outline" size={20} color={theme.colors.primary} />
-                {screenWidth >= 360 && <Text style={styles.importButtonText}>Import CSV</Text>}
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={theme.colors.primary} />
+                  {screenWidth >= 360 && <Text style={styles.importButtonText}>Import CSV</Text>}
+                </View>
               </View>
             </label>
             <input
@@ -393,7 +397,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               title={screenWidth < 360 ? '+' : t('admin.addUser')}
               onPress={openAddUserModal}
               variant="primary"
-              style={[styles.addButton, screenWidth < 360 ? styles.addButtonNarrow : undefined]}
+              style={StyleSheet.flatten([
+                styles.addButton,
+                screenWidth < 360 ? styles.addButtonNarrow : null,
+              ])}
             />
           </View>
         </View>
@@ -448,8 +455,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                   onPress={() => openEditUserModal(user)}
                   style={styles.iconButton}
                 >
-                  <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
-                  <Text style={styles.iconButtonText}>{t('common.edit')}</Text>
+                  <View>
+                    <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+                    <Text style={styles.iconButtonText}>{t('common.edit')}</Text>
+                  </View>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
@@ -461,14 +470,16 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     completedActions.has(`role-${user.id}`) && styles.iconButtonDisabled
                   ]}
                 >
-                  <Ionicons 
-                    name={user.role === 'admin' ? "person-outline" : "shield-checkmark-outline"} 
-                    size={20} 
-                    color="#000" 
-                  />
-                  <Text style={[styles.iconButtonText, { color: '#000' }]}>
-                    {user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
-                  </Text>
+                  <View>
+                    <Ionicons 
+                      name={user.role === 'admin' ? "person-outline" : "shield-checkmark-outline"} 
+                      size={20} 
+                      color="#000" 
+                    />
+                    <Text style={[styles.iconButtonText, { color: '#000' }]}>
+                      {user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
@@ -480,14 +491,16 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     completedActions.has(`status-${user.id}`) && styles.iconButtonDisabled
                   ]}
                 >
-                  <Ionicons 
-                    name={user.isActive ? "close-circle-outline" : "checkmark-circle-outline"} 
-                    size={20} 
-                    color="#FFFFFF" 
-                  />
-                  <Text style={[styles.iconButtonText, { color: '#FFFFFF' }]}>
-                    {user.isActive ? t('admin.deactivate') : t('admin.activate')}
-                  </Text>
+                  <View>
+                    <Ionicons 
+                      name={user.isActive ? "close-circle-outline" : "checkmark-circle-outline"} 
+                      size={20} 
+                      color="#FFFFFF" 
+                    />
+                    <Text style={[styles.iconButtonText, { color: '#FFFFFF' }]}>
+                      {user.isActive ? t('admin.deactivate') : t('admin.activate')}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>
@@ -593,18 +606,20 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       ]}
                       onPress={() => setFormData({...formData, membershipType: option.value})}
                     >
-                      <Text style={[
-                        styles.membershipText,
-                        formData.membershipType === option.value && styles.selectedMembershipText
-                      ]}>
-                        {t(option.labelKey)}
-                      </Text>
-                      <Text style={[
-                        styles.membershipPrice,
-                        formData.membershipType === option.value && styles.selectedMembershipPrice
-                      ]}>
-                        {t(option.priceKey)}
-                      </Text>
+                      <View>
+                        <Text style={[
+                          styles.membershipText,
+                          formData.membershipType === option.value && styles.selectedMembershipText
+                        ]}>
+                          {t(option.labelKey)}
+                        </Text>
+                        <Text style={[
+                          styles.membershipPrice,
+                          formData.membershipType === option.value && styles.selectedMembershipPrice
+                        ]}>
+                          {t(option.priceKey)}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -622,12 +637,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       ]}
                       onPress={() => setFormData({...formData, role})}
                     >
-                      <Text style={[
-                        styles.roleText,
-                        formData.role === role && styles.selectedRoleText
-                      ]}>
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </Text>
+                      <View>
+                        <Text style={[
+                          styles.roleText,
+                          formData.role === role && styles.selectedRoleText
+                        ]}>
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -670,12 +687,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       ]}
                       onPress={() => setFormData({...formData, danceLevel: level})}
                     >
-                      <Text style={[
-                        styles.levelText,
-                        formData.danceLevel === level && styles.selectedLevelText
-                      ]}>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </Text>
+                      <View>
+                        <Text style={[
+                          styles.levelText,
+                          formData.danceLevel === level && styles.selectedLevelText
+                        ]}>
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -836,7 +855,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
   },
   headerStats: {
     minWidth: 100,
@@ -923,12 +941,12 @@ const styles = StyleSheet.create({
   },
   userActions: {
     flexDirection: 'row',
-    gap: theme.spacing.xs,
     marginTop: theme.spacing.md,
     flexWrap: 'wrap',
   },
   actionButton: {
     flex: 1,
+    marginRight: theme.spacing.xs,
   },
   iconButton: {
     flex: 1,
@@ -942,7 +960,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surface,
-    gap: 4,
+    marginRight: theme.spacing.xs,
   },
   iconButtonDisabled: {
     opacity: 0.5,
@@ -1008,7 +1026,6 @@ const styles = StyleSheet.create({
   membershipOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
   membershipOption: {
@@ -1019,6 +1036,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   selectedMembership: {
     backgroundColor: theme.colors.primary,
@@ -1046,7 +1065,6 @@ const styles = StyleSheet.create({
   // Role options
   roleOptions: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
   roleOption: {
@@ -1056,6 +1074,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
+    marginRight: theme.spacing.sm,
   },
   selectedRole: {
     backgroundColor: theme.colors.warning,
@@ -1073,7 +1092,6 @@ const styles = StyleSheet.create({
   levelOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
   levelOption: {
@@ -1083,6 +1101,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   selectedLevel: {
     backgroundColor: theme.colors.info,
@@ -1139,16 +1159,15 @@ const styles = StyleSheet.create({
   },
   confirmModalActions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
   },
   confirmModalButton: {
     flex: 1,
+    marginRight: theme.spacing.md,
   },
   // CSV Import styles
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
     flexWrap: 'wrap',
   },
   headerActionsNarrow: {
@@ -1157,9 +1176,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   templateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderWidth: 1,
@@ -1167,6 +1183,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
     minWidth: 100,
+    marginRight: theme.spacing.sm,
   },
   iconOnlyButton: {
     minWidth: 40,
@@ -1181,11 +1198,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '600',
+    marginLeft: 4,
   },
   importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderWidth: 1,
@@ -1193,6 +1208,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
     minWidth: 100,
+    marginRight: theme.spacing.sm,
   },
   addButtonNarrow: {
     minWidth: 40,
@@ -1202,6 +1218,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '600',
+    marginLeft: 4,
   },
   importModalOverlay: {
     flex: 1,

@@ -17,6 +17,7 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png",
+      "title": "Antonio Dias Flamenco Werkstatt",
       "themeColor": "#8B0000",
       "backgroundColor": "#ffffff",
       "lang": "en",

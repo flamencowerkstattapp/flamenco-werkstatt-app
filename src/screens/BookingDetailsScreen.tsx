@@ -296,9 +296,7 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.md,  },
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',

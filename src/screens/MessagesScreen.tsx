@@ -334,9 +334,7 @@ const styles = StyleSheet.create({
   },
   messageFrom: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    flex: 1,
+    alignItems: 'center',    flex: 1,
   },
   senderName: {
     fontSize: 14,
@@ -366,9 +364,7 @@ const styles = StyleSheet.create({
   },
   messageStatusContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
+    alignItems: 'center',  },
   messageSubjectUnread: {
     color: theme.colors.primary,
     fontWeight: '700',
@@ -381,9 +377,7 @@ const styles = StyleSheet.create({
   },
   repliedIndicator: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
+    alignItems: 'center',  },
   repliedText: {
     fontSize: 11,
     color: theme.colors.primary,

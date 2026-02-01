@@ -167,15 +167,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: theme.spacing.md,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
   },
   rightSectionCompact: {
-    gap: theme.spacing.xs,
   },
   logoContainer: {
     // Add subtle visual feedback for touch
@@ -189,12 +186,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   titleCompact: {
     fontSize: 16,
   },
   titleWithLogo: {
-    marginLeft: theme.spacing.sm,
   },
   composeButton: {
     width: 40,

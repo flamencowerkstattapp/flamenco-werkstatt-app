@@ -160,9 +160,7 @@ const styles = StyleSheet.create({
   },
   detailedIndicator: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
+    alignItems: 'center',  },
   statusText: {
     fontSize: 12,
     fontWeight: '500',

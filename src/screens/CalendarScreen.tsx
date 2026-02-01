@@ -398,9 +398,7 @@ const styles = StyleSheet.create({
   },
   studioSelector: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   studioButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,
@@ -425,9 +423,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF3CD',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   holidayText: {
     fontSize: 14,
     color: '#856404',
@@ -519,9 +515,7 @@ const styles = StyleSheet.create({
   eventDetails: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.xs,
-    gap: theme.spacing.xs,
-  },
+    marginTop: theme.spacing.xs,  },
   eventTime: {
     fontSize: 14,
     color: theme.colors.textSecondary,
@@ -646,9 +640,7 @@ const styles = StyleSheet.create({
   },
   unavailableSlot: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.sm,
+    alignItems: 'center',    marginTop: theme.spacing.sm,
     padding: theme.spacing.xs,
     backgroundColor: 'rgba(156, 163, 175, 0.1)',
     borderRadius: theme.borderRadius.sm,

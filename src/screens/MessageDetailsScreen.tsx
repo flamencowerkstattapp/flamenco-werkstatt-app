@@ -373,9 +373,7 @@ const styles = StyleSheet.create({
   senderInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    flex: 1,
-    gap: theme.spacing.md,
-  },
+    flex: 1,  },
   senderDetails: {
     flex: 1,
   },
@@ -433,9 +431,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    gap: theme.spacing.md,
-  },
+    borderTopColor: theme.colors.border,  },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
@@ -446,9 +442,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    gap: theme.spacing.sm,
-  },
+    borderColor: theme.colors.border,  },
   actionText: {
     fontSize: 16,
     fontWeight: '600',
@@ -474,9 +468,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.md,  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -489,9 +481,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   modalActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
+    flexDirection: 'row',  },
   modalButton: {
     flex: 1,
     flexDirection: 'row',
@@ -499,9 +489,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
+    borderRadius: theme.borderRadius.md,  },
   cancelButton: {
     backgroundColor: theme.colors.border,
   },

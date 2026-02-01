@@ -218,9 +218,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.round,
-    gap: theme.spacing.xs,
-  },
+    borderRadius: theme.borderRadius.round,  },
   categoryText: {
     fontSize: 12,
     fontWeight: '600',
@@ -245,9 +243,7 @@ const styles = StyleSheet.create({
   },
   metaItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
+    alignItems: 'center',    marginBottom: theme.spacing.xs,
   },
   metaText: {
     fontSize: 14,

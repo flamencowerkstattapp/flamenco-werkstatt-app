@@ -112,9 +112,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     padding: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    paddingTop: theme.spacing.md,  },
   button: {
     flex: 1,
     paddingVertical: theme.spacing.md,

@@ -450,9 +450,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
+    borderRadius: theme.borderRadius.md,  },
   infoText: {
     fontSize: 14,
     color: '#1565C0',
@@ -467,9 +465,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3CD',
     padding: theme.spacing.md,
     marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
+    borderRadius: theme.borderRadius.md,  },
   noticeText: {
     fontSize: 14,
     color: '#856404',

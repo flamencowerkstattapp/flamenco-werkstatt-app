@@ -478,9 +478,7 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-  },
+    flexWrap: 'wrap',  },
   statCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -541,9 +539,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   growthContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
+    flexDirection: 'row',  },
   growthCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -567,12 +563,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   trendsContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  metricsContainer: {
-    gap: theme.spacing.md,
-  },
+    flexDirection: 'row',  },
+  metricsContainer: {  },
   metricCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -581,9 +573,7 @@ const styles = StyleSheet.create({
   },
   metricHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
+    alignItems: 'center',    marginBottom: theme.spacing.sm,
   },
   metricTitle: {
     fontSize: 16,

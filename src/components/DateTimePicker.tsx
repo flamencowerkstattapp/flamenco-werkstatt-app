@@ -289,9 +289,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   pickerText: {
     flex: 1,
     fontSize: 16,
@@ -339,9 +337,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   quickDateButtons: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    flexDirection: 'row',    marginTop: theme.spacing.sm,
   },
   quickDateButton: {
     flex: 1,
@@ -358,9 +354,7 @@ const styles = StyleSheet.create({
   },
   pickerActions: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   actionButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,

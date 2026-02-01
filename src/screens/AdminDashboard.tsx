@@ -406,9 +406,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    padding: theme.spacing.md,  },
   statCard: {
     flex: 1,
     backgroundColor: theme.colors.surface,
@@ -486,18 +484,14 @@ const styles = StyleSheet.create({
   bookingDetail: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-    gap: theme.spacing.xs,
-  },
+    marginBottom: theme.spacing.xs,  },
   bookingDetailText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
   },
   bookingActions: {
     flexDirection: 'row',
-    marginTop: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    marginTop: theme.spacing.md,  },
   actionButton: {
     flex: 1,
     minWidth: 100,
@@ -512,9 +506,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.md,
-    ...theme.shadows.small,
+    marginBottom: theme.spacing.sm,    ...theme.shadows.small,
   },
   actionCardText: {
     flex: 1,
