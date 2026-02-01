@@ -35,9 +35,11 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     loadMessages();
   }, [activeTab]);
 
-  // Scroll to top when screen gains focus
+  // Reload messages and scroll to top when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
+      loadMessages(); // Reload messages to get updated read status
+      
       const scrollToTop = () => {
         if (scrollViewRef.current) {
           scrollViewRef.current.scrollToOffset({ offset: 0, animated: false });
@@ -48,7 +50,7 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       const timeoutId = setTimeout(scrollToTop, 100);
       
       return () => clearTimeout(timeoutId);
-    }, [])
+    }, [activeTab])
   );
 
   const loadRecipientNames = async (messages: Message[]) => {
@@ -134,6 +136,9 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     const userReadStatus = item.readStatus?.[user?.id || ''] || 'unread';
     const isFromCurrentUser = item.senderId === user?.id;
     const isInbox = activeTab === 'inbox';
+    
+    const iconName = isInbox ? (isRead ? 'mail-open' : 'mail-outline') : 'send-outline';
+    const iconColor = isInbox ? (isRead ? theme.colors.success : theme.colors.error) : theme.colors.primary;
 
     // Helper function to format recipient names for sent messages
     const formatRecipientNames = (message: Message) => {
@@ -162,9 +167,10 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         <View style={styles.messageHeader}>
           <View style={styles.messageFrom}>
             <Ionicons
-              name={isInbox ? (isRead ? 'mail-open-outline' : 'mail-outline') : 'send-outline'}
-              size={20}
-              color={theme.colors.primary}
+              name="person-outline"
+              size={18}
+              color={theme.colors.textSecondary}
+              style={{ marginRight: theme.spacing.sm }}
             />
             <Text style={styles.senderName}>
               {isInbox ? item.senderName : formatRecipientNames(item)}
@@ -172,11 +178,10 @@ export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           </View>
           <View style={styles.messageStatusContainer}>
             {!isRead && <View style={styles.unreadBadge} />}
-            <MessageStatusIndicator
-              message={item}
-              userId={user?.id}
-              isFromCurrentUser={isFromCurrentUser}
-              showDetailedStatus={false}
+            <Ionicons
+              name={iconName}
+              size={20}
+              color={iconColor}
             />
           </View>
         </View>

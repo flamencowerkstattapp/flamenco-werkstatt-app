@@ -141,6 +141,12 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
       if (message && message.deliveryTracking?.[user.id]?.status !== 'delivered') {
         await service.markAsDelivered(messageId, user.id);
       }
+      
+      // Reload message to update local state with new read status
+      const updatedMessage = await service.getMessage(messageId);
+      if (updatedMessage) {
+        setMessage(updatedMessage);
+      }
     } catch (error) {
       console.error('Error marking message as read:', error);
     }
