@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { setLocale, getLocale } from '../locales';
@@ -18,6 +18,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'd
   const [modalVisible, setModalVisible] = useState(false);
   const [currentLocale, setCurrentLocale] = useState(getLocale());
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const isNarrowScreen = screenWidth <= 380;
 
   const handleLanguageChange = (languageCode: string) => {
     setLocale(languageCode as 'de' | 'en' | 'es');
@@ -40,29 +42,41 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'd
     setCurrentLocale(getLocale());
   }, [forceUpdate]);
 
+  useEffect(() => {
+    const onChange = (result: { window: { width: number } }) => {
+      setScreenWidth(result.window.width);
+    };
+    const subscription = Dimensions.addEventListener('change', onChange);
+    return () => subscription?.remove();
+  }, []);
+
   const currentLanguage = LANGUAGES.find(lang => lang.code === currentLocale) || LANGUAGES[0];
 
   return (
     <View>
       <TouchableOpacity
         style={[
-          styles.button,
+          isNarrowScreen ? styles.buttonCompact : styles.button,
           variant === 'light' && styles.buttonLight
         ]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.flag}>{currentLanguage.flag}</Text>
-        <Text style={[
-          styles.code,
-          variant === 'light' && styles.codeLight
-        ]}>
-          {currentLanguage.code.toUpperCase()}
-        </Text>
-        <Ionicons 
-          name="chevron-down" 
-          size={16} 
-          color={variant === 'light' ? '#FFFFFF' : theme.colors.text} 
-        />
+        <Text style={isNarrowScreen ? styles.flagCompact : styles.flag}>{currentLanguage.flag}</Text>
+        {!isNarrowScreen && (
+          <>
+            <Text style={[
+              styles.code,
+              variant === 'light' && styles.codeLight
+            ]}>
+              {currentLanguage.code.toUpperCase()}
+            </Text>
+            <Ionicons 
+              name="chevron-down" 
+              size={16} 
+              color={variant === 'light' ? '#FFFFFF' : theme.colors.text} 
+            />
+          </>
+        )}
       </TouchableOpacity>
 
       <Modal
@@ -109,7 +123,17 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.md,    ...theme.shadows.small,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.small,
+  },
+  buttonCompact: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
   },
   buttonLight: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -118,6 +142,10 @@ const styles = StyleSheet.create({
   },
   flag: {
     fontSize: 20,
+    marginRight: theme.spacing.xs,
+  },
+  flagCompact: {
+    fontSize: 18,
   },
   code: {
     fontSize: 14,

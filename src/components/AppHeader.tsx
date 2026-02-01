@@ -129,7 +129,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         )}
       </View>
       <View style={[styles.rightSection, isVeryNarrowScreen && styles.rightSectionCompact]}>
-        {showComposeButton && onComposePress && !isVeryNarrowScreen && (
+        {showComposeButton && onComposePress && (
           <TouchableOpacity 
             style={[
               styles.composeButton,
@@ -175,7 +175,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <Ionicons name="log-out-outline" size={isVeryNarrowScreen ? 18 : isNarrowScreen ? 20 : 22} color="#FFFFFF" />
           </TouchableOpacity>
         )}
-        {!isNarrowScreen && <LanguageSwitcher />}
+        <LanguageSwitcher />
       </View>
       
       <ConfirmModal
