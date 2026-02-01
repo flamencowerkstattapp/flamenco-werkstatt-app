@@ -47,6 +47,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     password: '',
     membershipType: '1-class' as '1-class' | '2-classes' | '3-classes' | 'all-you-can-dance',
     role: 'member' as UserRole,
+    isInstructor: false,
     emergencyContact: '',
     emergencyPhone: '',
     danceLevel: 'beginner' as 'beginner' | 'intermediate' | 'advanced' | 'professional',
@@ -187,6 +188,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       password: '',
       membershipType: '1-class',
       role: 'member',
+      isInstructor: false,
       emergencyContact: '',
       emergencyPhone: '',
       danceLevel: 'beginner',
@@ -209,6 +211,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       password: '', // Not used for editing existing users
       membershipType: userToEdit.membershipType || '1-class',
       role: userToEdit.role,
+      isInstructor: userToEdit.isInstructor || false,
       emergencyContact: userToEdit.emergencyContact || '',
       emergencyPhone: userToEdit.emergencyPhone || '',
       danceLevel: userToEdit.danceLevel || 'beginner',
@@ -245,6 +248,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           email: formData.email,
           phone: formData.phone,
           role: formData.role,
+          isInstructor: formData.isInstructor,
           membershipType: formData.membershipType,
           emergencyContact: formData.emergencyContact,
           emergencyPhone: formData.emergencyPhone,
@@ -277,6 +281,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           const newUserId = usersSnapshot.docs[0].id;
           await updateDoc(doc(getFirestoreDB(), 'users', newUserId), {
             role: formData.role,
+            isInstructor: formData.isInstructor,
             membershipType: formData.membershipType,
             emergencyContact: formData.emergencyContact,
             emergencyPhone: formData.emergencyPhone,
@@ -429,8 +434,16 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               <View style={styles.userInfo}>
                 <View style={styles.userHeader}>
                   <Text style={styles.userName}>{user.firstName} {user.lastName}</Text>
-                  <View style={[styles.roleBadge, { backgroundColor: user.role === 'admin' ? theme.colors.warning : theme.colors.info }]}>
-                    <Text style={styles.roleBadgeText}>{user.role}</Text>
+                  <View style={styles.badgeContainer}>
+                    <View style={[styles.roleBadge, { backgroundColor: user.role === 'admin' ? theme.colors.warning : theme.colors.info }]}>
+                      <Text style={styles.roleBadgeText}>{user.role}</Text>
+                    </View>
+                    {user.isInstructor && (
+                      <View style={[styles.instructorBadge, { backgroundColor: theme.colors.success }]}>
+                        <Ionicons name="school-outline" size={12} color="#fff" style={screenWidth < 768 ? undefined : styles.instructorBadgeIcon} />
+                        {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{t('user.instructor')}</Text>}
+                      </View>
+                    )}
                   </View>
                 </View>
                 
@@ -647,6 +660,44 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       </View>
                     </TouchableOpacity>
                   ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t('user.instructorStatus')}</Text>
+                <View style={styles.instructorOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.instructorOption,
+                      !formData.isInstructor && styles.selectedInstructor
+                    ]}
+                    onPress={() => setFormData({...formData, isInstructor: false})}
+                  >
+                    <View>
+                      <Text style={[
+                        styles.instructorText,
+                        !formData.isInstructor && styles.selectedInstructorText
+                      ]}>
+                        {t('user.regularMember')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.instructorOption,
+                      formData.isInstructor && styles.selectedInstructor
+                    ]}
+                    onPress={() => setFormData({...formData, isInstructor: true})}
+                  >
+                    <View>
+                      <Text style={[
+                        styles.instructorText,
+                        formData.isInstructor && styles.selectedInstructorText
+                      ]}>
+                        {t('user.isInstructor')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -919,6 +970,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
   },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  instructorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.xs,
+  },
+  instructorBadgeIcon: {
+    marginRight: 4,
+  },
   userEmail: {
     fontSize: 14,
     color: theme.colors.textSecondary,
@@ -1085,6 +1151,32 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   selectedRoleText: {
+    color: theme.colors.surface,
+    fontWeight: '600',
+  },
+  // Instructor options
+  instructorOptions: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.md,
+  },
+  instructorOption: {
+    flex: 1,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  selectedInstructor: {
+    backgroundColor: theme.colors.success,
+    borderColor: theme.colors.success,
+  },
+  instructorText: {
+    fontSize: 14,
+    color: theme.colors.text,
+  },
+  selectedInstructorText: {
     color: theme.colors.surface,
     fontWeight: '600',
   },

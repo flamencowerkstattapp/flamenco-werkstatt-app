@@ -124,6 +124,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
             lastName: replyTo.senderName.split(' ').slice(1).join(' ') || '',
             email: '', // We don't have email from message data
             role: 'member' as UserRole, // Default to member for unknown roles
+            isInstructor: false,
             isActive: true,
             memberSince: new Date(),
             phone: '',
@@ -144,6 +145,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
             lastName: 'Administrator',
             email: 'admin@flamenco.com',
             role: 'admin' as UserRole,
+            isInstructor: false,
             isActive: true,
             memberSince: new Date(),
             phone: '',
@@ -238,7 +240,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       case 'all-members':
         return availableUsers.filter(u => u.role === 'member').map(u => u.id);
       case 'all-instructors':
-        return availableUsers.filter(u => u.role === 'instructor').map(u => u.id);
+        return availableUsers.filter(u => (u as any).isInstructor === true).map(u => u.id);
       default:
         return [];
     }
