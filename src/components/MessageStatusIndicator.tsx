@@ -89,13 +89,13 @@ export const MessageStatusIndicator: React.FC<MessageStatusIndicatorProps> = ({
     };
     
     return isFromCurrentUser 
-      ? statusTexts[deliveryStatus] || ''
-      : statusTexts[readStatus] || '';
+      ? statusTexts[actualDeliveryStatus] || ''
+      : statusTexts[actualReadStatus] || '';
   };
 
   const getStatusColor = () => {
     if (isFromCurrentUser) {
-      switch (deliveryStatus) {
+      switch (actualDeliveryStatus) {
         case 'pending': return theme.colors.textSecondary;
         case 'sent': return theme.colors.textSecondary;
         case 'delivered': return theme.colors.primary;
@@ -103,7 +103,7 @@ export const MessageStatusIndicator: React.FC<MessageStatusIndicatorProps> = ({
         default: return theme.colors.textSecondary;
       }
     } else {
-      switch (readStatus) {
+      switch (actualReadStatus) {
         case 'unread': return theme.colors.textSecondary;
         case 'read': return theme.colors.primary;
         case 'replied': return theme.colors.success;
@@ -114,7 +114,7 @@ export const MessageStatusIndicator: React.FC<MessageStatusIndicatorProps> = ({
 
   const getStatusBackgroundColor = () => {
     if (isFromCurrentUser) {
-      switch (deliveryStatus) {
+      switch (actualDeliveryStatus) {
         case 'pending': return { backgroundColor: 'rgba(156, 163, 175, 0.1)' };
         case 'sent': return { backgroundColor: 'rgba(156, 163, 175, 0.1)' };
         case 'delivered': return { backgroundColor: 'rgba(34, 197, 94, 0.1)' };
@@ -122,7 +122,7 @@ export const MessageStatusIndicator: React.FC<MessageStatusIndicatorProps> = ({
         default: return { backgroundColor: 'rgba(156, 163, 175, 0.1)' };
       }
     } else {
-      switch (readStatus) {
+      switch (actualReadStatus) {
         case 'unread': return { backgroundColor: 'rgba(156, 163, 175, 0.1)' };
         case 'read': return { backgroundColor: 'rgba(59, 130, 246, 0.1)' };
         case 'replied': return { backgroundColor: 'rgba(34, 197, 94, 0.1)' };

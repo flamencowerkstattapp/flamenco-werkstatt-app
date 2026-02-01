@@ -116,7 +116,7 @@ export const AdminPasswordProtection: React.FC<AdminPasswordProtectionProps> = (
 
   const handlePasswordSubmit = async () => {
     if (!password.trim()) {
-      Alert.alert(t('common.error'), t('validation.passwordRequired'));
+      Alert.alert(t('common.error'), t('auth.passwordRequired'));
       return;
     }
 

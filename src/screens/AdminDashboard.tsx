@@ -513,5 +513,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
+    marginLeft: theme.spacing.md,
   },
 });

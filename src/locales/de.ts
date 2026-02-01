@@ -17,6 +17,7 @@ export default {
     search: 'Suchen',
     filter: 'Filtern',
     loading: 'Laden...',
+    verifying: 'Überprüfung...',
     error: 'Fehler',
     success: 'Erfolgreich',
     required: 'Erforderlich',
