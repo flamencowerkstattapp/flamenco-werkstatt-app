@@ -120,5 +120,23 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    
+    // Payments rules
+    match /payments/{paymentId} {
+      // Admins can read all payments
+      allow read: if isAdmin();
+      
+      // Users can read their own payments
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      
+      // Only admins can create payments
+      allow create: if isAdmin();
+      
+      // Only admins can update payments
+      allow update: if isAdmin();
+      
+      // Only admins can delete payments
+      allow delete: if isAdmin();
+    }
   }
 }

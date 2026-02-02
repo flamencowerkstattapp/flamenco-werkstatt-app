@@ -20,6 +20,60 @@ import { validateEventData, checkEventConflicts, checkRecurringEventConflicts } 
 import { formatDateTime } from '../utils/dateUtils';
 
 
+// Helper function to normalize time input to HH:MM format
+const normalizeTimeInput = (input: string): string => {
+  if (!input || input.trim() === '') return '';
+  
+  // Remove all non-digit characters except colon, dot, and space
+  let cleaned = input.replace(/[^\d:.\s]/g, '');
+  
+  // Handle various formats
+  // Format: "9" or "09" -> "09:00"
+  if (/^\d{1,2}$/.test(cleaned)) {
+    const hour = parseInt(cleaned);
+    if (hour >= 0 && hour <= 23) {
+      return `${hour.toString().padStart(2, '0')}:00`;
+    }
+  }
+  
+  // Format: "9:30", "09:30", "9.30", "9,30" -> "09:30"
+  if (/^\d{1,2}[:.]\d{1,2}$/.test(cleaned)) {
+    const parts = cleaned.split(/[:.]/);
+    const hour = parseInt(parts[0]);
+    const minute = parseInt(parts[1]);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  // Format: "930" or "0930" -> "09:30"
+  if (/^\d{3,4}$/.test(cleaned)) {
+    const hour = parseInt(cleaned.slice(0, -2));
+    const minute = parseInt(cleaned.slice(-2));
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  // Format: "9 30" or "09 30" -> "09:30"
+  if (/^\d{1,2}\s+\d{1,2}$/.test(cleaned)) {
+    const parts = cleaned.split(/\s+/);
+    const hour = parseInt(parts[0]);
+    const minute = parseInt(parts[1]);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  // If already in correct format, return as is
+  if (/^\d{2}:\d{2}$/.test(cleaned)) {
+    return cleaned;
+  }
+  
+  // If we can't parse it, return the original input
+  return input;
+};
+
 export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user, firebaseUser } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -39,6 +93,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
     imageUrl: '',
     startDate: undefined as Date | undefined,
     endDate: undefined as Date | undefined,
+    dailyStartTime: '',
+    dailyEndTime: '',
     registrationDeadline: undefined as Date | undefined,
     isOffsite: false,
     isRecurring: false,
@@ -210,6 +266,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
       imageUrl: '',
       startDate: undefined,
       endDate: undefined,
+      dailyStartTime: '',
+      dailyEndTime: '',
       registrationDeadline: undefined,
       isOffsite: false,
       isRecurring: false,
@@ -231,6 +289,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
       imageUrl: event.imageUrl || '',
       startDate: event.startDate,
       endDate: event.endDate,
+      dailyStartTime: event.dailyStartTime || '',
+      dailyEndTime: event.dailyEndTime || '',
       registrationDeadline: event.registrationDeadline,
       isOffsite: event.isOffsite,
       isRecurring: false,
@@ -238,6 +298,9 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
       blocksCalendar: !event.isOffsite,
     });
     setShowForm(true);
+    
+    // Scroll to top so user can see the edit form
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const handleCreateOrUpdateEvent = async () => {
@@ -259,6 +322,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
         description: formData.description.trim(),
         startDate: formData.startDate,
         endDate: formData.endDate,
+        dailyStartTime: formData.dailyStartTime.trim() || undefined,
+        dailyEndTime: formData.dailyEndTime.trim() || undefined,
         location: formData.location.trim(),
         isOffsite: formData.isOffsite,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
@@ -421,6 +486,40 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
             icon="time-outline"
           />
 
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t('events.dailyStartTime')}</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.dailyStartTime}
+              onChangeText={(text) => setFormData(prev => ({ ...prev, dailyStartTime: text }))}
+              onBlur={() => {
+                const normalized = normalizeTimeInput(formData.dailyStartTime);
+                if (normalized !== formData.dailyStartTime) {
+                  setFormData(prev => ({ ...prev, dailyStartTime: normalized }));
+                }
+              }}
+              placeholder="e.g., 9, 9:30, 930, 09:30"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t('events.dailyEndTime')}</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.dailyEndTime}
+              onChangeText={(text) => setFormData(prev => ({ ...prev, dailyEndTime: text }))}
+              onBlur={() => {
+                const normalized = normalizeTimeInput(formData.dailyEndTime);
+                if (normalized !== formData.dailyEndTime) {
+                  setFormData(prev => ({ ...prev, dailyEndTime: normalized }));
+                }
+              }}
+              placeholder="e.g., 17, 5pm, 1700, 17:00"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+          </View>
+
           <CustomDateTimePicker
             label={t('events.registrationDeadline')}
             value={formData.registrationDeadline}
@@ -560,6 +659,15 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
                   </View>
                 )}
                 
+                {event.dailyStartTime && event.dailyEndTime && (
+                  <View style={styles.detailItem}>
+                    <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
+                    <Text style={styles.detailText}>
+                      Daily: {event.dailyStartTime} - {event.dailyEndTime}
+                    </Text>
+                  </View>
+                )}
+                
                 {event.registrationDeadline && (
                   <View style={styles.detailItem}>
                     <Ionicons name="alarm-outline" size={12} color={theme.colors.textSecondary} />
@@ -679,6 +787,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
+  },
+  inputGroup: {
+    marginBottom: theme.spacing.md,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  input: {
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    fontSize: 14,
+    color: theme.colors.text,
   },
   formActions: {
     flexDirection: 'row',

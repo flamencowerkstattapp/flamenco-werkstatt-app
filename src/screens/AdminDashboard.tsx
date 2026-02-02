@@ -491,11 +491,13 @@ const styles = StyleSheet.create({
   },
   bookingActions: {
     flexDirection: 'row',
-    marginTop: theme.spacing.md,  },
+    marginTop: theme.spacing.md,
+  },
   actionButton: {
     flex: 1,
     minWidth: 100,
     maxWidth: 120,
+    marginRight: theme.spacing.sm,
   },
   quickActions: {
     padding: theme.spacing.md,

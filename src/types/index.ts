@@ -157,6 +157,8 @@ export interface SpecialEvent {
   country?: string;
   startDate: Date;
   endDate: Date;
+  dailyStartTime?: string; // Format: "HH:MM" (e.g., "09:00") - daily schedule start time for multi-day events
+  dailyEndTime?: string; // Format: "HH:MM" (e.g., "17:00") - daily schedule end time for multi-day events
   imageUrl?: string;
   registrationDeadline?: Date;
   maxParticipants?: number;
@@ -204,7 +206,8 @@ export interface NotificationPreferences {
 }
 
 export type PaymentMethod = 'cash' | 'bank';
-export type PaymentType = 'monthly-membership' | 'single-class';
+export type PaymentType = 'weekly-class' | 'special-class';
+export type SpecialClassType = 'technique' | 'special-event';
 
 export interface Payment {
   id: string;
@@ -214,7 +217,9 @@ export interface Payment {
   paymentMethod: PaymentMethod;
   paymentType: PaymentType;
   date: Date;
-  month?: string;
+  month: string;
+  membershipType?: string;
+  specialClassType?: SpecialClassType;
   classId?: string;
   notes?: string;
   recordedBy: string;

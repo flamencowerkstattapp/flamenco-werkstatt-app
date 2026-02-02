@@ -247,6 +247,8 @@ export class EventsService {
       country: data.country,
       startDate: data.startDate?.toDate() || new Date(),
       endDate: data.endDate?.toDate() || new Date(),
+      dailyStartTime: data.dailyStartTime,
+      dailyEndTime: data.dailyEndTime,
       imageUrl: data.imageUrl,
       registrationDeadline: data.registrationDeadline?.toDate(),
       maxParticipants: data.maxParticipants,

@@ -43,7 +43,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedUserForPayment, setSelectedUserForPayment] = useState<User | null>(null);
-  const [paymentType, setPaymentType] = useState<PaymentType>('monthly-membership');
+  const [paymentType, setPaymentType] = useState<PaymentType>('weekly-class');
   const [userPayments, setUserPayments] = useState<{[userId: string]: Payment[]}>({});
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<Set<string>>(new Set()); // Track completed actions
   const [formData, setFormData] = useState({
@@ -59,6 +59,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     emergencyPhone: '',
     danceLevel: 'beginner' as 'beginner' | 'intermediate' | 'advanced' | 'professional',
     preferredStyles: '',
+    preferredLanguage: 'de' as 'de' | 'en' | 'es',
   });
 
   // Responsive design
@@ -130,9 +131,21 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     if (!selectedUserForPayment || !user) return;
 
     try {
-      const paymentNote = paymentData.membershipType 
-        ? `${t(`user.membershipTypes.${paymentData.membershipType}`)}${paymentData.notes ? ` - ${paymentData.notes}` : ''}`
-        : paymentData.notes;
+      let paymentNote = paymentData.notes || '';
+      
+      // Add membership type info for weekly class payments
+      if (paymentData.membershipType) {
+        const membershipLabel = t(`user.membershipTypes.${paymentData.membershipType}`);
+        paymentNote = paymentNote ? `${membershipLabel} - ${paymentNote}` : membershipLabel;
+      }
+      
+      // Add special class type info for special class payments
+      if (paymentData.specialClassType) {
+        const specialClassLabel = paymentData.specialClassType === 'technique' 
+          ? t('payments.techniqueClass') 
+          : t('payments.specialEventClass');
+        paymentNote = paymentNote ? `${specialClassLabel} - ${paymentNote}` : specialClassLabel;
+      }
 
       await createPayment({
         userId: selectedUserForPayment.id,
@@ -142,10 +155,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
         paymentType: paymentData.paymentType,
         date: paymentData.date,
         month: paymentData.month,
+        membershipType: paymentData.membershipType,
+        specialClassType: paymentData.specialClassType,
         classId: paymentData.classId,
         notes: paymentNote,
         recordedBy: user.id,
         recordedByName: `${user.firstName} ${user.lastName}`,
+        updateUserMembership: paymentData.paymentType === 'weekly-class' && 
+                              paymentData.membershipType !== selectedUserForPayment.membershipType,
       });
 
       Alert.alert(
@@ -154,6 +171,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       );
 
       loadUserPayments(selectedUserForPayment.id);
+      loadUsers(); // Reload users to reflect membership type change
       setShowPaymentModal(false);
       setSelectedUserForPayment(null);
     } catch (error) {
@@ -272,6 +290,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       emergencyPhone: '',
       danceLevel: 'beginner',
       preferredStyles: '',
+      preferredLanguage: 'de',
     });
     setEditingUserId(null);
   };
@@ -295,6 +314,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       emergencyPhone: userToEdit.emergencyPhone || '',
       danceLevel: userToEdit.danceLevel || 'beginner',
       preferredStyles: userToEdit.preferredStyles || '',
+      preferredLanguage: userToEdit.preferredLanguage || 'de',
     });
     setEditingUserId(userToEdit.id);
     setShowUserModal(true);
@@ -333,6 +353,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           emergencyPhone: formData.emergencyPhone,
           danceLevel: formData.danceLevel,
           preferredStyles: formData.preferredStyles,
+          preferredLanguage: formData.preferredLanguage,
           updatedAt: new Date(),
         });
         Alert.alert(
@@ -345,7 +366,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           firstName: formData.firstName,
           lastName: formData.lastName,
           phone: formData.phone,
-          preferredLanguage: 'de',
+          preferredLanguage: formData.preferredLanguage,
         });
         
         // Wait a moment for the user to be created in Firestore
@@ -366,6 +387,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
             emergencyPhone: formData.emergencyPhone,
             danceLevel: formData.danceLevel,
             preferredStyles: formData.preferredStyles,
+            preferredLanguage: formData.preferredLanguage,
           });
         }
         
@@ -546,21 +568,21 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                 <View style={styles.paymentButtons}>
                   <TouchableOpacity
                     style={styles.paymentButton}
-                    onPress={() => openPaymentModal(user, 'monthly-membership')}
+                    onPress={() => openPaymentModal(user, 'weekly-class')}
                   >
                     <View style={styles.paymentButtonContent}>
-                      <Ionicons name="card-outline" size={18} color={theme.colors.success} />
-                      <Text style={styles.paymentButtonText}>{t('payments.recordMonthly')}</Text>
+                      <Ionicons name="calendar-outline" size={18} color={theme.colors.primary} />
+                      <Text style={styles.paymentButtonText}>{t('payments.recordClass')}</Text>
                     </View>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
                     style={styles.paymentButton}
-                    onPress={() => openPaymentModal(user, 'single-class')}
+                    onPress={() => openPaymentModal(user, 'special-class')}
                   >
                     <View style={styles.paymentButtonContent}>
-                      <Ionicons name="cash-outline" size={18} color={theme.colors.primary} />
-                      <Text style={styles.paymentButtonText}>{t('payments.recordClass')}</Text>
+                      <Ionicons name="star-outline" size={18} color={theme.colors.success} />
+                      <Text style={styles.paymentButtonText}>{t('payments.recordSpecialClass')}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -599,9 +621,9 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                             </Text>
                           </View>
                           <Text style={styles.paymentHistoryType}>
-                            {payment.paymentType === 'monthly-membership' 
-                              ? `${t('payments.monthly')} - ${formatMonthDisplay(payment.month, user.preferredLanguage)}` 
-                              : t('payments.singleClass')}
+                            {payment.paymentType === 'weekly-class' 
+                              ? `${t('payments.weeklyClass')} - ${formatMonthDisplay(payment.month, user.preferredLanguage)}` 
+                              : `${t('payments.specialClass')} - ${formatMonthDisplay(payment.month, user.preferredLanguage)}`}
                           </Text>
                           {payment.notes && (
                             <Text style={styles.paymentHistoryNotes}>{payment.notes}</Text>
@@ -771,20 +793,18 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       ]}
                       onPress={() => setFormData({...formData, membershipType: option.value})}
                     >
-                      <View>
-                        <Text style={[
-                          styles.membershipText,
-                          formData.membershipType === option.value && styles.selectedMembershipText
-                        ]}>
-                          {t(option.labelKey)}
-                        </Text>
-                        <Text style={[
-                          styles.membershipPrice,
-                          formData.membershipType === option.value && styles.selectedMembershipPrice
-                        ]}>
-                          {t(option.priceKey)}
-                        </Text>
-                      </View>
+                      <Text style={[
+                        styles.membershipText,
+                        formData.membershipType === option.value && styles.selectedMembershipText
+                      ]}>
+                        {t(option.labelKey)}
+                      </Text>
+                      <Text style={[
+                        styles.membershipPrice,
+                        formData.membershipType === option.value && styles.selectedMembershipPrice
+                      ]}>
+                        {t(option.priceKey)}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -825,14 +845,12 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     ]}
                     onPress={() => setFormData({...formData, isInstructor: false})}
                   >
-                    <View>
-                      <Text style={[
-                        styles.instructorText,
-                        !formData.isInstructor && styles.selectedInstructorText
-                      ]}>
-                        {t('user.regularMember')}
-                      </Text>
-                    </View>
+                    <Text style={[
+                      styles.instructorText,
+                      !formData.isInstructor && styles.selectedInstructorText
+                    ]}>
+                      {t('user.regularMember')}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
@@ -841,14 +859,12 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     ]}
                     onPress={() => setFormData({...formData, isInstructor: true})}
                   >
-                    <View>
-                      <Text style={[
-                        styles.instructorText,
-                        formData.isInstructor && styles.selectedInstructorText
-                      ]}>
-                        {t('user.isInstructor')}
-                      </Text>
-                    </View>
+                    <Text style={[
+                      styles.instructorText,
+                      formData.isInstructor && styles.selectedInstructorText
+                    ]}>
+                      {t('user.isInstructor')}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -890,14 +906,12 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       ]}
                       onPress={() => setFormData({...formData, danceLevel: level})}
                     >
-                      <View>
-                        <Text style={[
-                          styles.levelText,
-                          formData.danceLevel === level && styles.selectedLevelText
-                        ]}>
-                          {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </Text>
-                      </View>
+                      <Text style={[
+                        styles.levelText,
+                        formData.danceLevel === level && styles.selectedLevelText
+                      ]}>
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -911,6 +925,54 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                   onChangeText={(text) => setFormData({...formData, preferredStyles: text})}
                   placeholder={t('user.danceStylesExample')}
                 />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t('user.preferredLanguage')}</Text>
+                <View style={styles.languageOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.languageOption,
+                      formData.preferredLanguage === 'de' && styles.selectedLanguage
+                    ]}
+                    onPress={() => setFormData({...formData, preferredLanguage: 'de'})}
+                  >
+                    <Text style={[
+                      styles.languageText,
+                      formData.preferredLanguage === 'de' && styles.selectedLanguageText
+                    ]}>
+                      Deutsch
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.languageOption,
+                      formData.preferredLanguage === 'en' && styles.selectedLanguage
+                    ]}
+                    onPress={() => setFormData({...formData, preferredLanguage: 'en'})}
+                  >
+                    <Text style={[
+                      styles.languageText,
+                      formData.preferredLanguage === 'en' && styles.selectedLanguageText
+                    ]}>
+                      English
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.languageOption,
+                      formData.preferredLanguage === 'es' && styles.selectedLanguage
+                    ]}
+                    onPress={() => setFormData({...formData, preferredLanguage: 'es'})}
+                  >
+                    <Text style={[
+                      styles.languageText,
+                      formData.preferredLanguage === 'es' && styles.selectedLanguageText
+                    ]}>
+                      Español
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View style={styles.modalActions}>
@@ -1371,6 +1433,35 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   selectedLevelText: {
+    color: theme.colors.surface,
+    fontWeight: '600',
+  },
+  // Language options
+  languageOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: theme.spacing.md,
+  },
+  languageOption: {
+    width: '31%',
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  selectedLanguage: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  languageText: {
+    fontSize: 14,
+    color: theme.colors.text,
+    fontWeight: '500',
+  },
+  selectedLanguageText: {
     color: theme.colors.surface,
     fontWeight: '600',
   },

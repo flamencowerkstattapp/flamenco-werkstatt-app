@@ -12,7 +12,7 @@ import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { STUDIOS } from '../constants/studios';
 import { t, getLocale } from '../locales';
-import { CalendarEvent, Booking } from '../types';
+import { CalendarEvent, Booking, SpecialEvent } from '../types';
 import { formatTime, isSchoolHoliday } from '../utils/dateUtils';
 
 // Configure calendar locales
@@ -48,6 +48,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedStudio, setSelectedStudio] = useState<'studio-1-big' | 'studio-2-small' | 'offsite'>('studio-1-big');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [specialEvents, setSpecialEvents] = useState<SpecialEvent[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentLocale, setCurrentLocale] = useState(getLocale());
@@ -117,6 +118,12 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         where('startTime', '<=', Timestamp.fromDate(endOfDay))
       );
 
+      // Query for special events (from Manage Events screen)
+      const specialEventsQuery = query(
+        collection(db!, 'specialEvents'),
+        where('isPublished', '==', true)
+      );
+
       const bookingsQuery = query(
         collection(db!, 'bookings'),
         where('studioId', '==', selectedStudio),
@@ -125,12 +132,14 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       );
 
       console.log('CALENDAR: Executing queries...');
-      const [eventsSnapshot, bookingsSnapshot] = await Promise.all([
+      const [eventsSnapshot, specialEventsSnapshot, bookingsSnapshot] = await Promise.all([
         getDocs(eventsQuery),
+        getDocs(specialEventsQuery),
         getDocs(bookingsQuery),
       ]);
 
       console.log('CALENDAR: Events snapshot size:', eventsSnapshot.size);
+      console.log('CALENDAR: Special events snapshot size:', specialEventsSnapshot.size);
       console.log('CALENDAR: Bookings snapshot size:', bookingsSnapshot.size);
 
       const eventsData = eventsSnapshot.docs.map((doc) => ({
@@ -140,6 +149,42 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         endTime: doc.data().endTime.toDate(),
       })) as CalendarEvent[];
 
+      // Process special events and filter by date and location
+      const allSpecialEvents = specialEventsSnapshot.docs
+        .map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+          startDate: doc.data().startDate.toDate(),
+          endDate: doc.data().endDate.toDate(),
+          createdAt: doc.data().createdAt.toDate(),
+          updatedAt: doc.data().updatedAt.toDate(),
+        })) as SpecialEvent[];
+      
+      console.log('CALENDAR: All special events:', allSpecialEvents.map(e => ({
+        id: e.id,
+        title: e.title,
+        startDate: e.startDate.toISOString().split('T')[0],
+        location: e.location,
+        isOffsite: e.isOffsite
+      })));
+      
+      const specialEventsData = allSpecialEvents.filter((event) => {
+        const eventDate = new Date(event.startDate);
+        const eventDateStr = eventDate.toISOString().split('T')[0];
+        const matchesDate = eventDateStr === selectedDate;
+        
+        // Match location: offsite events show in offsite tab, studio events show in respective studio tabs
+        // Handle both studio IDs (studio-1-big) and display names (Big Studio, Small Studio)
+        const matchesLocation = event.isOffsite 
+          ? selectedStudio === 'offsite'
+          : (selectedStudio === 'studio-1-big' && (event.location === 'studio-1-big' || event.location === 'Big Studio')) ||
+            (selectedStudio === 'studio-2-small' && (event.location === 'studio-2-small' || event.location === 'Small Studio'));
+        
+        console.log(`CALENDAR: Event "${event.title}" - Date match: ${matchesDate} (${eventDateStr} vs ${selectedDate}), Location match: ${matchesLocation} (${event.location} vs ${selectedStudio}, isOffsite: ${event.isOffsite})`);
+        
+        return matchesDate && matchesLocation;
+      });
+
       const bookingsData = bookingsSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
@@ -148,6 +193,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       })) as Booking[];
 
       console.log('CALENDAR: Processed events:', eventsData.length);
+      console.log('CALENDAR: Processed special events:', specialEventsData.length);
       console.log('CALENDAR: Processed bookings:', bookingsData.length);
       
       if (bookingsData.length > 0) {
@@ -162,6 +208,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       }
 
       setEvents(eventsData);
+      setSpecialEvents(specialEventsData);
       setBookings(bookingsData);
       
       console.log('CALENDAR: Data loaded successfully');
@@ -176,6 +223,22 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const isHoliday = isSchoolHoliday(new Date(selectedDate));
 
   const handleBookStudio = () => {
+    // Check if user is a member (not admin or instructor)
+    if (user?.role === 'member') {
+      const selectedDateObj = new Date(selectedDate);
+      const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 6 = Saturday
+      
+      // Block Monday-Friday bookings for members (1-5)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        Alert.alert(
+          t('calendar.bookingRestricted'),
+          t('calendar.weekendOnlyBooking'),
+          [{ text: t('common.ok') }]
+        );
+        return;
+      }
+    }
+    
     navigation.navigate('BookStudio', {
       date: selectedDate,
       studioId: selectedStudio,
@@ -267,7 +330,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </Text>
           </View>
 
-          {events.length === 0 && bookings.length === 0 && !loading && (
+          {events.length === 0 && specialEvents.length === 0 && bookings.length === 0 && !loading && (
             <View style={styles.emptyState}>
               <Ionicons name="calendar-outline" size={48} color={theme.colors.textSecondary} />
               <Text style={styles.emptyStateText}>No events or bookings</Text>
@@ -301,6 +364,49 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
               <View style={styles.eventDetails}>
                 <Ionicons name="bookmark-outline" size={16} color={theme.colors.textSecondary} />
                 <Text style={styles.eventInstructor}>{event.classType}</Text>
+              </View>
+            )}
+          </View>
+        ))}
+
+        {specialEvents.map((event) => (
+          <View
+            key={event.id}
+            style={[styles.eventCard, { borderLeftColor: selectedStudio === 'studio-1-big' ? STUDIOS.BIG.color : selectedStudio === 'studio-2-small' ? STUDIOS.SMALL.color : STUDIOS.OFFSITE.color }]}
+          >
+            <View style={styles.eventHeader}>
+              <Text style={styles.eventTitle}>{event.title}</Text>
+              {event.price !== undefined && event.price > 0 && (
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelText}>€{event.price}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.eventDetails}>
+              <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.eventTime}>
+                {event.dailyStartTime && event.dailyEndTime 
+                  ? `${event.dailyStartTime} - ${event.dailyEndTime}` 
+                  : `${formatTime(event.startDate)} - ${formatTime(event.endDate)}`}
+              </Text>
+            </View>
+            <View style={styles.eventDetails}>
+              <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.eventInstructor}>
+                {event.isOffsite 
+                  ? event.location 
+                  : event.location === 'Big Studio' || event.location === 'studio-1-big'
+                    ? t('calendar.studioBig')
+                    : event.location === 'Small Studio' || event.location === 'studio-2-small'
+                      ? t('calendar.studioSmall')
+                      : event.location
+                }
+              </Text>
+            </View>
+            {event.description && (
+              <View style={styles.eventDetails}>
+                <Ionicons name="information-circle-outline" size={16} color={theme.colors.textSecondary} />
+                <Text style={styles.eventInstructor} numberOfLines={2}>{event.description}</Text>
               </View>
             )}
           </View>
@@ -457,7 +563,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   eventCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F3E5F5',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,

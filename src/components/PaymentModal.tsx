@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, Modal, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert, Dimensions, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
 import { theme } from '../constants/theme';
-import { t } from '../locales';
-import { PaymentMethod, PaymentType, User } from '../types';
+import { t, getLocale } from '../locales';
+import { PaymentMethod, PaymentType, SpecialClassType, User } from '../types';
 
 interface PaymentModalProps {
   visible: boolean;
@@ -14,10 +14,11 @@ interface PaymentModalProps {
     paymentMethod: PaymentMethod;
     paymentType: PaymentType;
     date: Date;
-    month?: string;
+    month: string;
     classId?: string;
     notes?: string;
     membershipType?: string;
+    specialClassType?: SpecialClassType;
   }) => void;
   user: User;
   defaultType: PaymentType;
@@ -37,29 +38,50 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   user,
   defaultType,
 }) => {
+  const { width } = useWindowDimensions();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [paymentType, setPaymentType] = useState<PaymentType>(defaultType);
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedMembershipType, setSelectedMembershipType] = useState<string>('');
+  const [selectedSpecialClassType, setSelectedSpecialClassType] = useState<SpecialClassType>('technique');
   const [notes, setNotes] = useState('');
+
+  // Calculate month button width based on screen size
+  // Desktop (>=768px): 4 columns = ~23%
+  // Tablet (480-767px): 3 columns = ~31%
+  // Mobile (<480px): 2 columns = ~47%
+  const getMonthButtonWidth = () => {
+    if (width >= 768) return '23%'; // 4 columns
+    if (width >= 480) return '31%'; // 3 columns
+    return '47%'; // 2 columns
+  };
+
+  // Calculate membership type button width based on screen size
+  // Desktop (>=768px): 4 columns = ~23%
+  // Mobile (<768px): 2 columns = ~47%
+  const getMembershipButtonWidth = () => {
+    if (width >= 768) return '23%'; // 4 columns
+    return '47%'; // 2 columns
+  };
 
   useEffect(() => {
     if (visible) {
       setPaymentType(defaultType);
       
-      if (defaultType === 'monthly-membership' && user.membershipType) {
-        const price = MEMBERSHIP_PRICING[user.membershipType];
-        setAmount(price.toString());
-        
-        const now = new Date();
-        const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        setSelectedMonth(monthStr);
-        setSelectedMembershipType('');
-      } else {
-        setAmount('');
-        setSelectedMonth('');
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      setSelectedMonth(monthStr);
+      
+      if (defaultType === 'weekly-class') {
+        // Weekly class payment - use member's membership type
         setSelectedMembershipType(user.membershipType || '1-class');
+        const price = MEMBERSHIP_PRICING[user.membershipType || '1-class'];
+        setAmount(price.toString());
+      } else {
+        // Special class payment
+        setSelectedSpecialClassType('technique');
+        setAmount('');
       }
       
       setPaymentMethod('cash');
@@ -67,20 +89,31 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [visible, defaultType, user.membershipType]);
 
-  const generateMonthOptions = () => {
+  const monthOptions = useMemo(() => {
     const options = [];
     const now = new Date();
-    const locale = user.preferredLanguage === 'de' ? 'de-DE' : user.preferredLanguage === 'es' ? 'es-ES' : 'en-US';
+    const currentYear = now.getFullYear();
     
-    for (let i = -2; i <= 2; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const monthName = date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    // Full month names by language to ensure consistency
+    const monthNames = {
+      en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+      es: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+    };
+    
+    // Use current app language, not individual user's preference
+    const currentLocale = getLocale() as 'en' | 'de' | 'es';
+    const months = monthNames[currentLocale] || monthNames.en;
+    
+    // Generate all 12 months of current year with full names
+    for (let i = 0; i < 12; i++) {
+      const monthStr = `${currentYear}-${String(i + 1).padStart(2, '0')}`;
+      const monthName = months[i];
       options.push({ value: monthStr, label: monthName });
     }
     
     return options;
-  };
+  }, []);
 
   const handleSubmit = () => {
     const amountNum = parseFloat(amount);
@@ -90,7 +123,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       return;
     }
 
-    if (paymentType === 'monthly-membership' && !selectedMonth) {
+    if (!selectedMonth) {
       Alert.alert(t('common.error'), t('payments.selectMonth'));
       return;
     }
@@ -100,15 +133,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       paymentMethod,
       paymentType,
       date: new Date(),
-      month: paymentType === 'monthly-membership' ? selectedMonth : undefined,
-      membershipType: paymentType === 'single-class' ? selectedMembershipType : undefined,
+      month: selectedMonth,
+      membershipType: paymentType === 'weekly-class' ? selectedMembershipType : undefined,
+      specialClassType: paymentType === 'special-class' ? selectedSpecialClassType : undefined,
       notes: notes.trim() || undefined,
     });
 
     onClose();
   };
-
-  const monthOptions = generateMonthOptions();
 
   return (
     <Modal
@@ -121,9 +153,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>
-              {paymentType === 'monthly-membership' 
-                ? t('payments.recordMonthlyPayment')
-                : t('payments.recordClassPayment')}
+              {paymentType === 'weekly-class' 
+                ? t('payments.recordClassPayment')
+                : t('payments.recordSpecialClassPayment')}
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -134,27 +166,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <Ionicons name="person-circle-outline" size={40} color={theme.colors.primary} />
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{user.firstName} {user.lastName}</Text>
-              {user.membershipType && (
+              {paymentType === 'weekly-class' && selectedMembershipType && (
                 <Text style={styles.userMembership}>
-                  {t(`user.membershipTypes.${user.membershipType}`)}
+                  {t(`user.membershipTypes.${selectedMembershipType}`)}
+                </Text>
+              )}
+              {paymentType === 'special-class' && (
+                <Text style={styles.userMembership}>
+                  {t('payments.recordSpecialClass')}
                 </Text>
               )}
             </View>
           </View>
 
           <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('payments.amount')} (€) *</Text>
-              <TextInput
-                style={styles.input}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            {paymentType === 'single-class' && (
+            {paymentType === 'weekly-class' && (
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>{t('user.membershipType')} *</Text>
                 <View style={styles.membershipTypeOptions}>
@@ -163,6 +189,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       key={type}
                       style={[
                         styles.membershipTypeOption,
+                        { width: getMembershipButtonWidth() },
                         selectedMembershipType === type && styles.selectedMembershipType
                       ]}
                       onPress={() => {
@@ -191,32 +218,81 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </View>
             )}
 
-            {paymentType === 'monthly-membership' && (
+            {paymentType === 'special-class' && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t('payments.month')} *</Text>
-                <View style={styles.monthOptions}>
-                  {monthOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.monthOption,
-                        selectedMonth === option.value && styles.selectedMonth
-                      ]}
-                      onPress={() => setSelectedMonth(option.value)}
-                    >
-                      <View>
-                        <Text style={[
-                          styles.monthText,
-                          selectedMonth === option.value && styles.selectedMonthText
-                        ]}>
-                          {option.label}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                <Text style={styles.label}>{t('payments.specialClassType')} *</Text>
+                <View style={styles.specialClassTypeOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.specialClassTypeOption,
+                      selectedSpecialClassType === 'technique' && styles.selectedSpecialClassType
+                    ]}
+                    onPress={() => setSelectedSpecialClassType('technique')}
+                  >
+                    <View>
+                      <Text style={[
+                        styles.specialClassTypeText,
+                        selectedSpecialClassType === 'technique' && styles.selectedSpecialClassTypeText
+                      ]}>
+                        {t('payments.techniqueClass')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.specialClassTypeOption,
+                      selectedSpecialClassType === 'special-event' && styles.selectedSpecialClassType
+                    ]}
+                    onPress={() => setSelectedSpecialClassType('special-event')}
+                  >
+                    <View>
+                      <Text style={[
+                        styles.specialClassTypeText,
+                        selectedSpecialClassType === 'special-event' && styles.selectedSpecialClassTypeText
+                      ]}>
+                        {t('payments.specialEventClass')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('payments.amount')} (€) *</Text>
+              <TextInput
+                style={styles.input}
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="0.00"
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{t('payments.month')} *</Text>
+              <View style={styles.monthOptions}>
+                {monthOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.monthOption,
+                      { width: getMonthButtonWidth() },
+                      selectedMonth === option.value && styles.selectedMonth
+                    ]}
+                    onPress={() => setSelectedMonth(option.value)}
+                  >
+                    <Text style={[
+                      styles.monthText,
+                      selectedMonth === option.value && styles.selectedMonthText
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t('payments.paymentMethod')} *</Text>
@@ -366,31 +442,41 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   monthOptions: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: -theme.spacing.xs,
+    marginRight: -theme.spacing.xs,
   },
   monthOption: {
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    marginLeft: theme.spacing.xs,
+    marginRight: theme.spacing.xs,
     marginBottom: theme.spacing.sm,
+    minWidth: 65,
   },
   selectedMonth: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
   monthText: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.text,
     textAlign: 'center',
+    fontWeight: '500',
   },
   selectedMonthText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   membershipTypeOptions: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: -theme.spacing.xs,
+    marginRight: -theme.spacing.xs,
   },
   membershipTypeOption: {
     backgroundColor: theme.colors.surface,
@@ -398,6 +484,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
+    marginLeft: theme.spacing.xs,
+    marginRight: theme.spacing.xs,
     marginBottom: theme.spacing.sm,
   },
   selectedMembershipType: {
@@ -421,6 +509,33 @@ const styles = StyleSheet.create({
   selectedMembershipPriceText: {
     color: '#fff',
     opacity: 0.9,
+  },
+  specialClassTypeOptions: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.sm,
+  },
+  specialClassTypeOption: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginRight: theme.spacing.sm,
+  },
+  selectedSpecialClassType: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  specialClassTypeText: {
+    fontSize: 14,
+    color: theme.colors.text,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  selectedSpecialClassTypeText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   paymentMethodOptions: {
     flexDirection: 'row',

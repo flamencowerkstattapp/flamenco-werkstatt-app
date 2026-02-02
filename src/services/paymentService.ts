@@ -1,6 +1,6 @@
-import { collection, addDoc, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, limit, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
-import { Payment, PaymentMethod, PaymentType } from '../types';
+import { Payment, PaymentMethod, PaymentType, SpecialClassType } from '../types';
 
 export interface CreatePaymentData {
   userId: string;
@@ -9,11 +9,14 @@ export interface CreatePaymentData {
   paymentMethod: PaymentMethod;
   paymentType: PaymentType;
   date: Date;
-  month?: string;
+  month: string;
+  membershipType?: string;
+  specialClassType?: SpecialClassType;
   classId?: string;
   notes?: string;
   recordedBy: string;
   recordedByName: string;
+  updateUserMembership?: boolean;
 }
 
 export const createPayment = async (paymentData: CreatePaymentData): Promise<string> => {
@@ -28,7 +31,9 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<str
       paymentMethod: paymentData.paymentMethod,
       paymentType: paymentData.paymentType,
       date: Timestamp.fromDate(paymentData.date),
-      month: paymentData.month || null,
+      month: paymentData.month,
+      membershipType: paymentData.membershipType || null,
+      specialClassType: paymentData.specialClassType || null,
       classId: paymentData.classId || null,
       notes: paymentData.notes || null,
       recordedBy: paymentData.recordedBy,
@@ -38,6 +43,23 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<str
     };
 
     const docRef = await addDoc(paymentsRef, payment);
+    
+    // Update user's membership type if requested (for weekly class payments)
+    if (paymentData.updateUserMembership && 
+        paymentData.paymentType === 'weekly-class' && 
+        paymentData.membershipType) {
+      try {
+        const userRef = doc(db, 'users', paymentData.userId);
+        await updateDoc(userRef, {
+          membershipType: paymentData.membershipType,
+          updatedAt: Timestamp.fromDate(new Date()),
+        });
+      } catch (updateError) {
+        console.warn('Could not update user membership type:', updateError);
+        // Don't throw - payment was successful even if membership update failed
+      }
+    }
+    
     return docRef.id;
   } catch (error) {
     console.error('Error creating payment:', error);
@@ -216,12 +238,12 @@ export const getPaymentStats = async () => {
       .filter(p => p.paymentMethod === 'bank')
       .reduce((sum, p) => sum + p.amount, 0);
 
-    const monthlyMembershipRevenue = payments
-      .filter(p => p.paymentType === 'monthly-membership')
+    const weeklyClassRevenue = payments
+      .filter(p => p.paymentType === 'weekly-class')
       .reduce((sum, p) => sum + p.amount, 0);
 
-    const singleClassRevenue = payments
-      .filter(p => p.paymentType === 'single-class')
+    const specialClassRevenue = payments
+      .filter(p => p.paymentType === 'special-class')
       .reduce((sum, p) => sum + p.amount, 0);
 
     return {
@@ -230,8 +252,8 @@ export const getPaymentStats = async () => {
       yearlyRevenue,
       cashPayments,
       bankPayments,
-      monthlyMembershipRevenue,
-      singleClassRevenue,
+      weeklyClassRevenue,
+      specialClassRevenue,
       totalPayments: payments.length,
     };
   } catch (error) {
