@@ -74,38 +74,110 @@ export const hasTimeConflict = (
 };
 
 export const getBerlinSchoolHolidays = (year: number) => {
-  return [
-    {
-      name: 'Winterferien',
-      startDate: new Date(year, 1, 1),
-      endDate: new Date(year, 1, 14),
-    },
-    {
-      name: 'Osterferien',
-      startDate: new Date(year, 3, 1),
-      endDate: new Date(year, 3, 14),
-    },
-    {
-      name: 'Pfingstferien',
-      startDate: new Date(year, 4, 20),
-      endDate: new Date(year, 4, 23),
-    },
-    {
-      name: 'Sommerferien',
-      startDate: new Date(year, 6, 1),
-      endDate: new Date(year, 7, 31),
-    },
-    {
-      name: 'Herbstferien',
-      startDate: new Date(year, 9, 15),
-      endDate: new Date(year, 9, 28),
-    },
-    {
-      name: 'Weihnachtsferien',
-      startDate: new Date(year, 11, 22),
-      endDate: new Date(year + 1, 0, 4),
-    },
-  ];
+  // Berlin school holidays for 2025-2026
+  // Note: JavaScript months are 0-indexed (0 = January, 11 = December)
+  
+  if (year === 2025) {
+    return [
+      {
+        name: 'Winterferien',
+        startDate: new Date(2025, 1, 3), // Feb 3, 2025
+        endDate: new Date(2025, 1, 8), // Feb 8, 2025
+      },
+      {
+        name: 'Osterferien',
+        startDate: new Date(2025, 3, 14), // Apr 14, 2025
+        endDate: new Date(2025, 3, 26), // Apr 26, 2025
+      },
+      {
+        name: 'Pfingstferien',
+        startDate: new Date(2025, 4, 30), // May 30, 2025
+        endDate: new Date(2025, 5, 3), // Jun 3, 2025
+      },
+      {
+        name: 'Sommerferien',
+        startDate: new Date(2025, 6, 10), // Jul 10, 2025
+        endDate: new Date(2025, 7, 22), // Aug 22, 2025
+      },
+      {
+        name: 'Herbstferien',
+        startDate: new Date(2025, 9, 20), // Oct 20, 2025
+        endDate: new Date(2025, 10, 1), // Nov 1, 2025
+      },
+      {
+        name: 'Weihnachtsferien',
+        startDate: new Date(2025, 11, 22), // Dec 22, 2025
+        endDate: new Date(2026, 0, 2), // Jan 2, 2026
+      },
+    ];
+  } else if (year === 2026) {
+    return [
+      {
+        name: 'Winterferien',
+        startDate: new Date(2026, 1, 2), // Feb 2, 2026
+        endDate: new Date(2026, 1, 7), // Feb 7, 2026
+      },
+      {
+        name: 'Osterferien',
+        startDate: new Date(2026, 2, 30), // Mar 30, 2026
+        endDate: new Date(2026, 3, 11), // Apr 11, 2026
+      },
+      {
+        name: 'Pfingstferien',
+        startDate: new Date(2026, 4, 15), // May 15, 2026
+        endDate: new Date(2026, 4, 16), // May 16, 2026
+      },
+      {
+        name: 'Sommerferien',
+        startDate: new Date(2026, 6, 9), // Jul 9, 2026
+        endDate: new Date(2026, 7, 21), // Aug 21, 2026
+      },
+      {
+        name: 'Herbstferien',
+        startDate: new Date(2026, 9, 12), // Oct 12, 2026
+        endDate: new Date(2026, 9, 24), // Oct 24, 2026
+      },
+      {
+        name: 'Weihnachtsferien',
+        startDate: new Date(2026, 11, 21), // Dec 21, 2026
+        endDate: new Date(2027, 0, 2), // Jan 2, 2027
+      },
+    ];
+  } else {
+    // Fallback for other years - approximate dates
+    return [
+      {
+        name: 'Winterferien',
+        startDate: new Date(year, 1, 1),
+        endDate: new Date(year, 1, 14),
+      },
+      {
+        name: 'Osterferien',
+        startDate: new Date(year, 3, 1),
+        endDate: new Date(year, 3, 14),
+      },
+      {
+        name: 'Pfingstferien',
+        startDate: new Date(year, 4, 20),
+        endDate: new Date(year, 4, 23),
+      },
+      {
+        name: 'Sommerferien',
+        startDate: new Date(year, 6, 1),
+        endDate: new Date(year, 7, 31),
+      },
+      {
+        name: 'Herbstferien',
+        startDate: new Date(year, 9, 15),
+        endDate: new Date(year, 9, 28),
+      },
+      {
+        name: 'Weihnachtsferien',
+        startDate: new Date(year, 11, 22),
+        endDate: new Date(year + 1, 0, 4),
+      },
+    ];
+  }
 };
 
 export const isSchoolHoliday = (date: Date): boolean => {
@@ -115,6 +187,17 @@ export const isSchoolHoliday = (date: Date): boolean => {
   return holidays.some(
     (holiday) => date >= holiday.startDate && date <= holiday.endDate
   );
+};
+
+export const getCurrentSchoolHoliday = (date: Date): { name: string; startDate: Date; endDate: Date } | null => {
+  const year = date.getFullYear();
+  const holidays = getBerlinSchoolHolidays(year);
+  
+  const currentHoliday = holidays.find(
+    (holiday) => date >= holiday.startDate && date <= holiday.endDate
+  );
+  
+  return currentHoliday || null;
 };
 
 export const parseTimeInput = (input: string): string | null => {

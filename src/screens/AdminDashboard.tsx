@@ -35,6 +35,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
     totalMembers: 0,
     pendingBookings: 0,
     upcomingEvents: 0,
+    adminCount: 0,
+    instructorCount: 0,
   });
 
   useEffect(() => {
@@ -112,6 +114,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
           totalMembers: 47,
           pendingBookings: demoBookings.length,
           upcomingEvents: 5,
+          adminCount: 3,
+          instructorCount: 8,
         });
         setLoading(false);
       }, 1000);
@@ -142,15 +146,30 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       // Try to load additional stats with graceful fallback
       let totalMembers = 0;
       let upcomingEvents = 0;
+      let adminCount = 0;
+      let instructorCount = 0;
       
       try {
         const usersQuery = query(collection(db!, 'users'));
         const usersSnapshot = await getDocs(usersQuery);
         totalMembers = usersSnapshot.size;
+        
+        // Count users by role
+        usersSnapshot.docs.forEach((doc) => {
+          const userData = doc.data();
+          if (userData.role === 'admin') {
+            adminCount++;
+          }
+          if (userData.isInstructor === true) {
+            instructorCount++;
+          }
+        });
       } catch (usersError) {
         // Silently handle users query failure
         console.error('Error loading users count:', usersError);
         totalMembers = 0;
+        adminCount = 0;
+        instructorCount = 0;
       }
       
       try {
@@ -166,6 +185,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         totalMembers,
         pendingBookings: bookingsData.length,
         upcomingEvents,
+        adminCount,
+        instructorCount,
       });
     } catch (error: any) {
       console.error('Error loading dashboard data:', error);
@@ -268,6 +289,18 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
                 <Ionicons name="calendar-outline" size={32} color={theme.colors.success} />
                 <Text style={styles.statValue}>{stats.upcomingEvents}</Text>
                 <Text style={styles.statLabel}>{t('admin.upcomingEvents')}</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="shield-checkmark-outline" size={32} color={theme.colors.error} />
+                <Text style={styles.statValue}>{stats.adminCount}</Text>
+                <Text style={styles.statLabel}>{t('admin.adminCount')}</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="school-outline" size={32} color={theme.colors.info} />
+                <Text style={styles.statValue}>{stats.instructorCount}</Text>
+                <Text style={styles.statLabel}>{t('admin.instructorCount')}</Text>
               </View>
             </View>
 

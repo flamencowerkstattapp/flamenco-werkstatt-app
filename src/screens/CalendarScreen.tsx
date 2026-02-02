@@ -13,7 +13,7 @@ import { theme } from '../constants/theme';
 import { STUDIOS } from '../constants/studios';
 import { t, getLocale } from '../locales';
 import { CalendarEvent, Booking, SpecialEvent } from '../types';
-import { formatTime, isSchoolHoliday } from '../utils/dateUtils';
+import { formatTime, isSchoolHoliday, getCurrentSchoolHoliday, formatDate } from '../utils/dateUtils';
 
 // Configure calendar locales
 LocaleConfig.locales['en'] = {
@@ -169,9 +169,15 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       })));
       
       const specialEventsData = allSpecialEvents.filter((event) => {
-        const eventDate = new Date(event.startDate);
-        const eventDateStr = eventDate.toISOString().split('T')[0];
-        const matchesDate = eventDateStr === selectedDate;
+        const eventStartDate = new Date(event.startDate);
+        const eventEndDate = new Date(event.endDate);
+        const selectedDateObj = new Date(selectedDate);
+        
+        eventStartDate.setHours(0, 0, 0, 0);
+        eventEndDate.setHours(23, 59, 59, 999);
+        selectedDateObj.setHours(0, 0, 0, 0);
+        
+        const matchesDate = selectedDateObj >= eventStartDate && selectedDateObj <= eventEndDate;
         
         // Match location: offsite events show in offsite tab, studio events show in respective studio tabs
         // Handle both studio IDs (studio-1-big) and display names (Big Studio, Small Studio)
@@ -180,7 +186,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           : (selectedStudio === 'studio-1-big' && (event.location === 'studio-1-big' || event.location === 'Big Studio')) ||
             (selectedStudio === 'studio-2-small' && (event.location === 'studio-2-small' || event.location === 'Small Studio'));
         
-        console.log(`CALENDAR: Event "${event.title}" - Date match: ${matchesDate} (${eventDateStr} vs ${selectedDate}), Location match: ${matchesLocation} (${event.location} vs ${selectedStudio}, isOffsite: ${event.isOffsite})`);
+        console.log(`CALENDAR: Event "${event.title}" - Date match: ${matchesDate} (${selectedDate} between ${eventStartDate.toISOString().split('T')[0]} and ${eventEndDate.toISOString().split('T')[0]}), Location match: ${matchesLocation} (${event.location} vs ${selectedStudio}, isOffsite: ${event.isOffsite})`);
         
         return matchesDate && matchesLocation;
       });
@@ -221,18 +227,21 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   const isHoliday = isSchoolHoliday(new Date(selectedDate));
+  const currentHoliday = getCurrentSchoolHoliday(new Date(selectedDate));
 
   const handleBookStudio = () => {
     // Check if user is a member (not admin or instructor)
     if (user?.role === 'member') {
       const selectedDateObj = new Date(selectedDate);
       const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 6 = Saturday
+      const isHolidayDate = isSchoolHoliday(selectedDateObj);
       
-      // Block Monday-Friday bookings for members (1-5)
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      // During school holidays, members can book any day
+      // Outside school holidays, members can only book on weekends
+      if (!isHolidayDate && dayOfWeek >= 1 && dayOfWeek <= 5) {
         Alert.alert(
           t('calendar.bookingRestricted'),
-          t('calendar.weekendOnlyBooking'),
+          t('calendar.memberBookingRules'),
           [{ text: t('common.ok') }]
         );
         return;
@@ -311,17 +320,23 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           }}
         />
 
-        {isHoliday && (
+        {isHoliday && currentHoliday && (
           <View style={styles.holidayBanner}>
-            <Ionicons name="information-circle" size={20} color={theme.colors.warning} />
-            <Text style={styles.holidayText}>{t('calendar.schoolHoliday')}</Text>
+            <Ionicons name="information-circle" size={20} color={theme.colors.warning} style={styles.holidayIcon} />
+            <Text style={styles.holidayText}>
+              {t('calendar.schoolHolidayWithDates', {
+                name: currentHoliday.name,
+                startDate: formatDate(currentHoliday.startDate),
+                endDate: formatDate(currentHoliday.endDate)
+              })}
+            </Text>
           </View>
         )}
 
         <View style={styles.eventsList}>
           <View style={styles.eventsHeader}>
             <Text style={styles.eventsTitle}>
-              {new Date(selectedDate).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : getLocale() === 'es' ? 'es-ES' : 'en-US', {
+              {new Date(selectedDate).toLocaleDateString(getLocale() === 'de' ? 'de-DE' : getLocale() === 'es' ? 'es-ES' : 'en-GB', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -529,7 +544,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF3CD',
-    padding: theme.spacing.md,  },
+    padding: theme.spacing.md,
+  },
+  holidayIcon: {
+    marginRight: theme.spacing.sm,
+  },
   holidayText: {
     fontSize: 14,
     color: '#856404',
