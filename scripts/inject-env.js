@@ -18,6 +18,20 @@ if (fs.existsSync(indexPath)) {
     indexContent = indexContent.replace('<title>', '<meta name="description" content="Antonio Dias Flamenco Werkstatt - Dance studio management and booking app">\n  <title>');
   }
   
+  // Add manifest link if missing
+  if (!indexContent.includes('<link rel="manifest"')) {
+    indexContent = indexContent.replace('<title>', '<link rel="manifest" href="/manifest.json">\n  <title>');
+  }
+  
+  // Add PWA meta tags if missing
+  if (!indexContent.includes('apple-mobile-web-app-title')) {
+    const pwaTags = `<meta name="apple-mobile-web-app-title" content="AD Werkstatt">
+  <meta name="application-name" content="Antonio Dias Flamenco Werkstatt">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">`;
+    indexContent = indexContent.replace('<title>', pwaTags + '\n  <title>');
+  }
+  
   // Add proper Open Graph tags if missing
   if (!indexContent.includes('<meta property="og:title"')) {
     indexContent = indexContent.replace('</title>', '</title>\n  <meta property="og:title" content="Antonio Dias Flamenco Werkstatt">\n  <meta property="og:description" content="Antonio Dias Flamenco Werkstatt - Dance studio management and booking app">');
