@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,6 +55,9 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringPattern, setRecurringPattern] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const [recurringEndDate, setRecurringEndDate] = useState('');
 
   // Auto-normalize time input when user finishes typing
   const handleStartTimeChange = (value: string) => {
@@ -107,6 +111,39 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
   const studio = studioId === 'studio-1-big' ? STUDIOS.BIG : studioId === 'studio-2-small' ? STUDIOS.SMALL : STUDIOS.OFFSITE;
   const isWeekendDay = isWeekend(new Date(date));
   const bookingHours = isWeekendDay ? BOOKING_HOURS.WEEKEND : BOOKING_HOURS.WEEKDAY;
+
+  const generateRecurringDates = (startDate: Date, pattern: 'daily' | 'weekly' | 'biweekly' | 'monthly', endDateStr: string): Date[] => {
+    const dates: Date[] = [];
+    const endDate = new Date(endDateStr);
+    let currentDate = new Date(startDate);
+    
+    // Limit to 52 weeks (1 year) to prevent excessive bookings
+    const maxIterations = 365;
+    let iterations = 0;
+    
+    while (currentDate <= endDate && iterations < maxIterations) {
+      dates.push(new Date(currentDate));
+      
+      switch (pattern) {
+        case 'daily':
+          currentDate.setDate(currentDate.getDate() + 1);
+          break;
+        case 'weekly':
+          currentDate.setDate(currentDate.getDate() + 7);
+          break;
+        case 'biweekly':
+          currentDate.setDate(currentDate.getDate() + 14);
+          break;
+        case 'monthly':
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          break;
+      }
+      
+      iterations++;
+    }
+    
+    return dates;
+  };
 
   const validate = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
@@ -169,6 +206,29 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
       newErrors.purpose = t('common.required');
     }
 
+    // Validate recurring booking fields
+    if (isRecurring) {
+      if (!recurringEndDate) {
+        newErrors.recurringEndDate = t('common.required');
+      } else {
+        const endDate = new Date(recurringEndDate);
+        const startDate = new Date(date);
+        
+        if (isNaN(endDate.getTime())) {
+          newErrors.recurringEndDate = 'Invalid date format. Use YYYY-MM-DD';
+        } else if (endDate <= startDate) {
+          newErrors.recurringEndDate = 'End date must be after start date';
+        } else {
+          // Check if end date is too far in the future (max 1 year)
+          const oneYearFromNow = new Date(startDate);
+          oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+          if (endDate > oneYearFromNow) {
+            newErrors.recurringEndDate = 'End date cannot be more than 1 year from start date';
+          }
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -226,23 +286,46 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
       const startDateTime = new Date(`${date}T${startTime}`);
       const endDateTime = new Date(`${date}T${endTime}`);
 
+      // Generate recurring group ID if this is a recurring booking
+      const recurringGroupId = isRecurring ? `recurring_${Date.now()}_${user?.id}` : undefined;
 
-      const bookingData = {
-        userId: user?.id,
-        userName: `${user?.firstName} ${user?.lastName}`,
-        studioId,
-        startTime: Timestamp.fromDate(startDateTime),
-        endTime: Timestamp.fromDate(endDateTime),
-        status: 'pending',
-        purpose,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-
-
-      const docRef = await addDoc(collection(db!, 'bookings'), bookingData);
+      // Calculate all booking dates if recurring
+      const bookingDates = isRecurring ? generateRecurringDates(new Date(date), recurringPattern, recurringEndDate) : [new Date(date)];
       
-      console.log('Booking created successfully:', docRef.id);
+      console.log('BOOKING: Is recurring:', isRecurring);
+      console.log('BOOKING: Recurring pattern:', recurringPattern);
+      console.log('BOOKING: Recurring end date:', recurringEndDate);
+      console.log('BOOKING: Generated booking dates:', bookingDates.length, bookingDates.map(d => d.toISOString().split('T')[0]));
+
+      // Create bookings for all dates
+      const bookingPromises = bookingDates.map(async (bookingDate) => {
+        const bookingStartTime = new Date(bookingDate);
+        bookingStartTime.setHours(startDateTime.getHours(), startDateTime.getMinutes());
+        const bookingEndTime = new Date(bookingDate);
+        bookingEndTime.setHours(endDateTime.getHours(), endDateTime.getMinutes());
+
+        const bookingData = {
+          userId: user?.id,
+          userName: `${user?.firstName} ${user?.lastName}`,
+          studioId,
+          startTime: Timestamp.fromDate(bookingStartTime),
+          endTime: Timestamp.fromDate(bookingEndTime),
+          status: 'pending',
+          purpose,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          isRecurring: isRecurring || undefined,
+          recurringPattern: isRecurring ? recurringPattern : undefined,
+          recurringEndDate: isRecurring && recurringEndDate ? Timestamp.fromDate(new Date(recurringEndDate)) : undefined,
+          recurringGroupId: recurringGroupId || undefined,
+        };
+
+        return addDoc(collection(db!, 'bookings'), bookingData);
+      });
+
+      const results = await Promise.all(bookingPromises);
+      
+      console.log('Booking(s) created successfully:', results.length, 'booking(s)');
       console.log('Booking data:', {
         userId: user?.id,
         studioId,
@@ -257,14 +340,26 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
       const studioName = studioId === 'studio-1-big' ? 'Studio 1 (Big)' : 
                         studioId === 'studio-2-small' ? 'Studio 2 (Small)' : 'Offsite';
       
+      const successMessage = isRecurring 
+        ? t('calendar.recurringBookingSubmittedBody', {
+            studio: studioName,
+            count: bookingDates.length,
+            pattern: t(`calendar.recurringPattern.${recurringPattern}`),
+            startDate: new Date(date).toLocaleDateString(),
+            endDate: new Date(recurringEndDate).toLocaleDateString(),
+            startTime,
+            endTime
+          })
+        : t('calendar.bookingSubmittedBody', { 
+            studio: studioName,
+            date: new Date(date).toLocaleDateString(),
+            startTime,
+            endTime
+          });
+      
       Alert.alert(
         t('calendar.bookingSubmittedTitle'),
-        t('calendar.bookingSubmittedBody', { 
-          studio: studioName,
-          date: new Date(date).toLocaleDateString(),
-          startTime,
-          endTime
-        }),
+        successMessage,
         [
           {
             text: t('calendar.viewMyBookings'),
@@ -277,6 +372,9 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
               setStartTime('');
               setEndTime('');
               setPurpose('');
+              setIsRecurring(false);
+              setRecurringPattern('weekly');
+              setRecurringEndDate('');
               setBookingSuccess(false);
               setBookingSubmitted(false); // Reset the lock for new booking
               navigation.goBack();
@@ -371,6 +469,64 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
             icon="document-text-outline"
             error={errors.purpose}
           />
+
+          {user?.role === 'admin' && (
+            <View style={styles.recurringSection}>
+              <View style={styles.recurringToggle}>
+                <View style={styles.recurringToggleLeft}>
+                  <Ionicons name="repeat-outline" size={20} color={theme.colors.primary} style={styles.recurringIcon} />
+                  <Text style={styles.recurringLabel}>{t('calendar.recurringBooking')}</Text>
+                </View>
+                <Switch
+                  value={isRecurring}
+                  onValueChange={setIsRecurring}
+                  trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                  thumbColor={isRecurring ? theme.colors.surface : theme.colors.textSecondary}
+                />
+              </View>
+
+              {isRecurring && (
+                <View style={styles.recurringOptions}>
+                  <Text style={styles.recurringOptionsLabel}>{t('calendar.recurringPattern.label')}</Text>
+                  <View style={styles.patternButtons}>
+                    <TouchableOpacity
+                      style={[styles.patternButton, recurringPattern === 'weekly' && styles.patternButtonActive]}
+                      onPress={() => setRecurringPattern('weekly')}
+                    >
+                      <Text style={[styles.patternButtonText, recurringPattern === 'weekly' && styles.patternButtonTextActive]}>
+                        {t('calendar.recurringPattern.weekly')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.patternButton, recurringPattern === 'biweekly' && styles.patternButtonActive]}
+                      onPress={() => setRecurringPattern('biweekly')}
+                    >
+                      <Text style={[styles.patternButtonText, recurringPattern === 'biweekly' && styles.patternButtonTextActive]}>
+                        {t('calendar.recurringPattern.biweekly')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.patternButton, recurringPattern === 'monthly' && styles.patternButtonActive]}
+                      onPress={() => setRecurringPattern('monthly')}
+                    >
+                      <Text style={[styles.patternButtonText, recurringPattern === 'monthly' && styles.patternButtonTextActive]}>
+                        {t('calendar.recurringPattern.monthly')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Input
+                    label={t('calendar.recurringEndDate')}
+                    placeholder="YYYY-MM-DD"
+                    value={recurringEndDate}
+                    onChangeText={setRecurringEndDate}
+                    icon="calendar-outline"
+                    error={errors.recurringEndDate}
+                  />
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={styles.noticeBox}>
             <Ionicons name="warning-outline" size={20} color={theme.colors.warning} />
@@ -476,5 +632,70 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 200,
     maxWidth: 250,
+  },
+  recurringSection: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  recurringToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  recurringToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recurringIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  recurringLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  recurringOptions: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  recurringOptionsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  patternButtons: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.md,
+  },
+  patternButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    alignItems: 'center',
+    marginRight: theme.spacing.xs,
+    backgroundColor: theme.colors.background,
+  },
+  patternButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  patternButtonText: {
+    fontSize: 13,
+    color: theme.colors.text,
+    fontWeight: '500',
+  },
+  patternButtonTextActive: {
+    color: theme.colors.surface,
+    fontWeight: '600',
   },
 });

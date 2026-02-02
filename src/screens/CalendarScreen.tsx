@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useFocusEffect } from '@react-navigation/native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
@@ -254,6 +254,30 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     });
   };
 
+  const handleCancelBooking = async (bookingId: string, bookingUserName: string) => {
+    const confirmed = window.confirm(
+      `${t('calendar.cancelBooking')}\n\n${t('calendar.cancelBookingConfirm', { userName: bookingUserName })}`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db!, 'bookings', bookingId), {
+        status: 'cancelled',
+        cancelledBy: user?.id,
+        cancelledAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      Alert.alert(t('common.success'), t('calendar.bookingCancelled'));
+      loadEventsAndBookings();
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.general'));
+    }
+  };
+
   const handleScroll = (event: any) => {
     const yOffset = event.nativeEvent?.contentOffset?.y || 0;
     setShowScrollTop(yOffset > 200);
@@ -470,6 +494,15 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                 <Text style={styles.unavailableText}>{t('calendar.slotUnavailable')}</Text>
               </View>
             )}
+            {user?.role === 'admin' && booking.status === 'approved' && (
+              <TouchableOpacity
+                style={styles.cancelBookingButton}
+                onPress={() => handleCancelBooking(booking.id, booking.userName)}
+              >
+                <Ionicons name="close-circle-outline" size={16} color={theme.colors.error} />
+                <Text style={styles.cancelBookingText}>{t('calendar.cancelBooking')}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ))}
         </View>
@@ -661,6 +694,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.primary,
+  },
+  cancelBookingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: theme.borderRadius.sm,
+    alignSelf: 'flex-start',
+  },
+  cancelBookingText: {
+    fontSize: 14,
+    color: theme.colors.error,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   footer: {
     padding: theme.spacing.md,

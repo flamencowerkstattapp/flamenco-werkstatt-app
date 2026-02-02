@@ -90,6 +90,10 @@ export interface Booking {
   rejectionReason?: string;
   cancellationReason?: string;
   cancelledAt?: Date;
+  isRecurring?: boolean;
+  recurringPattern?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  recurringEndDate?: Date;
+  recurringGroupId?: string;
 }
 
 export interface Message {

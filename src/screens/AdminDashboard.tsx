@@ -131,13 +131,15 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       const snapshot = await getDocs(bookingsQuery);
       
       const bookingsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
         return {
-          ...doc.data(),
+          ...data,
           id: doc.id,
-          startTime: doc.data().startTime.toDate(),
-          endTime: doc.data().endTime.toDate(),
-          createdAt: doc.data().createdAt.toDate(),
-          updatedAt: doc.data().updatedAt.toDate(),
+          startTime: data.startTime.toDate(),
+          endTime: data.endTime.toDate(),
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+          recurringEndDate: data.recurringEndDate ? data.recurringEndDate.toDate() : undefined,
         };
       }) as Booking[];
 
@@ -193,6 +195,71 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       Alert.alert(t('common.error'), t('errors.general'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveRecurringGroup = async (recurringGroupId: string) => {
+    if (DEMO_MODE) {
+      setTimeout(() => {
+        setPendingBookings(prev => prev.filter(booking => booking.recurringGroupId !== recurringGroupId));
+        const count = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId).length;
+        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - count }));
+        Alert.alert(t('common.success'), `${count} recurring bookings approved`);
+      }, 500);
+      return;
+    }
+
+    try {
+      const bookingsToApprove = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId);
+      
+      await Promise.all(
+        bookingsToApprove.map(booking =>
+          updateDoc(doc(db!, 'bookings', booking.id), {
+            status: 'approved',
+            approvedBy: user?.id,
+            approvedAt: new Date(),
+            updatedAt: new Date(),
+          })
+        )
+      );
+
+      Alert.alert(t('common.success'), `${bookingsToApprove.length} recurring bookings approved`);
+      loadDashboardData();
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.general'));
+    }
+  };
+
+  const handleRejectRecurringGroup = async (recurringGroupId: string) => {
+    const reason = 'Rejected by admin';
+
+    if (DEMO_MODE) {
+      setTimeout(() => {
+        setPendingBookings(prev => prev.filter(booking => booking.recurringGroupId !== recurringGroupId));
+        const count = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId).length;
+        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - count }));
+        Alert.alert(t('common.success'), `${count} recurring bookings rejected`);
+      }, 500);
+      return;
+    }
+
+    try {
+      const bookingsToReject = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId);
+      
+      await Promise.all(
+        bookingsToReject.map(booking =>
+          updateDoc(doc(db!, 'bookings', booking.id), {
+            status: 'rejected',
+            rejectionReason: reason,
+            updatedAt: new Date(),
+          })
+        )
+      );
+
+      Alert.alert(t('common.success'), `${bookingsToReject.length} recurring bookings rejected`);
+      loadDashboardData();
+    } catch (error) {
+      Alert.alert(t('common.error'), t('errors.general'));
     }
   };
 
@@ -312,7 +379,101 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
               <Text style={styles.emptyStateText}>{t('admin.noPendingBookings')}</Text>
             </View>
           ) : (
-            pendingBookings.map((booking) => {
+            (() => {
+              // Group bookings by recurringGroupId
+              const groupedBookings: { [key: string]: Booking[] } = {};
+              const standaloneBookings: Booking[] = [];
+
+              pendingBookings.forEach(booking => {
+                if (booking.recurringGroupId) {
+                  if (!groupedBookings[booking.recurringGroupId]) {
+                    groupedBookings[booking.recurringGroupId] = [];
+                  }
+                  groupedBookings[booking.recurringGroupId].push(booking);
+                } else {
+                  standaloneBookings.push(booking);
+                }
+              });
+
+              // Sort bookings within each group by startTime
+              Object.keys(groupedBookings).forEach(groupId => {
+                groupedBookings[groupId].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+              });
+
+              // Render recurring groups first, then standalone bookings
+              const recurringGroupCards = Object.entries(groupedBookings).map(([groupId, bookings]) => {
+                const firstBooking = bookings[0];
+                const lastBooking = bookings[bookings.length - 1];
+                const studio =
+                  firstBooking.studioId === 'studio-1-big' ? STUDIOS.BIG : 
+                  firstBooking.studioId === 'studio-2-small' ? STUDIOS.SMALL : STUDIOS.OFFSITE;
+
+                return (
+                  <View key={groupId} style={[styles.bookingCard, styles.recurringBookingCard]}>
+                    <View style={[styles.studioIndicator, { backgroundColor: studio.color }]} />
+                    <View style={styles.bookingContent}>
+                      <View style={styles.bookingHeader}>
+                        <View style={styles.recurringBadgeContainer}>
+                          <Ionicons name="repeat-outline" size={16} color={theme.colors.primary} style={styles.recurringBadgeIcon} />
+                          <Text style={styles.recurringBadge}>{t('calendar.recurringBooking')}</Text>
+                        </View>
+                        <View style={styles.studioBadge}>
+                          <Text style={styles.studioBadgeText}>{studio.name}</Text>
+                        </View>
+                      </View>
+
+                      <Text style={styles.bookingUser}>{firstBooking.userName}</Text>
+
+                      <View style={styles.bookingDetail}>
+                        <Ionicons name="calendar-outline" size={16} color={theme.colors.textSecondary} />
+                        <Text style={styles.bookingDetailText}>
+                          {bookings.length} bookings: {formatDateTime(firstBooking.startTime).split(',')[0]} - {formatDateTime(lastBooking.startTime).split(',')[0]}
+                        </Text>
+                      </View>
+
+                      <View style={styles.bookingDetail}>
+                        <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
+                        <Text style={styles.bookingDetailText}>
+                          {firstBooking.startTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {firstBooking.endTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </View>
+
+                      <View style={styles.bookingDetail}>
+                        <Ionicons name="repeat-outline" size={16} color={theme.colors.textSecondary} />
+                        <Text style={styles.bookingDetailText}>
+                          {firstBooking.recurringPattern ? t(`calendar.recurringPattern.${firstBooking.recurringPattern}`) : 'Weekly'}
+                        </Text>
+                      </View>
+
+                      {firstBooking.purpose && (
+                        <View style={styles.bookingDetail}>
+                          <Ionicons name="document-text-outline" size={16} color={theme.colors.textSecondary} />
+                          <Text style={styles.bookingDetailText}>{firstBooking.purpose}</Text>
+                        </View>
+                      )}
+
+                      <View style={styles.bookingActions}>
+                        <Button
+                          title={t('admin.approveAll', { count: bookings.length })}
+                          onPress={() => handleApproveRecurringGroup(groupId)}
+                          variant="success"
+                          size="small"
+                          style={styles.actionButton}
+                        />
+                        <Button
+                          title={t('admin.rejectAll', { count: bookings.length })}
+                          onPress={() => handleRejectRecurringGroup(groupId)}
+                          variant="danger"
+                          size="small"
+                          style={styles.actionButton}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                );
+              });
+
+              const standaloneCards = standaloneBookings.map((booking) => {
               const studio =
                 booking.studioId === 'studio-1-big' ? STUDIOS.BIG : 
                 booking.studioId === 'studio-2-small' ? STUDIOS.SMALL : STUDIOS.OFFSITE;
@@ -368,7 +529,10 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
                   </View>
                 </View>
               );
-            })
+              });
+
+              return [...recurringGroupCards, ...standaloneCards];
+            })()
           )}
         </View>
 
@@ -525,6 +689,26 @@ const styles = StyleSheet.create({
   bookingActions: {
     flexDirection: 'row',
     marginTop: theme.spacing.md,
+  },
+  recurringBookingCard: {
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+  },
+  recurringBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: theme.borderRadius.sm,
+  },
+  recurringBadgeIcon: {
+    marginRight: 4,
+  },
+  recurringBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
   },
   actionButton: {
     flex: 1,
