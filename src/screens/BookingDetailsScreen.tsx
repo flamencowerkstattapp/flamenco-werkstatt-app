@@ -34,6 +34,7 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
   const [loading, setLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     loadBookingDetails();
@@ -110,6 +111,26 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
     } catch (error) {
       console.error('Error updating booking:', error);
       throw error;
+    }
+  };
+
+  const handleDeleteBooking = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteBooking = async () => {
+    if (!booking) return;
+
+    setShowDeleteModal(false);
+    
+    try {
+      await deleteDoc(doc(db!, 'bookings', bookingId));
+
+      Alert.alert(t('common.success'), t('calendar.deleteBooking'));
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      Alert.alert(t('common.error'), t('errors.general'));
     }
   };
 
@@ -233,13 +254,24 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
           </View>
         )}
 
+        {user?.role === 'admin' && (
+          <View style={styles.actions}>
+            <Button
+              title={t('calendar.deleteBooking')}
+              onPress={handleDeleteBooking}
+              variant="danger"
+              style={styles.deleteButton}
+            />
+          </View>
+        )}
+
         {((user?.role === 'admin' && (booking.status === 'pending' || booking.status === 'approved')) || 
           (booking.userId === user?.id && booking.status === 'pending' && user?.role !== 'member')) && (
           <View style={styles.actions}>
             <Button
               title={t('calendar.cancelBooking')}
               onPress={handleCancelBooking}
-              variant="danger"
+              variant="secondary"
               style={styles.cancelButton}
             />
           </View>
@@ -264,6 +296,17 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
         cancelText={t('common.cancel')}
         onConfirm={confirmCancelBooking}
         onCancel={() => setShowCancelModal(false)}
+        destructive={true}
+      />
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title={t('calendar.deleteBooking')}
+        message={t('calendar.deleteBookingConfirm', { userName: booking?.userName })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmDeleteBooking}
+        onCancel={() => setShowDeleteModal(false)}
         destructive={true}
       />
       
@@ -385,11 +428,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 200,
     maxWidth: 250,
+    backgroundColor: theme.colors.warning,
+  },
+  deleteButton: {
+    alignSelf: 'center',
+    minWidth: 200,
+    maxWidth: 250,
   },
   returnButton: {
     alignSelf: 'center',
     minWidth: 200,
     maxWidth: 250,
-    backgroundColor: theme.colors.studioSmall,
+    backgroundColor: '#999999',
   },
 });

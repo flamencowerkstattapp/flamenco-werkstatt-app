@@ -16,6 +16,8 @@ import { ScrollToTopButton } from '../components/ScrollToTopButton';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
 import { MessageStatusIndicator } from '../components/MessageStatusIndicator';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { Button } from '../components/Button';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { Message, User } from '../types';
@@ -31,6 +33,10 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>(initialTab);
   const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
   const [allUsers, setAllUsers] = useState<User[]>([]); // Cache all users
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
 
   // Update tab when route params change (for redirect from compose)
   useEffect(() => {
@@ -167,12 +173,38 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
       return `To: ${message.recipientType}`;
     };
 
+    const isSelected = selectedMessages.has(item.id);
+
     return (
       <TouchableOpacity
-        style={[styles.messageCard, !isRead && styles.messageCardUnread]}
-        onPress={() => navigation.navigate('MessageDetails', { messageId: item.id })}
+        style={[styles.messageCard, !isRead && styles.messageCardUnread, isSelected && styles.messageCardSelected]}
+        onPress={() => {
+          if (selectionMode) {
+            toggleMessageSelection(item.id);
+          } else {
+            navigation.navigate('MessageDetails', { messageId: item.id });
+          }
+        }}
+        onLongPress={() => {
+          if (!selectionMode) {
+            setSelectionMode(true);
+            toggleMessageSelection(item.id);
+          }
+        }}
       >
         <View style={styles.messageHeader}>
+          {selectionMode && (
+            <TouchableOpacity
+              onPress={() => toggleMessageSelection(item.id)}
+              style={styles.checkbox}
+            >
+              <Ionicons
+                name={isSelected ? 'checkbox' : 'square-outline'}
+                size={24}
+                color={isSelected ? theme.colors.primary : theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
           <View style={styles.messageFrom}>
             <Ionicons
               name="person-outline"
@@ -220,6 +252,76 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
     setShowScrollTop(yOffset > 200);
   };
 
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedMessages(new Set());
+  };
+
+  const toggleMessageSelection = (messageId: string) => {
+    const newSelected = new Set(selectedMessages);
+    if (newSelected.has(messageId)) {
+      newSelected.delete(messageId);
+    } else {
+      newSelected.add(messageId);
+    }
+    setSelectedMessages(newSelected);
+  };
+
+  const selectAllMessages = () => {
+    if (selectedMessages.size === messages.length) {
+      setSelectedMessages(new Set());
+    } else {
+      setSelectedMessages(new Set(messages.map(m => m.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedMessages.size === 0) {
+      Alert.alert(t('common.error'), 'Please select at least one message to delete');
+      return;
+    }
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (!user || selectedMessages.size === 0) return;
+
+    setShowBulkDeleteModal(false);
+    setDeleting(true);
+
+    try {
+      const service = getMessageService();
+      let deletedCount = 0;
+
+      // Delete only selected messages
+      for (const messageId of selectedMessages) {
+        try {
+          await service.deleteMessage(messageId);
+          deletedCount++;
+        } catch (error) {
+          console.error(`Error deleting message ${messageId}:`, error);
+        }
+      }
+
+      if (deletedCount > 0) {
+        Alert.alert(
+          t('common.success'),
+          t('messages.bulkDeleteSuccess', { count: deletedCount })
+        );
+        setSelectedMessages(new Set());
+        setSelectionMode(false);
+        await loadMessages();
+      } else {
+        Alert.alert(t('common.error'), t('messages.bulkDeleteError'));
+      }
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      Alert.alert(t('common.error'), t('messages.bulkDeleteError'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader title={t('messages.title')} showComposeButton onComposePress={() => navigation.navigate('ComposeMessage')} />
@@ -251,6 +353,42 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
             </TouchableOpacity>
           </View>
 
+          {messages.length > 0 && (
+            <View style={styles.bulkDeleteContainer}>
+              {!selectionMode ? (
+                <Button
+                  title="Select Messages"
+                  onPress={toggleSelectionMode}
+                  variant="secondary"
+                  style={styles.bulkDeleteButton}
+                />
+              ) : (
+                <View style={styles.selectionActions}>
+                  <Button
+                    title={selectedMessages.size === messages.length ? 'Deselect All' : 'Select All'}
+                    onPress={selectAllMessages}
+                    variant="secondary"
+                    style={styles.selectionButton}
+                  />
+                  <Button
+                    title={`Delete (${selectedMessages.size})`}
+                    onPress={handleBulkDelete}
+                    variant="danger"
+                    loading={deleting}
+                    disabled={selectedMessages.size === 0}
+                    style={styles.selectionButton}
+                  />
+                  <Button
+                    title="Cancel"
+                    onPress={toggleSelectionMode}
+                    variant="secondary"
+                    style={styles.selectionButton}
+                  />
+                </View>
+              )}
+            </View>
+          )}
+
           <FlatList
             ref={scrollViewRef}
             data={messages}
@@ -269,6 +407,20 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
           />
           
           {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+
+          <ConfirmModal
+            visible={showBulkDeleteModal}
+            title={t('messages.bulkDelete')}
+            message={t('messages.bulkDeleteConfirm', { 
+              count: selectedMessages.size, 
+              folder: activeTab === 'inbox' ? t('messages.inbox') : t('messages.sent')
+            })}
+            confirmText={t('common.delete')}
+            cancelText={t('common.cancel')}
+            onConfirm={confirmBulkDelete}
+            onCancel={() => setShowBulkDeleteModal(false)}
+            destructive={true}
+          />
         </>
       )}
     </View>
@@ -405,5 +557,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.lg,
+  },
+  bulkDeleteContainer: {
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  bulkDeleteButton: {
+    alignSelf: 'center',
+    minWidth: 200,
+    maxWidth: 300,
+  },
+  selectionActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
+  selectionButton: {
+    marginHorizontal: theme.spacing.xs,
+    marginVertical: theme.spacing.xs,
+    minWidth: 120,
+  },
+  checkbox: {
+    marginRight: theme.spacing.sm,
+  },
+  messageCardSelected: {
+    backgroundColor: '#E8F5E9',
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.success,
   },
 });
