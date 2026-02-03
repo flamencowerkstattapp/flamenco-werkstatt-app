@@ -14,6 +14,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { eventsService } from '../services/eventsService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
+import { LinkableText } from '../components/LinkableText';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { SpecialEvent } from '../types';
@@ -155,7 +156,7 @@ export const EventDetailsScreen: React.FC = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('events.eventDescription')}</Text>
-          <Text style={styles.description}>{event.description}</Text>
+          <LinkableText style={styles.description}>{event.description}</LinkableText>
         </View>
 
         <View style={styles.section}>

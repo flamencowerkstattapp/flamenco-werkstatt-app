@@ -13,6 +13,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { newsService } from '../services/newsService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
+import { LinkableText } from '../components/LinkableText';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { NewsItem } from '../types';
@@ -167,7 +168,7 @@ export const NewsDetailsScreen: React.FC = () => {
           </View>
 
           <View style={styles.newsBody}>
-            <Text style={styles.bodyText}>{newsItem.content}</Text>
+            <LinkableText style={styles.bodyText}>{newsItem.content}</LinkableText>
           </View>
         </View>
       </ScrollView>
