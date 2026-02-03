@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: theme.spacing.md,
-    paddingLeft: theme.spacing.sm,
+    paddingLeft: theme.spacing.md,
     fontSize: 16,
     color: theme.colors.text,
     minWidth: 0,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     paddingLeft: theme.spacing.md,
   },
   icon: {
-    marginRight: theme.spacing.md,
+    marginRight: theme.spacing.lg,
   },
   eyeIcon: {
     padding: theme.spacing.xs,

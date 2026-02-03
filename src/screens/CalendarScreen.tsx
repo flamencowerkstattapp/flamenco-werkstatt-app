@@ -8,6 +8,7 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
 import { ScrollToTopButton } from '../components/ScrollToTopButton';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { STUDIOS } from '../constants/studios';
@@ -52,6 +53,8 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentLocale, setCurrentLocale] = useState(getLocale());
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<{ id: string; userName: string } | null>(null);
 
   // Set calendar locale based on app language
   useEffect(() => {
@@ -254,27 +257,30 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     });
   };
 
-  const handleCancelBooking = async (bookingId: string, bookingUserName: string) => {
-    const confirmed = window.confirm(
-      `${t('calendar.cancelBooking')}\n\n${t('calendar.cancelBookingConfirm', { userName: bookingUserName })}`
-    );
+  const handleCancelBooking = (bookingId: string, bookingUserName: string) => {
+    setBookingToCancel({ id: bookingId, userName: bookingUserName });
+    setShowCancelModal(true);
+  };
 
-    if (!confirmed) {
-      return;
-    }
+  const confirmCancelBooking = async () => {
+    if (!bookingToCancel) return;
+
+    setShowCancelModal(false);
 
     try {
-      await updateDoc(doc(db!, 'bookings', bookingId), {
+      await updateDoc(doc(db!, 'bookings', bookingToCancel.id), {
         status: 'cancelled',
-        cancelledBy: user?.id,
+        cancellationReason: 'Cancelled by admin',
         cancelledAt: new Date(),
         updatedAt: new Date(),
       });
 
       Alert.alert(t('common.success'), t('calendar.bookingCancelled'));
       loadEventsAndBookings();
+      setBookingToCancel(null);
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
+      setBookingToCancel(null);
     }
   };
 
@@ -340,6 +346,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           theme={{
             selectedDayBackgroundColor: theme.colors.primary,
             todayTextColor: theme.colors.primary,
+            todayBackgroundColor: '#E0E0E0',
             arrowColor: theme.colors.primary,
           }}
         />
@@ -494,7 +501,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                 <Text style={styles.unavailableText}>{t('calendar.slotUnavailable')}</Text>
               </View>
             )}
-            {user?.role === 'admin' && booking.status === 'approved' && (
+            {user?.role === 'admin' && (booking.status === 'approved' || booking.status === 'pending') && (
               <TouchableOpacity
                 style={styles.cancelBookingButton}
                 onPress={() => handleCancelBooking(booking.id, booking.userName)}
@@ -517,6 +524,20 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       </ScrollView>
       
       {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+      
+      <ConfirmModal
+        visible={showCancelModal}
+        title={t('calendar.cancelBooking')}
+        message={bookingToCancel ? t('calendar.cancelBookingConfirm', { userName: bookingToCancel.userName }) : ''}
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmCancelBooking}
+        onCancel={() => {
+          setShowCancelModal(false);
+          setBookingToCancel(null);
+        }}
+        destructive={true}
+      />
     </View>
   );
 };
@@ -673,14 +694,17 @@ const styles = StyleSheet.create({
   eventDetails: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.xs,  },
+    marginTop: theme.spacing.xs,
+  },
   eventTime: {
     fontSize: 14,
     color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.sm,
   },
   eventInstructor: {
     fontSize: 14,
     color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.sm,
   },
   eventLevel: {
     fontSize: 14,
@@ -811,6 +835,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary,
     fontStyle: 'italic',
+    marginLeft: theme.spacing.sm,
   },
   unavailableSlot: {
     flexDirection: 'row',
@@ -824,5 +849,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textSecondary,
     fontWeight: '500',
+    marginLeft: theme.spacing.xs,
   },
 });

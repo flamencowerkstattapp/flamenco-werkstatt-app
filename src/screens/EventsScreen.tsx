@@ -373,12 +373,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 2,
-    gap: 2,
   },
   eventDetailText: {
     fontSize: 9,
     color: theme.colors.textSecondary,
     flex: 1,
+    marginLeft: theme.spacing.xs,
   },
   eventFooter: {
     marginTop: 2,
@@ -401,13 +401,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 2,
     borderRadius: theme.borderRadius.sm,
-    gap: 2,
     alignSelf: 'flex-start',
   },
   registerButtonText: {
     fontSize: 9,
     fontWeight: '600',
     color: '#FFFFFF',
+    marginRight: theme.spacing.xs,
   },
   emptyState: {
     alignItems: 'center',

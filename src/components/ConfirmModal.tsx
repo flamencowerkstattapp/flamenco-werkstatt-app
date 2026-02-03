@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: theme.colors.primary,
+    marginLeft: theme.spacing.sm,
   },
   destructiveButton: {
     backgroundColor: theme.colors.error,

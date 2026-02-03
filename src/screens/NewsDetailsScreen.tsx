@@ -218,11 +218,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.round,  },
+    borderRadius: theme.borderRadius.round,
+  },
   categoryText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
+    marginLeft: theme.spacing.xs,
   },
   newsDate: {
     fontSize: 14,

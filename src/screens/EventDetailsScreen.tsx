@@ -285,18 +285,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: theme.spacing.xs,
   },
   metaInfo: {
-    flexDirection: 'row',  },
+    flexDirection: 'row',
+  },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginRight: theme.spacing.md,
   },
   metaText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.xs,
   },
   section: {
     marginBottom: theme.spacing.lg,
@@ -315,9 +317,11 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,  },
+    marginBottom: theme.spacing.md,
+  },
   detailContent: {
     flex: 1,
+    marginLeft: theme.spacing.md,
   },
   detailLabel: {
     fontSize: 12,
@@ -341,17 +345,20 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.xl,  },
+    marginBottom: theme.spacing.xl,
+  },
   registerButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: theme.spacing.sm,
   },
   disabledButton: {
     backgroundColor: theme.colors.disabled,
   },
   disabledButtonText: {
     color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.sm,
   },
   errorContainer: {
     flex: 1,

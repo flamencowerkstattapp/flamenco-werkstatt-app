@@ -13,6 +13,8 @@ import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
 import { ScrollToTopButton } from '../components/ScrollToTopButton';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { EditBookingModal } from '../components/EditBookingModal';
 import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
@@ -30,6 +32,8 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
   const { bookingId } = route.params;
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     loadBookingDetails();
@@ -61,39 +65,52 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
     }
   };
 
-  const handleCancelBooking = async () => {
+  const handleCancelBooking = () => {
+    console.log('BOOKING DETAILS: Cancel button clicked, showing modal');
+    setShowCancelModal(true);
+    console.log('BOOKING DETAILS: Modal state set to true');
+  };
+
+  const confirmCancelBooking = async () => {
     if (!booking) return;
 
-    Alert.alert(
-      t('calendar.cancelBooking'),
-      t('calendar.cancelBookingConfirm'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await updateDoc(doc(db!, 'bookings', bookingId), {
-                status: 'cancelled',
-                cancellationReason: 'Cancelled by user',
-                cancelledAt: new Date(),
-                updatedAt: new Date(),
-              });
+    setShowCancelModal(false);
+    
+    try {
+      await updateDoc(doc(db!, 'bookings', bookingId), {
+        status: 'cancelled',
+        cancellationReason: 'Cancelled by user',
+        cancelledAt: new Date(),
+        updatedAt: new Date(),
+      });
 
-              Alert.alert(t('common.success'), 'Booking cancelled');
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error cancelling booking:', error);
-              Alert.alert(t('common.error'), t('errors.general'));
-            }
-          },
-        },
-      ]
-    );
+      Alert.alert(t('common.success'), 'Booking cancelled');
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      Alert.alert(t('common.error'), t('errors.general'));
+    }
+  };
+
+  const handleEditBooking = () => {
+    setShowEditModal(true);
+  };
+
+  const handleSaveBooking = async (updatedBooking: Partial<Booking>) => {
+    if (!booking) return;
+
+    try {
+      await updateDoc(doc(db!, 'bookings', bookingId), {
+        ...updatedBooking,
+        updatedAt: new Date(),
+      });
+
+      Alert.alert(t('common.success'), 'Booking updated successfully');
+      await loadBookingDetails();
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      throw error;
+    }
   };
 
   const handleScroll = (event: any) => {
@@ -206,7 +223,18 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
           </View>
         )}
 
-        {booking.userId === user?.id && booking.status === 'pending' && (
+        {user?.role === 'admin' && (
+          <View style={styles.actions}>
+            <Button
+              title={t('calendar.editBooking')}
+              onPress={handleEditBooking}
+              style={styles.editButton}
+            />
+          </View>
+        )}
+
+        {((user?.role === 'admin' && (booking.status === 'pending' || booking.status === 'approved')) || 
+          (booking.userId === user?.id && booking.status === 'pending' && user?.role !== 'member')) && (
           <View style={styles.actions}>
             <Button
               title={t('calendar.cancelBooking')}
@@ -227,6 +255,26 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
       </ScrollView>
       
       {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+      
+      <ConfirmModal
+        visible={showCancelModal}
+        title={t('calendar.cancelBooking')}
+        message={t('calendar.cancelBookingConfirm', { userName: booking?.userName })}
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmCancelBooking}
+        onCancel={() => setShowCancelModal(false)}
+        destructive={true}
+      />
+      
+      {booking && (
+        <EditBookingModal
+          visible={showEditModal}
+          booking={booking}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveBooking}
+        />
+      )}
     </View>
   );
 };
@@ -296,12 +344,14 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,  },
+    marginBottom: theme.spacing.md,
+  },
   detailLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.colors.textSecondary,
     minWidth: 80,
+    marginLeft: theme.spacing.md,
   },
   detailValue: {
     fontSize: 14,
@@ -325,6 +375,12 @@ const styles = StyleSheet.create({
   actions: {
     padding: theme.spacing.lg,
   },
+  editButton: {
+    alignSelf: 'center',
+    minWidth: 200,
+    maxWidth: 250,
+    backgroundColor: theme.colors.secondary,
+  },
   cancelButton: {
     alignSelf: 'center',
     minWidth: 200,
@@ -334,5 +390,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 200,
     maxWidth: 250,
+    backgroundColor: theme.colors.studioSmall,
   },
 });

@@ -25,23 +25,39 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
   minimumDate,
   maximumDate,
   icon = 'calendar-outline',
-  placeholder = t('events.selectDateTime'),
+  placeholder,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [tempDate, setTempDate] = useState(value || new Date());
   const [tempTime, setTempTime] = useState('');
   const [timeError, setTimeError] = useState('');
   const [dateInput, setDateInput] = useState('');
+  const [activeQuickButton, setActiveQuickButton] = useState<'today' | 'tomorrow' | 'nextWeek' | null>(null);
 
   const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return date.toLocaleDateString('en-US', options);
+    if (mode === 'date') {
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      };
+      return date.toLocaleDateString('en-US', options);
+    } else if (mode === 'time') {
+      const options: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+      };
+      return date.toLocaleTimeString('en-US', options);
+    } else {
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      };
+      return date.toLocaleDateString('en-US', options);
+    }
   };
 
   // Initialize time when modal opens
@@ -56,6 +72,7 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
     const currentDate = value || new Date();
     const formattedDate = currentDate.toISOString().split('T')[0];
     setDateInput(formattedDate);
+    setActiveQuickButton(null);
     setShowModal(true);
   };
 
@@ -112,6 +129,7 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const handleDateChange = (text: string) => {
     setDateInput(text);
+    setActiveQuickButton(null);
     // Parse and update date when user types
     // Try multiple date formats
     let parsedDate: Date | null = null;
@@ -198,39 +216,60 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
                   />
                   <View style={styles.quickDateButtons}>
                     <TouchableOpacity
-                      style={styles.quickDateButton}
+                      style={[
+                        styles.quickDateButton,
+                        activeQuickButton === 'today' && styles.quickDateButtonActive
+                      ]}
                       onPress={() => {
                         const today = new Date();
                         const formatted = today.toISOString().split('T')[0];
                         setDateInput(formatted);
                         setTempDate(today);
+                        setActiveQuickButton('today');
                       }}
                     >
-                      <Text style={styles.quickDateButtonText}>{t('events.today')}</Text>
+                      <Text style={[
+                        styles.quickDateButtonText,
+                        activeQuickButton === 'today' && styles.quickDateButtonTextActive
+                      ]}>{t('events.today')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.quickDateButton}
+                      style={[
+                        styles.quickDateButton,
+                        activeQuickButton === 'tomorrow' && styles.quickDateButtonActive
+                      ]}
                       onPress={() => {
                         const tomorrow = new Date();
                         tomorrow.setDate(tomorrow.getDate() + 1);
                         const formatted = tomorrow.toISOString().split('T')[0];
                         setDateInput(formatted);
                         setTempDate(tomorrow);
+                        setActiveQuickButton('tomorrow');
                       }}
                     >
-                      <Text style={styles.quickDateButtonText}>{t('events.tomorrow')}</Text>
+                      <Text style={[
+                        styles.quickDateButtonText,
+                        activeQuickButton === 'tomorrow' && styles.quickDateButtonTextActive
+                      ]}>{t('events.tomorrow')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.quickDateButton}
+                      style={[
+                        styles.quickDateButton,
+                        activeQuickButton === 'nextWeek' && styles.quickDateButtonActive
+                      ]}
                       onPress={() => {
                         const nextWeek = new Date();
                         nextWeek.setDate(nextWeek.getDate() + 7);
                         const formatted = nextWeek.toISOString().split('T')[0];
                         setDateInput(formatted);
                         setTempDate(nextWeek);
+                        setActiveQuickButton('nextWeek');
                       }}
                     >
-                      <Text style={styles.quickDateButtonText}>{t('events.nextWeek')}</Text>
+                      <Text style={[
+                        styles.quickDateButtonText,
+                        activeQuickButton === 'nextWeek' && styles.quickDateButtonTextActive
+                      ]}>{t('events.nextWeek')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -289,11 +328,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,  },
+    padding: theme.spacing.md,
+  },
   pickerText: {
     flex: 1,
     fontSize: 16,
     color: theme.colors.text,
+    marginLeft: theme.spacing.lg,
   },
   modalOverlay: {
     flex: 1,
@@ -343,13 +384,23 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.xs,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.sm,
     alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  quickDateButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   quickDateButtonText: {
     fontSize: 12,
     fontWeight: '600',
+    color: theme.colors.text,
+  },
+  quickDateButtonTextActive: {
     color: '#FFFFFF',
   },
   pickerActions: {

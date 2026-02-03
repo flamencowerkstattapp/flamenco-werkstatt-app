@@ -249,12 +249,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4, // Reduced from theme.spacing.xs (8px)
     paddingVertical: 1, // Reduced from 2px
     borderRadius: theme.borderRadius.round,
-    gap: 2,
   },
   categoryText: {
     fontSize: 10,
     fontWeight: '600',
     color: '#FFFFFF',
+    marginLeft: theme.spacing.xs,
   },
   newsDate: {
     fontSize: 10,

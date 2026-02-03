@@ -195,9 +195,13 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
           }
         }
 
-        const hasConflict = await checkForConflicts(startDateTime, endDateTime);
-        if (hasConflict) {
-          newErrors.startTime = t('calendar.doubleBookingError');
+        const conflictCheck = await checkForConflicts(startDateTime, endDateTime);
+        if (conflictCheck.hasConflict) {
+          if (conflictCheck.isDuplicate) {
+            newErrors.startTime = 'Duplicate booking: This exact time slot is already booked for this studio';
+          } else {
+            newErrors.startTime = t('calendar.doubleBookingError');
+          }
         }
       }
     }
@@ -233,7 +237,7 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const checkForConflicts = async (start: Date, end: Date): Promise<boolean> => {
+  const checkForConflicts = async (start: Date, end: Date): Promise<{ hasConflict: boolean; isDuplicate: boolean }> => {
     try {
       const startOfDay = new Date(start);
       startOfDay.setHours(0, 0, 0, 0);
@@ -258,28 +262,59 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
         getDocs(bookingsQuery),
       ]);
 
+      let hasConflict = false;
+      let isDuplicate = false;
+
       for (const doc of eventsSnapshot.docs) {
         const event = doc.data();
-        if (hasTimeConflict(start, end, event.startTime.toDate(), event.endTime.toDate())) {
-          return true;
+        const eventStart = event.startTime.toDate();
+        const eventEnd = event.endTime.toDate();
+        
+        if (eventStart.getTime() === start.getTime() && eventEnd.getTime() === end.getTime()) {
+          isDuplicate = true;
+          hasConflict = true;
+          break;
+        }
+        
+        if (hasTimeConflict(start, end, eventStart, eventEnd)) {
+          hasConflict = true;
+          break;
         }
       }
 
-      for (const doc of bookingsSnapshot.docs) {
-        const booking = doc.data();
-        if (hasTimeConflict(start, end, booking.startTime.toDate(), booking.endTime.toDate())) {
-          return true;
+      if (!hasConflict) {
+        for (const doc of bookingsSnapshot.docs) {
+          const booking = doc.data();
+          const bookingStart = booking.startTime.toDate();
+          const bookingEnd = booking.endTime.toDate();
+          
+          if (bookingStart.getTime() === start.getTime() && bookingEnd.getTime() === end.getTime()) {
+            isDuplicate = true;
+            hasConflict = true;
+            break;
+          }
+          
+          if (hasTimeConflict(start, end, bookingStart, bookingEnd)) {
+            hasConflict = true;
+            break;
+          }
         }
       }
 
-      return false;
+      return { hasConflict, isDuplicate };
     } catch (error) {
-      return false;
+      return { hasConflict: false, isDuplicate: false };
     }
   };
 
   const handleSubmit = async () => {
-    if (!(await validate())) return;
+    console.log('BOOKING: handleSubmit called');
+    const isValid = await validate();
+    console.log('BOOKING: Validation result:', isValid);
+    if (!isValid) {
+      console.log('BOOKING: Validation failed, not submitting');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -304,7 +339,7 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
         const bookingEndTime = new Date(bookingDate);
         bookingEndTime.setHours(endDateTime.getHours(), endDateTime.getMinutes());
 
-        const bookingData = {
+        const bookingData: any = {
           userId: user?.id,
           userName: `${user?.firstName} ${user?.lastName}`,
           studioId,
@@ -314,19 +349,28 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
           purpose,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-          isRecurring: isRecurring || undefined,
-          recurringPattern: isRecurring ? recurringPattern : undefined,
-          recurringEndDate: isRecurring && recurringEndDate ? Timestamp.fromDate(new Date(recurringEndDate)) : undefined,
-          recurringGroupId: recurringGroupId || undefined,
         };
+
+        // Only add recurring fields if this is a recurring booking
+        if (isRecurring) {
+          bookingData.isRecurring = true;
+          bookingData.recurringPattern = recurringPattern;
+          if (recurringEndDate) {
+            bookingData.recurringEndDate = Timestamp.fromDate(new Date(recurringEndDate));
+          }
+          if (recurringGroupId) {
+            bookingData.recurringGroupId = recurringGroupId;
+          }
+        }
 
         return addDoc(collection(db!, 'bookings'), bookingData);
       });
 
+      console.log('BOOKING: About to execute Promise.all with', bookingPromises.length, 'promises');
       const results = await Promise.all(bookingPromises);
       
-      console.log('Booking(s) created successfully:', results.length, 'booking(s)');
-      console.log('Booking data:', {
+      console.log('BOOKING: Booking(s) created successfully:', results.length, 'booking(s)');
+      console.log('BOOKING: Booking data:', {
         userId: user?.id,
         studioId,
         date,
@@ -388,7 +432,13 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
       setBookingSubmitted(true); // Lock the button after successful booking
       setTimeout(() => setBookingSuccess(false), 2000);
     } catch (error) {
-      Alert.alert(t('common.error'), t('errors.general'));
+      console.error('BOOKING ERROR: Failed to create booking:', error);
+      console.error('BOOKING ERROR: Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        error
+      });
+      Alert.alert(t('common.error'), error instanceof Error ? error.message : t('errors.general'));
     } finally {
       setLoading(false);
     }
@@ -611,6 +661,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1565C0',
     flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   form: {
     padding: theme.spacing.lg,
@@ -626,6 +677,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#856404',
     flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   submitButton: {
     marginTop: theme.spacing.md,

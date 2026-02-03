@@ -681,10 +681,12 @@ const styles = StyleSheet.create({
   bookingDetail: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,  },
+    marginBottom: theme.spacing.xs,
+  },
   bookingDetailText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.sm,
   },
   bookingActions: {
     flexDirection: 'row',

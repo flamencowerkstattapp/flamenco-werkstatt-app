@@ -474,16 +474,18 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
             label={t('events.startDate')}
             value={formData.startDate}
             onChange={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
-            mode="datetime"
+            mode="date"
             icon="calendar-outline"
+            placeholder={t('events.selectDate')}
           />
 
           <CustomDateTimePicker
             label={t('events.endDate')}
             value={formData.endDate}
             onChange={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-            mode="datetime"
-            icon="time-outline"
+            mode="date"
+            icon="calendar-outline"
+            placeholder={t('events.selectDate')}
           />
 
           <View style={styles.inputGroup}>
@@ -891,7 +893,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 9,
     color: theme.colors.textSecondary,
-    marginLeft: 2,
+    marginLeft: theme.spacing.xs,
   },
   eventActions: {
     flexDirection: 'column',
