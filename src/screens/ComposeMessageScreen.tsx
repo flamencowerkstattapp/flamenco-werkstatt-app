@@ -12,11 +12,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { messageService, getMessageService } from '../services/messageService';
+import { groupsService } from '../services/groupsService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
-import { User, UserRole } from '../types';
+import { User, UserRole, Group } from '../types';
 
 interface RecipientOption {
   id: string;
@@ -50,6 +51,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
 
   const [recipientType, setRecipientType] = useState<'individual' | 'group' | 'all-members' | 'all-instructors'>('individual');
   const [selectedRecipient, setSelectedRecipient] = useState<string>('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,9 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRecipientModal, setShowRecipientModal] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<RecipientOption[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const individualListRef = useRef<ScrollView>(null);
 
@@ -68,13 +72,11 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       console.log('ComposeMessageScreen: Setting up reply with subject:', replyTo.subject);
       setSubject(replyTo.subject);
       setBody(replyTo.body);
-      setMessageSent(false); // Reset lock when replying to a new message
-      
-      // When replying, we should set the recipient to the original sender
-      // But we need to find the sender in the available users list
+      setMessageSent(false);
       console.log('ComposeMessageScreen: Looking for sender:', replyTo.senderName);
     }
     loadUsers();
+    loadGroups();
   }, [replyTo]);
 
   // Effect to set recipient when replying and users are loaded
@@ -94,6 +96,16 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       }
     }
   }, [replyTo, availableUsers]);
+
+  const loadGroups = async () => {
+    try {
+      const groups = await groupsService.getActiveGroups();
+      setAvailableGroups(groups);
+      console.log('COMPOSE MESSAGE: Loaded groups:', groups.length);
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    }
+  };
 
   const loadUsers = async () => {
     console.log('=== COMPOSE MESSAGE: LOAD USERS START ===');
@@ -221,7 +233,11 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
         }
         return t('messages.selectRecipient');
       case 'group':
-        return t('messages.groupMessage');
+        if (selectedGroup) {
+          const group = availableGroups.find(g => g.id === selectedGroup);
+          return group ? group.name : t('messages.selectGroup');
+        }
+        return t('messages.selectGroup');
       case 'all-members':
         return t('messages.allMembers');
       case 'all-instructors':
@@ -236,7 +252,11 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       case 'individual':
         return selectedRecipient ? [selectedRecipient] : [];
       case 'group':
-        return availableUsers.filter(u => u.role !== 'admin').map(u => u.id);
+        if (selectedGroup) {
+          const group = availableGroups.find(g => g.id === selectedGroup);
+          return group ? group.memberIds : [];
+        }
+        return [];
       case 'all-members':
         return availableUsers.filter(u => u.role === 'member').map(u => u.id);
       case 'all-instructors':
@@ -302,40 +322,15 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
         }
       }
       
-      // Create a friendly success message with recipient details
-      const recipientName = selectedRecipient 
-        ? availableUsers.find(u => u.id === selectedRecipient)?.name || t('messages.selectedRecipient')
-        : getRecipientLabel();
-      
-      Alert.alert(
-        t('messages.messageSentSuccessTitle'),
-        t('messages.messageSentSuccessBody', { 
-          recipient: recipientName, 
-          messageId: messageId.slice(-8) 
-        }),
-        [
-          {
-            text: t('messages.done'),
-            onPress: () => navigation.goBack(),
-          },
-          {
-            text: t('messages.sendAnother'),
-            onPress: () => {
-              // Reset form for another message
-              setSubject('');
-              setBody('');
-              setSelectedRecipient('');
-              setSendSuccess(false);
-              setMessageSent(false); // Reset the lock for new message
-            },
-          },
-        ]
-      );
-      
-      // Show success state briefly
+      // Show success state briefly, then redirect to Sent messages
       setSendSuccess(true);
-      setMessageSent(true); // Lock the button after successful send
-      setTimeout(() => setSendSuccess(false), 2000);
+      setMessageSent(true);
+      
+      // After showing success animation, navigate to Sent messages
+      setTimeout(() => {
+        setSendSuccess(false);
+        navigation.navigate('Messages', { initialTab: 'sent' });
+      }, 2000);
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert(t('common.error'), t('messages.errorSendingMessage'));
@@ -397,6 +392,21 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
             <Text style={styles.recipientText}>{getRecipientLabel()}</Text>
             <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
+          
+          {recipientType === 'group' && (
+            <TouchableOpacity
+              style={[styles.recipientButton, styles.groupSelectButton]}
+              onPress={() => setShowGroupModal(true)}
+            >
+              <Ionicons name="people-outline" size={20} color={theme.colors.primary} />
+              <Text style={styles.groupSelectText}>
+                {selectedGroup 
+                  ? availableGroups.find(g => g.id === selectedGroup)?.name 
+                  : t('messages.selectGroup')}
+              </Text>
+              <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -489,7 +499,11 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
                 styles.recipientTypeOption,
                 recipientType === 'group' && styles.recipientTypeOptionSelected,
               ]}
-              onPress={() => setRecipientType('group')}
+              onPress={() => {
+                setRecipientType('group');
+                setShowRecipientModal(false);
+                setTimeout(() => setShowGroupModal(true), 300);
+              }}
             >
               <View style={styles.recipientTypeInfo}>
                 <Ionicons name="people" size={24} color={theme.colors.primary} />
@@ -621,6 +635,66 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
                   </TouchableOpacity>
                 )}
               </View>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Group Selection Modal */}
+      <Modal
+        visible={showGroupModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowGroupModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowGroupModal(false)}>
+              <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{t('messages.selectGroup')}</Text>
+            <TouchableOpacity onPress={() => setShowGroupModal(false)}>
+              <Text style={styles.modalDone}>{t('common.done')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            {availableGroups.length === 0 ? (
+              <View style={styles.emptyGroupsContainer}>
+                <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
+                <Text style={styles.emptyGroupsText}>{t('messages.noGroupsAvailable')}</Text>
+                <Text style={styles.emptyGroupsSubtext}>{t('messages.createGroupsInAdmin')}</Text>
+              </View>
+            ) : (
+              availableGroups.map((group) => (
+                <TouchableOpacity
+                  key={group.id}
+                  style={[
+                    styles.groupOption,
+                    selectedGroup === group.id && styles.groupOptionSelected,
+                  ]}
+                  onPress={() => {
+                    setSelectedGroup(group.id);
+                    setShowGroupModal(false);
+                  }}
+                >
+                  <View style={styles.groupOptionInfo}>
+                    <View style={styles.groupOptionHeader}>
+                      <Ionicons name="people" size={20} color={theme.colors.primary} />
+                      <Text style={styles.groupOptionName}>{group.name}</Text>
+                    </View>
+                    {group.description && (
+                      <Text style={styles.groupOptionDesc}>{group.description}</Text>
+                    )}
+                    <Text style={styles.groupOptionMembers}>
+                      {group.memberIds.length} {t('groups.members')}
+                    </Text>
+                  </View>
+                  {selectedGroup === group.id && (
+                    <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))
             )}
           </ScrollView>
         </View>
@@ -872,7 +946,8 @@ const styles = StyleSheet.create({
   },
   sendingContainer: {
     flexDirection: 'row',
-    alignItems: 'center',  },
+    alignItems: 'center',
+  },
   sendingAnimation: {
     fontSize: 16,
   },
@@ -880,5 +955,70 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  groupSelectButton: {
+    marginTop: theme.spacing.sm,
+  },
+  groupSelectText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    flex: 1,
+    marginLeft: theme.spacing.sm,
+  },
+  emptyGroupsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  emptyGroupsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginTop: theme.spacing.md,
+    textAlign: 'center',
+  },
+  emptyGroupsSubtext: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  groupOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  groupOptionSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: '#E3F2FD',
+  },
+  groupOptionInfo: {
+    flex: 1,
+  },
+  groupOptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  groupOptionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginLeft: theme.spacing.sm,
+  },
+  groupOptionDesc: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+  },
+  groupOptionMembers: {
+    fontSize: 12,
+    color: theme.colors.primary,
   },
 });

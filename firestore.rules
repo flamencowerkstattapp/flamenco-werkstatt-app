@@ -138,5 +138,59 @@ service cloud.firestore {
       // Only admins can delete payments
       allow delete: if isAdmin();
     }
+    
+    // Groups rules - Admin only management
+    match /groups/{groupId} {
+      // Admins can read all groups
+      allow read: if isAdmin();
+      
+      // All authenticated users can read active groups (for messaging)
+      allow read: if isSignedIn() && resource.data.isActive == true;
+      
+      // Only admins can create groups
+      allow create: if isAdmin();
+      
+      // Only admins can update groups
+      allow update: if isAdmin();
+      
+      // Only admins can delete groups
+      allow delete: if isAdmin();
+    }
+    
+    // Notifications rules
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      
+      // System can create notifications for users
+      allow create: if isSignedIn();
+      
+      // Users can update their own notifications (mark as read, etc.)
+      allow update: if isSignedIn() && request.auth.uid == resource.data.userId;
+      
+      // Users can delete their own notifications
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
+      
+      // Admins can manage all notifications
+      allow read, write: if isAdmin();
+    }
+    
+    // FCM Tokens rules - for push notifications
+    match /fcmTokens/{tokenId} {
+      // Users can read and write their own FCM tokens
+      allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId;
+      
+      // Admins can manage all tokens
+      allow read, write: if isAdmin();
+    }
+    
+    // Notification Preferences rules
+    match /notificationPreferences/{userId} {
+      // Users can read and write their own preferences
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      
+      // Admins can manage all preferences
+      allow read, write: if isAdmin();
+    }
   }
 }

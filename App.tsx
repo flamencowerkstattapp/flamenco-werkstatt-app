@@ -28,6 +28,7 @@ import { AdminDashboard } from './src/screens/AdminDashboard';
 import { ManageUsersScreen } from './src/screens/ManageUsersScreen';
 import { ManageEventsScreen } from './src/screens/ManageEventsScreen';
 import { ManageNewsScreen } from './src/screens/ManageNewsScreen';
+import { ManageGroupsScreen } from './src/screens/ManageGroupsScreen';
 import { StatisticsScreen } from './src/screens/StatisticsScreen';
 
 const Stack = createStackNavigator();
@@ -78,6 +79,7 @@ const AdminStack = () => {
       <Stack.Screen name="ManageUsers" component={ManageUsersScreen} />
       <Stack.Screen name="ManageEvents" component={ManageEventsScreen} />
       <Stack.Screen name="ManageNews" component={ManageNewsScreen} />
+      <Stack.Screen name="ManageGroups" component={ManageGroupsScreen} />
       <Stack.Screen name="Statistics" component={StatisticsScreen} />
     </Stack.Navigator>
   );

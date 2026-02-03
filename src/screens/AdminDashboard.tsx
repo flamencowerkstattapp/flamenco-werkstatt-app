@@ -568,6 +568,15 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
 
           <TouchableOpacity
             style={styles.actionCard}
+            onPress={() => navigation.navigate('ManageGroups')}
+          >
+            <Ionicons name="people-circle-outline" size={24} color={theme.colors.primary} />
+            <Text style={styles.actionCardText}>{t('admin.manageGroups')}</Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
             onPress={() => navigation.navigate('Statistics')}
           >
             <Ionicons name="stats-chart-outline" size={24} color={theme.colors.primary} />

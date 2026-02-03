@@ -231,3 +231,21 @@ export interface Payment {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type GroupType = 'class' | 'event' | 'custom';
+
+export interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  type: GroupType;
+  memberIds: string[];
+  classLevel?: ClassLevel;
+  classType?: ClassType;
+  eventId?: string;
+  isActive: boolean;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

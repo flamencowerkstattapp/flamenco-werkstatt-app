@@ -3,6 +3,7 @@ import {
   doc, 
   addDoc, 
   updateDoc, 
+  setDoc,
   query, 
   where, 
   orderBy, 
@@ -81,10 +82,11 @@ export class NotificationService {
   async saveFCMToken(userId: string, token: string): Promise<void> {
     try {
       const prefsRef = doc(this.preferencesCollection, userId);
-      await updateDoc(prefsRef, {
+      await setDoc(prefsRef, {
+        userId,
         fcmToken: token,
         updatedAt: serverTimestamp(),
-      });
+      }, { merge: true });
     } catch (error) {
       console.error('Error saving FCM token:', error);
     }
@@ -353,14 +355,9 @@ export class NotificationService {
       };
 
       const prefsRef = doc(this.preferencesCollection, userId);
-      await updateDoc(prefsRef, {
+      await setDoc(prefsRef, {
         ...defaultPrefs,
         updatedAt: serverTimestamp(),
-      }).catch(async () => {
-        await addDoc(this.preferencesCollection, {
-          ...defaultPrefs,
-          updatedAt: serverTimestamp(),
-        });
       });
 
       return defaultPrefs;

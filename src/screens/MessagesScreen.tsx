@@ -21,15 +21,23 @@ import { t } from '../locales';
 import { Message, User } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
 
-export const MessagesScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ navigation, route }) => {
   const { user } = useAuth();
   const scrollViewRef = useRef<FlatList>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>('inbox');
+  const initialTab = route?.params?.initialTab || 'inbox';
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>(initialTab);
   const [recipientNames, setRecipientNames] = useState<Record<string, string>>({});
   const [allUsers, setAllUsers] = useState<User[]>([]); // Cache all users
+
+  // Update tab when route params change (for redirect from compose)
+  useEffect(() => {
+    if (route?.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route?.params?.initialTab]);
 
   useEffect(() => {
     loadMessages();
