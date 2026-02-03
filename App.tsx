@@ -116,10 +116,46 @@ const MainTabs = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Calendar" component={CalendarStack} options={{ title: t('navigation.calendar') }} />
-      <Tab.Screen name="Messages" component={MessagesStack} options={{ title: t('navigation.messages') }} />
-      <Tab.Screen name="News" component={NewsStack} options={{ title: t('navigation.news') }} />
-      <Tab.Screen name="Events" component={EventsStack} options={{ title: t('navigation.events') }} />
+      <Tab.Screen 
+        name="Calendar" 
+        component={CalendarStack} 
+        options={{ title: t('navigation.calendar') }} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('Calendar', { screen: 'CalendarView' });
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="Messages" 
+        component={MessagesStack} 
+        options={{ title: t('navigation.messages') }} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('Messages', { screen: 'MessagesList' });
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="News" 
+        component={NewsStack} 
+        options={{ title: t('navigation.news') }} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('News', { screen: 'NewsList' });
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="Events" 
+        component={EventsStack} 
+        options={{ title: t('navigation.events') }} 
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('Events', { screen: 'EventsList' });
+          },
+        })}
+      />
       {user?.role === 'admin' && (
         <Tab.Screen name="Admin" component={AdminStack} options={{ title: t('navigation.admin') }} />
       )}

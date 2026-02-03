@@ -379,9 +379,11 @@ const styles = StyleSheet.create({
   senderInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    flex: 1,  },
+    flex: 1,
+  },
   senderDetails: {
     flex: 1,
+    marginLeft: theme.spacing.md,
   },
   senderName: {
     fontSize: 18,

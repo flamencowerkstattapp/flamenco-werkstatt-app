@@ -178,7 +178,7 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
               name="person-outline"
               size={18}
               color={theme.colors.textSecondary}
-              style={{ marginRight: theme.spacing.sm }}
+              style={{ marginRight: theme.spacing.md }}
             />
             <Text style={styles.senderName}>
               {isInbox ? item.senderName : formatRecipientNames(item)}
