@@ -19,7 +19,7 @@ import { Input } from '../components/Input';
 import { theme } from '../constants/theme';
 import { STUDIOS, BOOKING_HOURS } from '../constants/studios';
 import { t, getLocale } from '../locales';
-import { isWithinBookingHours, hasTimeConflict, isWeekend, parseTimeInput } from '../utils/dateUtils';
+import { isWithinBookingHours, hasTimeConflict, isWeekend, parseTimeInput, parseDateInput, formatDateInput } from '../utils/dateUtils';
 import { validateBookingTime } from '../utils/validation';
 
 
@@ -114,7 +114,13 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
 
   const generateRecurringDates = (startDate: Date, pattern: 'daily' | 'weekly' | 'biweekly' | 'monthly', endDateStr: string): Date[] => {
     const dates: Date[] = [];
-    const endDate = new Date(endDateStr);
+    const endDate = parseDateInput(endDateStr);
+    
+    if (!endDate || isNaN(endDate.getTime())) {
+      console.error('BOOKING: Invalid end date format:', endDateStr);
+      return [];
+    }
+    
     let currentDate = new Date(startDate);
     
     // Limit to 52 weeks (1 year) to prevent excessive bookings
@@ -215,11 +221,11 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
       if (!recurringEndDate) {
         newErrors.recurringEndDate = t('common.required');
       } else {
-        const endDate = new Date(recurringEndDate);
+        const endDate = parseDateInput(recurringEndDate);
         const startDate = new Date(date);
         
-        if (isNaN(endDate.getTime())) {
-          newErrors.recurringEndDate = 'Invalid date format. Use YYYY-MM-DD';
+        if (!endDate || isNaN(endDate.getTime())) {
+          newErrors.recurringEndDate = 'Invalid date format. Use DD/MM/YYYY';
         } else if (endDate <= startDate) {
           newErrors.recurringEndDate = 'End date must be after start date';
         } else {
@@ -356,7 +362,10 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
           bookingData.isRecurring = true;
           bookingData.recurringPattern = recurringPattern;
           if (recurringEndDate) {
-            bookingData.recurringEndDate = Timestamp.fromDate(new Date(recurringEndDate));
+            const parsedEndDate = parseDateInput(recurringEndDate);
+            if (parsedEndDate) {
+              bookingData.recurringEndDate = Timestamp.fromDate(parsedEndDate);
+            }
           }
           if (recurringGroupId) {
             bookingData.recurringGroupId = recurringGroupId;
@@ -567,7 +576,7 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
 
                   <Input
                     label={t('calendar.recurringEndDate')}
-                    placeholder="YYYY-MM-DD"
+                    placeholder="DD/MM/YYYY"
                     value={recurringEndDate}
                     onChangeText={setRecurringEndDate}
                     icon="calendar-outline"

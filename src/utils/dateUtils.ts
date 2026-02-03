@@ -200,6 +200,59 @@ export const getCurrentSchoolHoliday = (date: Date): { name: string; startDate: 
   return currentHoliday || null;
 };
 
+export const parseDateInput = (input: string): Date | null => {
+  if (!input || typeof input !== 'string') {
+    return null;
+  }
+
+  const trimmed = input.trim();
+  
+  // Try DD/MM/YYYY format (e.g., "25/12/2025", "25.12.2025", "25-12-2025")
+  const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const day = parseInt(ddmmyyyyMatch[1], 10);
+    const month = parseInt(ddmmyyyyMatch[2], 10);
+    const year = parseInt(ddmmyyyyMatch[3], 10);
+    
+    if (day < 1 || day > 31 || month < 1 || month > 12) {
+      return null;
+    }
+    
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return date;
+  }
+  
+  // Try YYYY-MM-DD format (ISO format)
+  const yyyymmddMatch = trimmed.match(/^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/);
+  if (yyyymmddMatch) {
+    const year = parseInt(yyyymmddMatch[1], 10);
+    const month = parseInt(yyyymmddMatch[2], 10);
+    const day = parseInt(yyyymmddMatch[3], 10);
+    
+    if (day < 1 || day > 31 || month < 1 || month > 12) {
+      return null;
+    }
+    
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return date;
+  }
+  
+  return null;
+};
+
+export const formatDateInput = (date: Date): string => {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 export const parseTimeInput = (input: string): string | null => {
   if (!input || typeof input !== 'string') {
     return null;

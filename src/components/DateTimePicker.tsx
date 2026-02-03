@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Alert, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from './Input';
-import { parseTimeInput } from '../utils/dateUtils';
+import { parseTimeInput, parseDateInput, formatDateInput } from '../utils/dateUtils';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 
@@ -68,9 +68,9 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
     const formattedTime = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
     setTempTime(formattedTime);
     setTimeError('');
-    // Initialize date input in YYYY-MM-DD format
+    // Initialize date input in DD/MM/YYYY format
     const currentDate = value || new Date();
-    const formattedDate = currentDate.toISOString().split('T')[0];
+    const formattedDate = formatDateInput(currentDate);
     setDateInput(formattedDate);
     setActiveQuickButton(null);
     setShowModal(true);
@@ -130,45 +130,8 @@ export const CustomDateTimePicker: React.FC<DateTimePickerProps> = ({
   const handleDateChange = (text: string) => {
     setDateInput(text);
     setActiveQuickButton(null);
-    // Parse and update date when user types
-    // Try multiple date formats
-    let parsedDate: Date | null = null;
-    
-    // Try YYYY-MM-DD format
-    const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-      const year = parseInt(isoMatch[1]);
-      const month = parseInt(isoMatch[2]) - 1; // JS months are 0-indexed
-      const day = parseInt(isoMatch[3]);
-      parsedDate = new Date(year, month, day);
-    }
-    
-    // Try DD.MM.YYYY format
-    const dmyMatch = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    if (dmyMatch) {
-      const day = parseInt(dmyMatch[1]);
-      const month = parseInt(dmyMatch[2]) - 1;
-      const year = parseInt(dmyMatch[3]);
-      parsedDate = new Date(year, month, day);
-    }
-    
-    // Try MM/DD/YYYY format
-    const mdyMatch = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (mdyMatch) {
-      const month = parseInt(mdyMatch[1]) - 1;
-      const day = parseInt(mdyMatch[2]);
-      const year = parseInt(mdyMatch[3]);
-      parsedDate = new Date(year, month, day);
-    }
-    
-    // Try DD/MM/YYYY format
-    const dmySlashMatch = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (dmySlashMatch && !mdyMatch) {
-      const day = parseInt(dmySlashMatch[1]);
-      const month = parseInt(dmySlashMatch[2]) - 1;
-      const year = parseInt(dmySlashMatch[3]);
-      parsedDate = new Date(year, month, day);
-    }
+    // Parse date using utility function that supports DD/MM/YYYY and YYYY-MM-DD
+    const parsedDate = parseDateInput(text);
     
     if (parsedDate && !isNaN(parsedDate.getTime())) {
       setTempDate(parsedDate);

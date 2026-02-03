@@ -35,6 +35,7 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCancelSingleModal, setShowCancelSingleModal] = useState(false);
 
   useEffect(() => {
     loadBookingDetails();
@@ -72,6 +73,10 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
     console.log('BOOKING DETAILS: Modal state set to true');
   };
 
+  const handleCancelSingleBooking = () => {
+    setShowCancelSingleModal(true);
+  };
+
   const confirmCancelBooking = async () => {
     if (!booking) return;
 
@@ -89,6 +94,31 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
       navigation.goBack();
     } catch (error) {
       console.error('Error cancelling booking:', error);
+      Alert.alert(t('common.error'), t('errors.general'));
+    }
+  };
+
+  const confirmCancelSingleBooking = async () => {
+    if (!booking) return;
+
+    setShowCancelSingleModal(false);
+    
+    try {
+      // Cancel only this single instance of the recurring booking
+      await updateDoc(doc(db!, 'bookings', bookingId), {
+        status: 'cancelled',
+        cancellationReason: 'Single instance cancelled (holiday/sick instructor)',
+        cancelledAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      Alert.alert(
+        t('common.success'), 
+        t('calendar.singleBookingCancelled')
+      );
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error cancelling single booking:', error);
       Alert.alert(t('common.error'), t('errors.general'));
     }
   };
@@ -223,6 +253,16 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
             </View>
           )}
 
+          {booking.isRecurring && booking.recurringPattern && (
+            <View style={styles.detailRow}>
+              <Ionicons name="repeat-outline" size={20} color={theme.colors.info} />
+              <Text style={styles.detailLabel}>{t('calendar.recurringBooking')}:</Text>
+              <Text style={styles.detailValue}>
+                {t(`calendar.recurringPattern.${booking.recurringPattern}`)}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.detailRow}>
             <Ionicons name="create-outline" size={20} color={theme.colors.textSecondary} />
             <Text style={styles.detailLabel}>{t('common.createdAt')}:</Text>
@@ -261,6 +301,17 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
               onPress={handleDeleteBooking}
               variant="danger"
               style={styles.deleteButton}
+            />
+          </View>
+        )}
+
+        {user?.role === 'admin' && booking.isRecurring && booking.status !== 'cancelled' && (
+          <View style={styles.actions}>
+            <Button
+              title={t('calendar.cancelSingleInstance')}
+              onPress={handleCancelSingleBooking}
+              variant="secondary"
+              style={styles.cancelSingleButton}
             />
           </View>
         )}
@@ -307,6 +358,19 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
         cancelText={t('common.cancel')}
         onConfirm={confirmDeleteBooking}
         onCancel={() => setShowDeleteModal(false)}
+        destructive={true}
+      />
+
+      <ConfirmModal
+        visible={showCancelSingleModal}
+        title={t('calendar.cancelSingleInstance')}
+        message={t('calendar.cancelSingleInstanceConfirm', { 
+          date: booking ? formatDateTime(booking.startTime) : ''
+        })}
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmCancelSingleBooking}
+        onCancel={() => setShowCancelSingleModal(false)}
         destructive={true}
       />
       
@@ -434,6 +498,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 200,
     maxWidth: 250,
+  },
+  cancelSingleButton: {
+    alignSelf: 'center',
+    minWidth: 200,
+    maxWidth: 250,
+    backgroundColor: theme.colors.info,
   },
   returnButton: {
     alignSelf: 'center',
