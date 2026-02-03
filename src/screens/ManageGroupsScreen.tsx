@@ -40,7 +40,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
   const [saving, setSaving] = useState(false);
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
-  const [isNarrowScreen, setIsNarrowScreen] = useState(false);
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -62,13 +62,13 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
     const onChange = (result: { window: { width: number } }) => {
       const { width } = result.window;
       setScreenWidth(width);
-      setIsNarrowScreen(width <= 360); // 6cm narrow screens
+      setIsMobileScreen(width <= 768); // All mobile devices
     };
 
     const subscription = Dimensions.addEventListener('change', onChange);
     
     // Set initial value
-    setIsNarrowScreen(screenWidth <= 360);
+    setIsMobileScreen(screenWidth <= 768);
 
     return () => subscription?.remove();
   }, [screenWidth]);
@@ -505,7 +505,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
                   onPress={() => handleManageMembers(group)}
                 >
                   <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
-                  {!isNarrowScreen && <Text style={styles.actionButtonText}>{t('groups.members')}</Text>}
+                  {!isMobileScreen && <Text style={styles.actionButtonText}>{t('groups.members')}</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -513,7 +513,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
                   onPress={() => handleEditGroup(group)}
                 >
                   <Ionicons name="create-outline" size={18} color={theme.colors.info} />
-                  {!isNarrowScreen && <Text style={styles.actionButtonText}>{t('common.edit')}</Text>}
+                  {!isMobileScreen && <Text style={styles.actionButtonText}>{t('common.edit')}</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -525,7 +525,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
                     size={18}
                     color={theme.colors.warning}
                   />
-                  {!isNarrowScreen && (
+                  {!isMobileScreen && (
                     <Text style={styles.actionButtonText}>
                       {group.isActive ? t('groups.deactivate') : t('groups.activate')}
                     </Text>
@@ -537,7 +537,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
                   onPress={() => handleDeleteGroup(group)}
                 >
                   <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
-                  {!isNarrowScreen && (
+                  {!isMobileScreen && (
                     <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
                       {t('common.delete')}
                     </Text>

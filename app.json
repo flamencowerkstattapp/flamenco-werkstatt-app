@@ -3,7 +3,7 @@
     "name": "Antonio Dias Werkstatt",
     "slug": "antonio-dias-werkstatt",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon-512x512.png",
     "splash": {
@@ -24,7 +24,7 @@
       "description": "Antonio Dias Flamenco Werkstatt - Dance studio management and booking app",
       "dir": "ltr",
       "display": "standalone",
-      "orientation": "portrait",
+      "orientation": "any",
       "scope": "/",
       "start_url": "/",
       "name": "Antonio Dias Flamenco Werkstatt",
