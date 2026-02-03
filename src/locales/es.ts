@@ -93,7 +93,7 @@ export default {
     cancelBooking: 'Cancelar Reserva',
     cancelBookingConfirm: '¿Está seguro de que desea cancelar esta reserva para {{userName}}? Esta acción no se puede deshacer.',
     cancelSingleInstance: 'Cancelar Instancia Única',
-    cancelSingleInstanceConfirm: '¿Está seguro de que desea cancelar esta reserva recurrente única el {{date}}? Esto no afectará otras reservas de la serie.',
+    cancelSingleInstanceConfirm: 'Esta reserva es parte de una serie recurrente. ¿Está seguro de que desea cancelar solo esta instancia única el {{date}}? Otras reservas de la serie permanecerán activas.',
     singleBookingCancelled: 'Instancia de reserva única cancelada exitosamente',
     deleteBooking: 'Eliminar Reserva',
     deleteBookingConfirm: '¿Está seguro de que desea eliminar permanentemente esta reserva para {{userName}}? Esta acción no se puede deshacer.',

@@ -316,7 +316,7 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
           </View>
         )}
 
-        {((user?.role === 'admin' && (booking.status === 'pending' || booking.status === 'approved')) || 
+        {!booking.isRecurring && ((user?.role === 'admin' && (booking.status === 'pending' || booking.status === 'approved')) || 
           (booking.userId === user?.id && booking.status === 'pending' && user?.role !== 'member')) && (
           <View style={styles.actions}>
             <Button
@@ -372,6 +372,7 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
         onConfirm={confirmCancelSingleBooking}
         onCancel={() => setShowCancelSingleModal(false)}
         destructive={true}
+        messageColor={theme.colors.info}
       />
       
       {booking && (

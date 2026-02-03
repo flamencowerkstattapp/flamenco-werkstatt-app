@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   destructive?: boolean;
+  messageColor?: string;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -25,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
   destructive = false,
+  messageColor,
 }) => {
   return (
     <Modal
@@ -40,7 +42,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </View>
           
           <View style={styles.content}>
-            <Text style={styles.message}>{message}</Text>
+            <Text style={[styles.message, messageColor ? { color: messageColor } : null]}>{message}</Text>
           </View>
           
           <View style={styles.actions}>

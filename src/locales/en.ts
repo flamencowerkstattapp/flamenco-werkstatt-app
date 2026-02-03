@@ -99,7 +99,7 @@ export default {
     cancelBooking: 'Cancel Booking',
     cancelBookingConfirm: 'Are you sure you want to cancel this booking for {{userName}}? This action cannot be undone.',
     cancelSingleInstance: 'Cancel Single Instance',
-    cancelSingleInstanceConfirm: 'Are you sure you want to cancel this single recurring booking on {{date}}? This will not affect other bookings in the series.',
+    cancelSingleInstanceConfirm: 'This booking is part of a recurring series. Are you sure you want to cancel only this single instance on {{date}}? Other bookings in the series will remain active.',
     singleBookingCancelled: 'Single booking instance cancelled successfully',
     deleteBooking: 'Delete Booking',
     deleteBookingConfirm: 'Are you sure you want to permanently delete this booking for {{userName}}? This action cannot be undone.',

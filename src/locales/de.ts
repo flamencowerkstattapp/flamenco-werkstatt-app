@@ -93,7 +93,7 @@ export default {
     cancelBooking: 'Buchung stornieren',
     cancelBookingConfirm: 'Sind Sie sicher, dass Sie diese Buchung für {{userName}} stornieren möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
     cancelSingleInstance: 'Einzelne Instanz stornieren',
-    cancelSingleInstanceConfirm: 'Sind Sie sicher, dass Sie diese einzelne wiederkehrende Buchung am {{date}} stornieren möchten? Dies wirkt sich nicht auf andere Buchungen in der Serie aus.',
+    cancelSingleInstanceConfirm: 'Diese Buchung ist Teil einer wiederkehrenden Serie. Sind Sie sicher, dass Sie nur diese einzelne Instanz am {{date}} stornieren möchten? Andere Buchungen in der Serie bleiben aktiv.',
     singleBookingCancelled: 'Einzelne Buchungsinstanz erfolgreich storniert',
     deleteBooking: 'Buchung löschen',
     deleteBookingConfirm: 'Sind Sie sicher, dass Sie diese Buchung für {{userName}} dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
