@@ -9,7 +9,7 @@ import {
   sendEmailVerification,
   ActionCodeSettings,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { User, UserRole } from '../types';
 
@@ -180,21 +180,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
     const uid = userCredential.user.uid;
 
-    const newUser: User = {
-      id: uid,
-      email,
-      firstName: userData.firstName || '',
-      lastName: userData.lastName || '',
-      role: 'member' as UserRole,
-      isInstructor: false,
-      phone: userData.phone,
-      memberSince: new Date(),
-      isActive: true,
-      preferredLanguage: userData.preferredLanguage || 'de',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
     let verificationError: any = null;
     let firestoreError: any = null;
 
@@ -216,11 +201,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      await withTimeout(
-        setDoc(doc(db, 'users', uid), newUser),
-        15000,
-        'Timed out while saving your profile.'
-      );
+      // Check if user profile already exists (from CSV import)
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        // Profile exists from CSV import - update it with Auth UID
+        console.log('Auth: Found existing profile from CSV import, linking to Auth account');
+        const existingDoc = snapshot.docs[0];
+        const existingData = existingDoc.data() as User;
+        
+        // Update existing profile with Auth UID and merge with signup data
+        const updatedUser: User = {
+          ...existingData,
+          id: uid, // Link to Auth UID
+          firstName: userData.firstName || existingData.firstName,
+          lastName: userData.lastName || existingData.lastName,
+          phone: userData.phone || existingData.phone,
+          updatedAt: new Date(),
+        };
+        
+        // Delete old document and create new one with Auth UID
+        await withTimeout(
+          deleteDoc(doc(db, 'users', existingDoc.id)),
+          15000,
+          'Timed out while updating profile.'
+        );
+        
+        await withTimeout(
+          setDoc(doc(db, 'users', uid), updatedUser),
+          15000,
+          'Timed out while saving profile.'
+        );
+        
+        console.log('Auth: Successfully linked CSV profile to Auth account');
+      } else {
+        // No existing profile - create new one
+        console.log('Auth: Creating new user profile');
+        const newUser: User = {
+          id: uid,
+          email,
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          role: 'member' as UserRole,
+          isInstructor: false,
+          phone: userData.phone,
+          memberSince: new Date(),
+          isActive: true,
+          preferredLanguage: userData.preferredLanguage || 'de',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        await withTimeout(
+          setDoc(doc(db, 'users', uid), newUser),
+          15000,
+          'Timed out while saving your profile.'
+        );
+      }
     } catch (err: any) {
       firestoreError = err;
       console.error('Failed to save user profile to Firestore:', err);

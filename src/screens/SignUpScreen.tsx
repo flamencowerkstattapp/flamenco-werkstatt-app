@@ -18,6 +18,8 @@ import { FlamencoLoading } from '../components/FlamencoLoading';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { validateEmail, validatePassword, validatePhone } from '../utils/validation';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestoreDB } from '../services/firebase';
 
 export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -78,6 +80,33 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     if (!validate()) return;
 
     setLoading(true);
+    
+    try {
+      // Check if email is pre-registered in Firestore
+      console.log('Signup: Checking if email is pre-registered:', formData.email);
+      const db = getFirestoreDB();
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', formData.email.toLowerCase().trim()));
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        console.log('Signup: Email not pre-registered');
+        Alert.alert(
+          'Registration Required',
+          'Your email is not registered in our system. Please contact the studio administrator to be added to the member list before creating an account.',
+          [{ text: 'OK' }]
+        );
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Signup: Email is pre-registered, proceeding with signup');
+    } catch (error) {
+      console.error('Signup: Error checking pre-registration:', error);
+      Alert.alert('Error', 'Failed to verify registration. Please try again.');
+      setLoading(false);
+      return;
+    }
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(

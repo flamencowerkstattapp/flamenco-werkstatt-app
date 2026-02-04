@@ -65,15 +65,31 @@ Maria,Garcia,maria.garcia@example.com,+34612345678,all-you-can-dance,member,adva
 - If an email already exists in the database, that row will be **skipped**
 - No duplicate members will be created
 
-### Password Setup - IMPORTANT
-- **CSV import creates member profiles only, NOT login accounts**
-- Imported members must complete signup to create their login credentials:
-  1. Member visits the app signup page
-  2. Member enters the SAME email address used in CSV import
-  3. Member creates their password
-  4. System links their profile to their new login account
-- **Password reset will NOT work** until member completes signup
-- Admin cannot set passwords for imported members (Firebase security restriction)
+### Account Setup Workflow - IMPORTANT
+
+**How CSV Import Works:**
+1. Admin uploads CSV file with member information
+2. System creates member profiles in database
+3. Members receive notification to create their account
+4. Members visit signup page and enter their email (must match CSV)
+5. System verifies email is pre-registered
+6. Members create password and complete signup
+7. System automatically links their profile to login account
+8. Members receive email verification
+9. After verification, members can log in
+
+**Security Features:**
+- ✅ Only pre-registered emails can create accounts (no public signups)
+- ✅ Signup page checks if email exists in CSV import before allowing registration
+- ✅ Prevents duplicate accounts - links existing profile to new Auth account
+- ✅ Firebase automatically sends verification email on signup
+- ✅ Password reset works after account is created
+
+**Important Notes:**
+- Members CANNOT log in until they complete signup process
+- Password reset will NOT work for CSV imported users until they create their account
+- If someone tries to sign up with an email NOT in the CSV, they will be blocked
+- This ensures only Antonio's approved members can access the app
 
 ### Data Validation
 The system validates:
