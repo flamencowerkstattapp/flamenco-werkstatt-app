@@ -430,13 +430,31 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       const parseResult = parseCSV(text);
 
       if (!parseResult.success) {
-        Alert.alert('CSV Parse Error', parseResult.errors.join('\n'));
+        setImportResult({
+          success: false,
+          totalRows: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: parseResult.errors.length,
+          errors: parseResult.errors.slice(0, 50),
+          details: [],
+        });
         setImporting(false);
         return;
       }
 
       if (parseResult.data.length === 0) {
-        Alert.alert('No Data', 'CSV file contains no valid data rows');
+        setImportResult({
+          success: false,
+          totalRows: 0,
+          imported: 0,
+          updated: 0,
+          skipped: 0,
+          failed: 1,
+          errors: ['CSV file contains no valid data rows'],
+          details: [],
+        });
         setImporting(false);
         return;
       }
@@ -448,7 +466,16 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
         await loadUsers();
       }
     } catch (error) {
-      Alert.alert('Import Error', error instanceof Error ? error.message : 'Failed to import CSV');
+      setImportResult({
+        success: false,
+        totalRows: 0,
+        imported: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 1,
+        errors: [error instanceof Error ? error.message : 'Failed to import CSV'],
+        details: [],
+      });
     } finally {
       setImporting(false);
       event.target.value = '';
@@ -479,19 +506,23 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               style={[styles.templateButton, screenWidth < 360 && styles.iconOnlyButton]}
               onPress={handleDownloadTemplate}
             >
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={styles.buttonContent}>
                 <Ionicons name="download-outline" size={20} color={theme.colors.primary} />
                 {screenWidth >= 360 && <Text style={styles.templateButtonText}>CSV Template</Text>}
               </View>
             </TouchableOpacity>
-            <label htmlFor="csv-upload" style={{ cursor: 'pointer' }}>
-              <View style={[styles.importButton, screenWidth < 360 && styles.iconOnlyButton]}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={theme.colors.primary} />
-                  {screenWidth >= 360 && <Text style={styles.importButtonText}>Import CSV</Text>}
-                </View>
+            <TouchableOpacity
+              style={[styles.importButton, screenWidth < 360 && styles.iconOnlyButton]}
+              onPress={() => {
+                const input = document.getElementById('csv-upload') as HTMLInputElement;
+                if (input) input.click();
+              }}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons name="cloud-upload-outline" size={20} color={theme.colors.primary} />
+                {screenWidth >= 360 && <Text style={styles.importButtonText}>Import CSV</Text>}
               </View>
-            </label>
+            </TouchableOpacity>
             <input
               id="csv-upload"
               type="file"
@@ -539,12 +570,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     <View style={[styles.roleBadge, { backgroundColor: user.role === 'admin' ? theme.colors.warning : theme.colors.info }]}>
                       <Text style={styles.roleBadgeText}>{user.role}</Text>
                     </View>
-                    {user.isInstructor && (
-                      <View style={[styles.instructorBadge, { backgroundColor: theme.colors.success }]}>
-                        <Ionicons name="school-outline" size={12} color="#fff" style={screenWidth < 768 ? undefined : styles.instructorBadgeIcon} />
-                        {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{t('user.instructor')}</Text>}
-                      </View>
-                    )}
+                    {user.isInstructor && <View style={[styles.instructorBadge, { backgroundColor: theme.colors.success }]}>
+                      <Ionicons name="school-outline" size={12} color="#fff" style={screenWidth >= 768 ? styles.instructorBadgeIcon : undefined} />
+                      {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{t('user.instructor')}</Text>}
+                    </View>}
                   </View>
                 </View>
                 
@@ -566,20 +595,13 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
 
               <View style={styles.paymentSection}>
                 <View style={styles.paymentButtons}>
-                  <TouchableOpacity
-                    style={styles.paymentButton}
-                    onPress={() => openPaymentModal(user, 'weekly-class')}
-                  >
+                  <TouchableOpacity style={styles.paymentButton} onPress={() => openPaymentModal(user, 'weekly-class')}>
                     <View style={styles.paymentButtonContent}>
                       <Ionicons name="calendar-outline" size={18} color={theme.colors.primary} />
                       <Text style={styles.paymentButtonText}>{t('payments.recordClass')}</Text>
                     </View>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.paymentButton}
-                    onPress={() => openPaymentModal(user, 'special-class')}
-                  >
+                  <TouchableOpacity style={styles.paymentButton} onPress={() => openPaymentModal(user, 'special-class')}>
                     <View style={styles.paymentButtonContent}>
                       <Ionicons name="star-outline" size={18} color={theme.colors.success} />
                       <Text style={styles.paymentButtonText}>{t('payments.recordSpecialClass')}</Text>
@@ -642,10 +664,8 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                   onPress={() => openEditUserModal(user)}
                   style={styles.iconButton}
                 >
-                  <View>
-                    <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
-                    <Text style={styles.iconButtonText}>{t('common.edit')}</Text>
-                  </View>
+                  <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+                  <Text style={styles.iconButtonText}>{t('common.edit')}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
@@ -657,16 +677,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     completedActions.has(`role-${user.id}`) && styles.iconButtonDisabled
                   ]}
                 >
-                  <View>
-                    <Ionicons 
-                      name={user.role === 'admin' ? "person-outline" : "shield-checkmark-outline"} 
-                      size={20} 
-                      color="#000" 
-                    />
-                    <Text style={[styles.iconButtonText, { color: '#000' }]}>
-                      {user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
-                    </Text>
-                  </View>
+                  <Ionicons 
+                    name={user.role === 'admin' ? "person-outline" : "shield-checkmark-outline"} 
+                    size={20} 
+                    color="#000" 
+                  />
+                  <Text style={[styles.iconButtonText, { color: '#000' }]}>
+                    {user.role === 'admin' ? t('admin.makeMember') : t('admin.makeAdmin')}
+                  </Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
@@ -678,16 +696,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                     completedActions.has(`status-${user.id}`) && styles.iconButtonDisabled
                   ]}
                 >
-                  <View>
-                    <Ionicons 
-                      name={user.isActive ? "close-circle-outline" : "checkmark-circle-outline"} 
-                      size={20} 
-                      color="#FFFFFF" 
-                    />
-                    <Text style={[styles.iconButtonText, { color: '#FFFFFF' }]}>
-                      {user.isActive ? t('admin.deactivate') : t('admin.activate')}
-                    </Text>
-                  </View>
+                  <Ionicons 
+                    name={user.isActive ? "close-circle-outline" : "checkmark-circle-outline"} 
+                    size={20} 
+                    color="#FFFFFF" 
+                  />
+                  <Text style={[styles.iconButtonText, { color: '#FFFFFF' }]}>
+                    {user.isActive ? t('admin.deactivate') : t('admin.activate')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1051,7 +1067,11 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                   style={styles.importCloseButton}
                 />
               </ScrollView>
-            ) : null}
+            ) : (
+              <View style={styles.importingContainer}>
+                <Text style={styles.importingText}>Ready to import</Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1543,11 +1563,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   templateButtonText: {
     fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: theme.spacing.xs,
   },
   importButton: {
     paddingHorizontal: theme.spacing.sm,
@@ -1567,7 +1591,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.primary,
     fontWeight: '600',
-    marginLeft: 4,
+    marginLeft: theme.spacing.xs,
   },
   importModalOverlay: {
     flex: 1,

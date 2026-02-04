@@ -14,6 +14,7 @@ import { t } from './src/locales';
 
 import { LoginScreen } from './src/screens/LoginScreen';
 import { SignUpScreen } from './src/screens/SignUpScreen';
+import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
 import { CalendarScreen } from './src/screens/CalendarScreen';
 import { BookStudioScreen } from './src/screens/BookStudioScreen';
 import { BookingDetailsScreen } from './src/screens/BookingDetailsScreen';
@@ -176,6 +177,7 @@ const AppNavigator = () => {
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       ) : (
         <>

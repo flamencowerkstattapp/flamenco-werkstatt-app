@@ -53,6 +53,13 @@ export default {
     signupSuccessTitle: '✅ Account Erfolgreich Erstellt!',
     signupSuccessBody: 'Ihr Account wurde erstellt. Bitte überprüfen Sie Ihre E-Mail für die Bestätigung.',
     signupLoading: '📝 Account Wird Erstellt...',
+    resetPasswordInstructions: 'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.',
+    emailPlaceholder: 'Geben Sie Ihre E-Mail-Adresse ein',
+    sendResetLink: 'Link Senden',
+    sendingResetLink: '📧 Wird Gesendet...',
+    resetPasswordSuccessTitle: '✅ Link Gesendet!',
+    resetPasswordSuccessMessage: 'Wir haben einen Link zum Zurücksetzen des Passworts an Ihre E-Mail gesendet. Bitte überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen.',
+    resetPasswordError: 'Fehler beim Senden des Links. Bitte versuchen Sie es erneut.',
   },
   navigation: {
     home: 'Startseite',

@@ -100,7 +100,7 @@ export const importUsersFromCSV = async (
             row: rowIndex,
             email: csvRow.email,
             status: 'imported',
-            message: 'Successfully imported',
+            message: 'Imported - User must create account via signup',
           });
 
         } catch (error) {

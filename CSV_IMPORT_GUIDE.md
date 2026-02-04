@@ -65,10 +65,15 @@ Maria,Garcia,maria.garcia@example.com,+34612345678,all-you-can-dance,member,adva
 - If an email already exists in the database, that row will be **skipped**
 - No duplicate members will be created
 
-### Password Setup
-- Imported members do NOT have passwords created automatically
-- Members will need to use the "Forgot Password" flow on first login
-- Alternatively, admin can manually set passwords via "Edit User"
+### Password Setup - IMPORTANT
+- **CSV import creates member profiles only, NOT login accounts**
+- Imported members must complete signup to create their login credentials:
+  1. Member visits the app signup page
+  2. Member enters the SAME email address used in CSV import
+  3. Member creates their password
+  4. System links their profile to their new login account
+- **Password reset will NOT work** until member completes signup
+- Admin cannot set passwords for imported members (Firebase security restriction)
 
 ### Data Validation
 The system validates:

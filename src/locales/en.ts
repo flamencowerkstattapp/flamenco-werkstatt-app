@@ -60,6 +60,13 @@ export default {
     signupSuccessTitle: '✅ Account Created Successfully!',
     signupSuccessBody: 'Your account has been created. Please check your email for verification.',
     signupLoading: '📝 Creating Account...',
+    resetPasswordInstructions: 'Enter your email address and we\'ll send you a link to reset your password.',
+    emailPlaceholder: 'Enter your email address',
+    sendResetLink: 'Send Reset Link',
+    sendingResetLink: '📧 Sending...',
+    resetPasswordSuccessTitle: '✅ Reset Link Sent!',
+    resetPasswordSuccessMessage: 'We\'ve sent a password reset link to your email. Please check your inbox and follow the instructions to reset your password.',
+    resetPasswordError: 'Failed to send reset link. Please try again.',
   },
   navigation: {
     home: 'Home',

@@ -53,6 +53,13 @@ export default {
     signupSuccessTitle: '✅ ¡Cuenta Creada Exitosamente!',
     signupSuccessBody: 'Tu cuenta ha sido creada. Por favor revisa tu correo electrónico para la verificación.',
     signupLoading: '📝 Creando Cuenta...',
+    resetPasswordInstructions: 'Ingrese su dirección de correo electrónico y le enviaremos un enlace para restablecer su contraseña.',
+    emailPlaceholder: 'Ingrese su dirección de correo electrónico',
+    sendResetLink: 'Enviar Enlace',
+    sendingResetLink: '📧 Enviando...',
+    resetPasswordSuccessTitle: '✅ ¡Enlace Enviado!',
+    resetPasswordSuccessMessage: 'Hemos enviado un enlace para restablecer la contraseña a su correo electrónico. Por favor revise su bandeja de entrada y siga las instrucciones.',
+    resetPasswordError: 'Error al enviar el enlace. Por favor intente nuevamente.',
   },
   navigation: {
     home: 'Inicio',

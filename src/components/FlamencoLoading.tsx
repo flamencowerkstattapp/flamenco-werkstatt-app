@@ -227,11 +227,11 @@ const styles = StyleSheet.create({
   dotsContainer: {
     flexDirection: 'row',
     marginTop: theme.spacing.sm,
-    gap: 4,
   },
   dot: {
     fontSize: 20,
     color: theme.colors.primary,
     fontWeight: 'bold',
+    marginRight: 4,
   },
 });
