@@ -109,14 +109,20 @@ export class EventsService {
       }
       
       // Step 2: Create event document with temp image URL (or undefined)
-      const docData = {
+      const docData: any = {
         ...eventData,
-        imageUrl: tempImageUrl,
         isPublished: eventData.isPublished ?? false,
         currentParticipants: eventData.currentParticipants || 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
+
+      // Only include imageUrl if it has a value (Firestore doesn't accept undefined)
+      if (tempImageUrl) {
+        docData.imageUrl = tempImageUrl;
+      } else {
+        delete docData.imageUrl;
+      }
 
       const docRef = await addDoc(this.collection, docData);
       const eventId = docRef.id;

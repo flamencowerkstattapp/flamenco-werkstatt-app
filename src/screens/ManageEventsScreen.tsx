@@ -10,6 +10,7 @@ import { AppHeader } from '../components/AppHeader';
 import { ScrollToTopButton } from '../components/ScrollToTopButton';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { CustomDateTimePicker } from '../components/DateTimePicker';
 import { RecurringEventSelector } from '../components/RecurringEventSelector';
 import { LocationToggle } from '../components/LocationToggle';
@@ -84,6 +85,8 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<SpecialEvent | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -237,21 +240,27 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
     }
   };
 
-  const deleteEvent = async (eventId: string) => {
-    // Use browser confirm for React Native Web compatibility
-    const confirmed = window.confirm(
-      t('events.deleteEventConfirm')
-    );
-    
-    if (confirmed) {
-      try {
-        await eventsService.deleteEvent(eventId);
-        await loadEvents();
-        alert(t('events.eventDeletedSuccess'));
-      } catch (error) {
-        console.error('Error deleting event:', error);
-        alert(t('events.errorDeletingEvent'));
-      }
+  const handleDeletePress = (eventId: string, eventTitle: string) => {
+    setEventToDelete({ id: eventId, title: eventTitle });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!eventToDelete) return;
+
+    try {
+      await eventsService.deleteEvent(eventToDelete.id);
+      await loadEvents();
+      Alert.alert(
+        t('events.eventDeleted'),
+        t('events.eventDeletedSuccess')
+      );
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      Alert.alert(t('common.error'), t('events.errorDeletingEvent'));
+    } finally {
+      setShowDeleteModal(false);
+      setEventToDelete(null);
     }
   };
 
@@ -724,7 +733,7 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
                 
                 <Button
                   title={t('common.delete')}
-                  onPress={() => deleteEvent(event.id)}
+                  onPress={() => handleDeletePress(event.id, event.title)}
                   variant="danger"
                   size="small"
                   style={styles.actionButton}
@@ -737,6 +746,20 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
       </ScrollView>
       
       {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+      
+      <ConfirmModal
+        visible={showDeleteModal}
+        title={t('common.delete')}
+        message={eventToDelete ? t('events.deleteEventConfirm', { title: eventToDelete.title }) : ''}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmDeleteEvent}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setEventToDelete(null);
+        }}
+        destructive={true}
+      />
     </SafeAreaView>
   );
 };

@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, BackHandler } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -191,12 +191,33 @@ const AppNavigator = () => {
 };
 
 export default function App() {
+  const navigationRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (navigationRef.current) {
+        const canGoBack = navigationRef.current.canGoBack();
+        if (canGoBack) {
+          navigationRef.current.goBack();
+          return true; // Prevent default behavior (exit app)
+        }
+      }
+      return false; // Allow default behavior (exit app) if at root
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <NotificationProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <AppNavigator />
           </NavigationContainer>
         </NotificationProvider>

@@ -19,7 +19,7 @@ import { Input } from '../components/Input';
 import { theme } from '../constants/theme';
 import { STUDIOS, BOOKING_HOURS } from '../constants/studios';
 import { t, getLocale } from '../locales';
-import { isWithinBookingHours, hasTimeConflict, isWeekend, parseTimeInput, parseDateInput, formatDateInput } from '../utils/dateUtils';
+import { isWithinBookingHours, hasTimeConflict, isWeekend, parseTimeInput, parseDateInput, formatDateInput, isSchoolHoliday, isPublicHoliday } from '../utils/dateUtils';
 import { validateBookingTime } from '../utils/validation';
 
 
@@ -109,8 +109,12 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
   };
 
   const studio = studioId === 'studio-1-big' ? STUDIOS.BIG : studioId === 'studio-2-small' ? STUDIOS.SMALL : STUDIOS.OFFSITE;
-  const isWeekendDay = isWeekend(new Date(date));
-  const bookingHours = isWeekendDay ? BOOKING_HOURS.WEEKEND : BOOKING_HOURS.WEEKDAY;
+  const bookingDate = new Date(date);
+  const isWeekendDay = isWeekend(bookingDate);
+  const isHolidayDate = isSchoolHoliday(bookingDate) || isPublicHoliday(bookingDate);
+  
+  // Weekends and holidays use extended hours (08:00-22:00), weekdays use limited hours (16:00-22:00)
+  const bookingHours = (isWeekendDay || isHolidayDate) ? BOOKING_HOURS.WEEKEND : BOOKING_HOURS.WEEKDAY;
 
   const generateRecurringDates = (startDate: Date, pattern: 'daily' | 'weekly' | 'biweekly' | 'monthly', endDateStr: string): Date[] => {
     const dates: Date[] = [];
@@ -184,20 +188,20 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
           newErrors.endTime = timeValidation.message || '';
         }
 
-        // Validate booking hours with specific messages for weekday vs weekend
+        // Validate booking hours with specific messages for weekday vs weekend/holiday
         const startHour = startDateTime.getHours();
         const endHour = endDateTime.getHours();
         const endMinute = endDateTime.getMinutes();
         
-        if (isWeekendDay) {
-          // Weekend: 08:00-22:00
+        if (isWeekendDay || isHolidayDate) {
+          // Weekend or Holiday: 08:00-22:00
           if (startHour < 8 || startHour >= 22 || endHour > 22 || (endHour === 22 && endMinute > 0)) {
-            newErrors.startTime = 'Weekend bookings: 08:00-22:00 only';
+            newErrors.startTime = isHolidayDate ? t('calendar.holidayBookingsOnly') : t('calendar.weekendBookingsOnly');
           }
         } else {
-          // Weekday: 16:00-22:00
+          // Weekday (non-holiday): 16:00-22:00
           if (startHour < 16 || startHour >= 22 || endHour > 22 || (endHour === 22 && endMinute > 0)) {
-            newErrors.startTime = 'Weekday bookings: 16:00-22:00 only';
+            newErrors.startTime = t('calendar.weekdayBookingsOnly');
           }
         }
 
@@ -491,16 +495,18 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            {isWeekendDay
-              ? `Weekend hours: ${bookingHours.start}:00 - ${bookingHours.end}:00`
-              : `Weekday hours: ${bookingHours.start}:00 - ${bookingHours.end}:00`}
+            {isHolidayDate
+              ? `🎉 ${t('calendar.holidayHours', { start: bookingHours.start, end: bookingHours.end })}`
+              : isWeekendDay
+              ? `🎉 ${t('calendar.weekendHours', { start: bookingHours.start, end: bookingHours.end })}`
+              : t('calendar.weekdayHours', { start: bookingHours.start, end: bookingHours.end })}
           </Text>
         </View>
 
         <View style={styles.form}>
           <Input
             label={t('calendar.startTime')}
-            placeholder="e.g., 16:00, 4pm, 16,00"
+            placeholder={isWeekendDay || isHolidayDate ? t('calendar.startTimePlaceholderHoliday') : t('calendar.startTimePlaceholderWeekday')}
             value={startTime}
             onChangeText={handleStartTimeChange}
             onBlur={handleStartTimeBlur}
@@ -510,7 +516,7 @@ export const BookStudioScreen: React.FC<{ route: any; navigation: any }> = ({
 
           <Input
             label={t('calendar.endTime')}
-            placeholder="e.g., 18:00, 6pm, 18,00"
+            placeholder={isWeekendDay || isHolidayDate ? t('calendar.endTimePlaceholderHoliday') : t('calendar.endTimePlaceholderWeekday')}
             value={endTime}
             onChangeText={handleEndTimeChange}
             onBlur={handleEndTimeBlur}

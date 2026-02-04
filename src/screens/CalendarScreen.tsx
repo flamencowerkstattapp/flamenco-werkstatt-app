@@ -14,7 +14,7 @@ import { theme } from '../constants/theme';
 import { STUDIOS } from '../constants/studios';
 import { t, getLocale } from '../locales';
 import { CalendarEvent, Booking, SpecialEvent } from '../types';
-import { formatTime, isSchoolHoliday, getCurrentSchoolHoliday, formatDate } from '../utils/dateUtils';
+import { formatTime, isSchoolHoliday, getCurrentSchoolHoliday, formatDate, isPublicHoliday, getCurrentPublicHoliday, isHolidayOrWeekend } from '../utils/dateUtils';
 
 // Configure calendar locales
 LocaleConfig.locales['en'] = {
@@ -231,30 +231,24 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
   const isHoliday = isSchoolHoliday(new Date(selectedDate));
   const currentHoliday = getCurrentSchoolHoliday(new Date(selectedDate));
+  const isPublicHol = isPublicHoliday(new Date(selectedDate));
+  const currentPublicHoliday = getCurrentPublicHoliday(new Date(selectedDate));
+
+  // Check if booking is unavailable for members on weekdays
+  const selectedDateObj = new Date(selectedDate);
+  const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 6 = Saturday
+  const isHolidayDate = isSchoolHoliday(selectedDateObj) || isPublicHoliday(selectedDateObj);
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+  const isBookingUnavailable = user?.role === 'member' && isWeekday && !isHolidayDate;
 
   const handleBookStudio = () => {
-    // Check if user is a member (not admin or instructor)
-    if (user?.role === 'member') {
-      const selectedDateObj = new Date(selectedDate);
-      const dayOfWeek = selectedDateObj.getDay(); // 0 = Sunday, 6 = Saturday
-      const isHolidayDate = isSchoolHoliday(selectedDateObj);
-      
-      // During school holidays, members can book any day
-      // Outside school holidays, members can only book on weekends
-      if (!isHolidayDate && dayOfWeek >= 1 && dayOfWeek <= 5) {
-        Alert.alert(
-          t('calendar.bookingRestricted'),
-          t('calendar.memberBookingRules'),
-          [{ text: t('common.ok') }]
-        );
-        return;
-      }
+    // Only navigate if booking is available
+    if (!isBookingUnavailable) {
+      navigation.navigate('BookStudio', {
+        date: selectedDate,
+        studioId: selectedStudio,
+      });
     }
-    
-    navigation.navigate('BookStudio', {
-      date: selectedDate,
-      studioId: selectedStudio,
-    });
   };
 
   const handleCancelBooking = (bookingId: string, bookingUserName: string) => {
@@ -351,16 +345,30 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           }}
         />
 
-        {isHoliday && currentHoliday && (
-          <View style={styles.holidayBanner}>
-            <Ionicons name="information-circle" size={20} color={theme.colors.warning} style={styles.holidayIcon} />
-            <Text style={styles.holidayText}>
-              {t('calendar.schoolHolidayWithDates', {
-                name: currentHoliday.name,
-                startDate: formatDate(currentHoliday.startDate),
-                endDate: formatDate(currentHoliday.endDate)
-              })}
-            </Text>
+        {(isHoliday || isPublicHol) && (
+          <View style={styles.holidayBannersContainer}>
+            {isHoliday && currentHoliday && (
+              <View style={styles.holidayBanner}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.warning} style={styles.holidayIcon} />
+                <Text style={styles.holidayText}>
+                  {t('calendar.schoolHolidayWithDates', {
+                    name: currentHoliday.name,
+                    startDate: formatDate(currentHoliday.startDate),
+                    endDate: formatDate(currentHoliday.endDate)
+                  })}
+                </Text>
+              </View>
+            )}
+            {isPublicHol && currentPublicHoliday && (
+              <View style={styles.publicHolidayBanner}>
+                <Ionicons name="calendar" size={20} color="#856404" style={styles.holidayIcon} />
+                <Text style={styles.holidayText}>
+                  {t('calendar.publicHolidayDate', {
+                    name: currentPublicHoliday.name
+                  })}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -487,9 +495,12 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                 <Text style={styles.eventPurpose} numberOfLines={2}>{booking.purpose}</Text>
               </View>
             )}
-            {booking.userId === user?.id && (
+            {(booking.userId === user?.id || user?.role === 'admin') && (
               <TouchableOpacity
-                style={styles.viewBookingButton}
+                style={[
+                  styles.viewBookingButton,
+                  { backgroundColor: selectedStudio === 'studio-1-big' ? STUDIOS.BIG.color : selectedStudio === 'studio-2-small' ? STUDIOS.SMALL.color : STUDIOS.OFFSITE.color }
+                ]}
                 onPress={() => navigation.navigate('BookingDetails', { bookingId: booking.id })}
               >
                 <Text style={styles.viewBookingText}>{t('common.viewDetails')}</Text>
@@ -515,11 +526,28 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         </View>
 
         <View style={styles.footer}>
-          <Button
-            title={t('calendar.bookStudio')}
-            onPress={handleBookStudio}
-            style={styles.bookButton}
-          />
+          {isBookingUnavailable ? (
+            <View style={styles.unavailableContainer}>
+              <Button
+                title={t('calendar.slotsUnavailable')}
+                onPress={() => {}}
+                disabled={true}
+                style={styles.bookButton}
+              />
+              <View style={styles.unavailableMessage}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.textSecondary} style={styles.unavailableIcon} />
+                <Text style={styles.unavailableText}>
+                  {t('calendar.weekdaySlotsRestricted')}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <Button
+              title={t('calendar.bookStudio')}
+              onPress={handleBookStudio}
+              style={styles.bookButton}
+            />
+          )}
         </View>
       </ScrollView>
       
@@ -594,11 +622,31 @@ const styles = StyleSheet.create({
   studioButtonTextActive: {
     color: theme.colors.primary,
   },
+  holidayBannersContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: theme.spacing.md,
+  },
   holidayBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF3CD',
     padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    flex: 1,
+    minWidth: 280,
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  publicHolidayBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFE5B4',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    flex: 1,
+    minWidth: 280,
+    marginBottom: theme.spacing.sm,
   },
   holidayIcon: {
     marginRight: theme.spacing.sm,
@@ -712,12 +760,16 @@ const styles = StyleSheet.create({
   },
   viewBookingButton: {
     marginTop: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     alignSelf: 'flex-start',
+    minHeight: 36,
+    borderRadius: theme.borderRadius.sm,
   },
   viewBookingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.colors.surface,
   },
   cancelBookingButton: {
     flexDirection: 'row',
@@ -839,7 +891,8 @@ const styles = StyleSheet.create({
   },
   unavailableSlot: {
     flexDirection: 'row',
-    alignItems: 'center',    marginTop: theme.spacing.sm,
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
     padding: theme.spacing.xs,
     backgroundColor: 'rgba(156, 163, 175, 0.1)',
     borderRadius: theme.borderRadius.sm,
@@ -850,5 +903,22 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontWeight: '500',
     marginLeft: theme.spacing.xs,
+  },
+  unavailableContainer: {
+    width: '100%',
+  },
+  unavailableMessage: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F3F4F6',
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.textSecondary,
+  },
+  unavailableIcon: {
+    marginRight: theme.spacing.sm,
+    marginTop: 2,
   },
 });

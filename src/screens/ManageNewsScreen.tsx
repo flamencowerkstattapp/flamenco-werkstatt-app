@@ -19,6 +19,7 @@ import { AppHeader } from '../components/AppHeader';
 import { ScrollToTopButton } from '../components/ScrollToTopButton';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { newsService } from '../services/newsService';
 import { imageService } from '../services/imageService';
 import { theme } from '../constants/theme';
@@ -36,6 +37,8 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   const [showForm, setShowForm] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [newsToDelete, setNewsToDelete] = useState<{ id: string; title: string } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -178,24 +181,27 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     }
   };
 
-  const deleteNews = async (newsId: string) => {
-    // Use window.confirm for web compatibility
-    const confirmed = window.confirm(
-      `${t('common.delete')}\n\n${t('admin.deleteMessageConfirm')}`
-    );
-    
-    if (confirmed) {
-      try {
-        await newsService.deleteNews(newsId);
-        await loadNews();
-        Alert.alert(
-          t('admin.newsDeletedTitle'),
-          t('admin.newsDeletedBody')
-        );
-      } catch (error) {
-        console.error('Error deleting news:', error);
-        Alert.alert(t('common.error'), t('admin.errorDeletingNews'));
-      }
+  const handleDeletePress = (newsId: string, newsTitle: string) => {
+    setNewsToDelete({ id: newsId, title: newsTitle });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteNews = async () => {
+    if (!newsToDelete) return;
+
+    try {
+      await newsService.deleteNews(newsToDelete.id);
+      await loadNews();
+      Alert.alert(
+        t('admin.newsDeletedTitle'),
+        t('admin.newsDeletedBody')
+      );
+    } catch (error) {
+      console.error('Error deleting news:', error);
+      Alert.alert(t('common.error'), t('admin.errorDeletingNews'));
+    } finally {
+      setShowDeleteModal(false);
+      setNewsToDelete(null);
     }
   };
 
@@ -236,7 +242,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         category: formData.category,
         publishedBy: `${user?.firstName} ${user?.lastName}` || 'Admin',
         publishedAt: new Date(), // Will be overwritten by server timestamp
-        isPublished: true, // Default to published
+        isPublished: editingNews?.isPublished ?? false, // Preserve status when editing, default to unpublished for new items
       };
 
       if (editingNews) {
@@ -481,7 +487,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
                 
                 <Button
                   title={t('common.delete')}
-                  onPress={() => deleteNews(newsItem.id)}
+                  onPress={() => handleDeletePress(newsItem.id, newsItem.title)}
                   variant="danger"
                   size="small"
                   style={styles.actionButton}
@@ -494,6 +500,20 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       </ScrollView>
       
       {showScrollTop && <ScrollToTopButton scrollViewRef={scrollViewRef} />}
+      
+      <ConfirmModal
+        visible={showDeleteModal}
+        title={t('common.delete')}
+        message={newsToDelete ? t('admin.deleteNewsConfirm', { title: newsToDelete.title }) : ''}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        onConfirm={confirmDeleteNews}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setNewsToDelete(null);
+        }}
+        destructive={true}
+      />
     </SafeAreaView>
   );
 };

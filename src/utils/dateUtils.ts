@@ -106,12 +106,17 @@ export const getBerlinSchoolHolidays = (year: number) => {
       },
       {
         name: 'Weihnachtsferien',
-        startDate: new Date(2025, 11, 22), // Dec 22, 2025
+        startDate: new Date(2025, 11, 23), // Dec 23, 2025
         endDate: new Date(2026, 0, 2), // Jan 2, 2026
       },
     ];
   } else if (year === 2026) {
     return [
+      {
+        name: 'Weihnachtsferien 2025/26',
+        startDate: new Date(2025, 11, 23), // Dec 23, 2025
+        endDate: new Date(2026, 0, 2), // Jan 2, 2026
+      },
       {
         name: 'Winterferien',
         startDate: new Date(2026, 1, 2), // Feb 2, 2026
@@ -120,26 +125,36 @@ export const getBerlinSchoolHolidays = (year: number) => {
       {
         name: 'Osterferien',
         startDate: new Date(2026, 2, 30), // Mar 30, 2026
-        endDate: new Date(2026, 3, 11), // Apr 11, 2026
+        endDate: new Date(2026, 3, 10), // Apr 10, 2026
+      },
+      {
+        name: 'No Classes',
+        startDate: new Date(2026, 4, 15), // May 15, 2026
+        endDate: new Date(2026, 4, 15), // May 15, 2026 (single day)
       },
       {
         name: 'Pfingstferien',
-        startDate: new Date(2026, 4, 15), // May 15, 2026
-        endDate: new Date(2026, 4, 16), // May 16, 2026
+        startDate: new Date(2026, 4, 26), // May 26, 2026
+        endDate: new Date(2026, 4, 26), // May 26, 2026 (single day)
+      },
+      {
+        name: 'No Classes',
+        startDate: new Date(2026, 4, 30), // May 30, 2026
+        endDate: new Date(2026, 4, 30), // May 30, 2026 (single day)
       },
       {
         name: 'Sommerferien',
         startDate: new Date(2026, 6, 9), // Jul 9, 2026
-        endDate: new Date(2026, 7, 21), // Aug 21, 2026
+        endDate: new Date(2026, 7, 22), // Aug 22, 2026
       },
       {
         name: 'Herbstferien',
-        startDate: new Date(2026, 9, 12), // Oct 12, 2026
-        endDate: new Date(2026, 9, 24), // Oct 24, 2026
+        startDate: new Date(2026, 9, 19), // Oct 19, 2026
+        endDate: new Date(2026, 9, 31), // Oct 31, 2026
       },
       {
-        name: 'Weihnachtsferien',
-        startDate: new Date(2026, 11, 21), // Dec 21, 2026
+        name: 'Weihnachtsferien 2026/27',
+        startDate: new Date(2026, 11, 23), // Dec 23, 2026
         endDate: new Date(2027, 0, 2), // Jan 2, 2027
       },
     ];
@@ -180,24 +195,186 @@ export const getBerlinSchoolHolidays = (year: number) => {
   }
 };
 
+// Normalize date to midnight local time for accurate day comparison
+const normalizeDate = (date: Date): Date => {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+};
+
 export const isSchoolHoliday = (date: Date): boolean => {
   const year = date.getFullYear();
   const holidays = getBerlinSchoolHolidays(year);
+  const normalizedDate = normalizeDate(date);
   
   return holidays.some(
-    (holiday) => date >= holiday.startDate && date <= holiday.endDate
+    (holiday) => {
+      const normalizedStart = normalizeDate(holiday.startDate);
+      const normalizedEnd = normalizeDate(holiday.endDate);
+      return normalizedDate >= normalizedStart && normalizedDate <= normalizedEnd;
+    }
   );
 };
 
 export const getCurrentSchoolHoliday = (date: Date): { name: string; startDate: Date; endDate: Date } | null => {
   const year = date.getFullYear();
   const holidays = getBerlinSchoolHolidays(year);
+  const normalizedDate = normalizeDate(date);
   
   const currentHoliday = holidays.find(
-    (holiday) => date >= holiday.startDate && date <= holiday.endDate
+    (holiday) => {
+      const normalizedStart = normalizeDate(holiday.startDate);
+      const normalizedEnd = normalizeDate(holiday.endDate);
+      return normalizedDate >= normalizedStart && normalizedDate <= normalizedEnd;
+    }
   );
   
   return currentHoliday || null;
+};
+
+export const getBerlinPublicHolidays = (year: number) => {
+  // Berlin public holidays for 2025-2026
+  // Note: JavaScript months are 0-indexed (0 = January, 11 = December)
+  
+  if (year === 2025) {
+    return [
+      {
+        name: 'Neujahr',
+        date: new Date(2025, 0, 1), // Jan 1, 2025
+      },
+      {
+        name: 'Internationaler Frauentag',
+        date: new Date(2025, 2, 8), // Mar 8, 2025
+      },
+      {
+        name: 'Karfreitag',
+        date: new Date(2025, 3, 18), // Apr 18, 2025
+      },
+      {
+        name: 'Ostermontag',
+        date: new Date(2025, 3, 21), // Apr 21, 2025
+      },
+      {
+        name: 'Tag der Arbeit',
+        date: new Date(2025, 4, 1), // May 1, 2025
+      },
+      {
+        name: 'Christi Himmelfahrt',
+        date: new Date(2025, 4, 29), // May 29, 2025
+      },
+      {
+        name: 'Pfingstmontag',
+        date: new Date(2025, 5, 9), // Jun 9, 2025
+      },
+      {
+        name: 'Tag der Deutschen Einheit',
+        date: new Date(2025, 9, 3), // Oct 3, 2025
+      },
+      {
+        name: '1. Weihnachtstag',
+        date: new Date(2025, 11, 25), // Dec 25, 2025
+      },
+      {
+        name: '2. Weihnachtstag',
+        date: new Date(2025, 11, 26), // Dec 26, 2025
+      },
+    ];
+  } else if (year === 2026) {
+    return [
+      {
+        name: 'Neujahr',
+        date: new Date(2026, 0, 1), // Jan 1, 2026
+      },
+      {
+        name: 'Internationaler Frauentag',
+        date: new Date(2026, 2, 8), // Mar 8, 2026
+      },
+      {
+        name: 'Karfreitag',
+        date: new Date(2026, 3, 3), // Apr 3, 2026
+      },
+      {
+        name: 'Ostermontag',
+        date: new Date(2026, 3, 6), // Apr 6, 2026
+      },
+      {
+        name: 'Tag der Arbeit',
+        date: new Date(2026, 4, 1), // May 1, 2026
+      },
+      {
+        name: 'Christi Himmelfahrt',
+        date: new Date(2026, 4, 14), // May 14, 2026
+      },
+      {
+        name: 'Pfingstmontag',
+        date: new Date(2026, 4, 25), // May 25, 2026
+      },
+      {
+        name: 'Tag der Deutschen Einheit',
+        date: new Date(2026, 9, 3), // Oct 3, 2026
+      },
+      {
+        name: '1. Weihnachtstag',
+        date: new Date(2026, 11, 25), // Dec 25, 2026
+      },
+      {
+        name: '2. Weihnachtstag',
+        date: new Date(2026, 11, 26), // Dec 26, 2026
+      },
+    ];
+  } else {
+    // Fallback for other years - approximate dates based on typical German holidays
+    return [
+      {
+        name: 'Neujahr',
+        date: new Date(year, 0, 1),
+      },
+      {
+        name: 'Internationaler Frauentag',
+        date: new Date(year, 2, 8),
+      },
+      {
+        name: 'Tag der Arbeit',
+        date: new Date(year, 4, 1),
+      },
+      {
+        name: 'Tag der Deutschen Einheit',
+        date: new Date(year, 9, 3),
+      },
+      {
+        name: '1. Weihnachtstag',
+        date: new Date(year, 11, 25),
+      },
+      {
+        name: '2. Weihnachtstag',
+        date: new Date(year, 11, 26),
+      },
+    ];
+  }
+};
+
+export const isPublicHoliday = (date: Date): boolean => {
+  const year = date.getFullYear();
+  const holidays = getBerlinPublicHolidays(year);
+  
+  return holidays.some(
+    (holiday) => isSameDay(holiday.date, date)
+  );
+};
+
+export const getCurrentPublicHoliday = (date: Date): { name: string; date: Date } | null => {
+  const year = date.getFullYear();
+  const holidays = getBerlinPublicHolidays(year);
+  
+  const currentHoliday = holidays.find(
+    (holiday) => isSameDay(holiday.date, date)
+  );
+  
+  return currentHoliday || null;
+};
+
+export const isHolidayOrWeekend = (date: Date): boolean => {
+  return isSchoolHoliday(date) || isPublicHoliday(date);
 };
 
 export const parseDateInput = (input: string): Date | null => {

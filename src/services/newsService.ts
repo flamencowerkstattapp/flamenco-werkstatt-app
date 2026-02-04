@@ -110,13 +110,20 @@ export class NewsService {
       }
       
       // Step 2: Create news document with temp image URL (or null)
-      const docData = {
+      const docData: any = {
         ...newsData,
-        imageUrl: tempImageUrl, // This can now be null, which Firestore accepts
+        isPublished: newsData.isPublished ?? false, // Explicitly preserve isPublished status
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         publishedAt: serverTimestamp(),
       };
+
+      // Only include imageUrl if it has a value (Firestore doesn't accept undefined)
+      if (tempImageUrl) {
+        docData.imageUrl = tempImageUrl;
+      } else {
+        delete docData.imageUrl;
+      }
 
       const docRef = await addDoc(this.collection, docData);
       const newsId = docRef.id;
