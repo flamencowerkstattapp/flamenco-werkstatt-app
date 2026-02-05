@@ -184,8 +184,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let firestoreError: any = null;
 
     try {
-      // Try sending email verification without custom settings first
-      await sendEmailVerification(userCredential.user);
+      const actionCodeSettings: ActionCodeSettings = {
+        url: `${window.location.origin}/?verified=true`,
+        handleCodeInApp: true,
+      };
+      
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);

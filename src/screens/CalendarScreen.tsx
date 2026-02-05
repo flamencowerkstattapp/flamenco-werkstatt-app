@@ -119,7 +119,7 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     });
 
     const unsubscribeSpecialEvents = onSnapshot(specialEventsQuery, (specialEventsSnapshot) => {
-      const specialEventsData = specialEventsSnapshot.docs.map((doc) => {
+      const allSpecialEvents = specialEventsSnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           ...data,
@@ -128,6 +128,27 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           endDate: data.endDate.toDate(),
         };
       }) as SpecialEvent[];
+
+      // Filter special events by date and location
+      const specialEventsData = allSpecialEvents.filter((event) => {
+        const eventStartDate = new Date(event.startDate);
+        const eventEndDate = new Date(event.endDate);
+        const selectedDateObj = new Date(selectedDate);
+        
+        eventStartDate.setHours(0, 0, 0, 0);
+        eventEndDate.setHours(23, 59, 59, 999);
+        selectedDateObj.setHours(0, 0, 0, 0);
+        
+        const matchesDate = selectedDateObj >= eventStartDate && selectedDateObj <= eventEndDate;
+        
+        // Match location: offsite events show in offsite tab, studio events show in respective studio tabs
+        const matchesLocation = event.isOffsite 
+          ? selectedStudio === 'offsite'
+          : (selectedStudio === 'studio-1-big' && (event.location === 'studio-1-big' || event.location === 'Big Studio')) ||
+            (selectedStudio === 'studio-2-small' && (event.location === 'studio-2-small' || event.location === 'Small Studio'));
+        
+        return matchesDate && matchesLocation;
+      });
 
       setSpecialEvents(specialEventsData);
     });
