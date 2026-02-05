@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Management System - Next Generation Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cyber-pink: #ff006e;
+            --cyber-blue: #00f5ff;
+            --cyber-purple: #8b00ff;
+            --cyber-yellow: #ffff00;
+            --dark-bg: #0a0a0f;
+            --darker-bg: #050508;
+            --card-bg: #1a1a2e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --neon-glow: 0 0 10px var(--cyber-blue), 0 0 20px var(--cyber-blue), 0 0 30px var(--cyber-blue);
+            --pink-glow: 0 0 10px var(--cyber-pink), 0 0 20px var(--cyber-pink), 0 0 30px var(--cyber-pink);
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .cyber-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(45deg, transparent 30%, rgba(255, 0, 110, 0.05) 30%, rgba(255, 0, 110, 0.05) 70%, transparent 70%),
+                linear-gradient(-45deg, transparent 30%, rgba(0, 245, 255, 0.05) 30%, rgba(0, 245, 255, 0.05) 70%, transparent 70%);
+            background-size: 100px 100px;
+            animation: bgScroll 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes bgScroll {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 100px 100px, -100px -100px; }
+        }
+
+        /* Grid Overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 245, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 245, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+            position: relative;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--cyber-pink), var(--cyber-blue), var(--cyber-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            animation: glitch 3s infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 2px); }
+            94% { transform: translate(2px, -2px); }
+            96% { transform: translate(-2px, -2px); }
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--cyber-blue);
+            text-shadow: var(--neon-glow);
+            letter-spacing: 2px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--cyber-pink);
+            text-shadow: var(--pink-glow);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            animation: fadeInUp 1.2s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            background: linear-gradient(45deg, var(--cyber-pink), var(--cyber-purple));
+            border: 2px solid var(--cyber-blue);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: var(--neon-glow);
+            animation: fadeInUp 1.4s ease-out;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--cyber-blue), 0 0 40px var(--cyber-blue);
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin: 4rem 0 3rem;
+            color: var(--cyber-blue);
+            text-shadow: var(--neon-glow);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyber-pink), var(--cyber-blue));
+            margin: 1rem auto;
+            box-shadow: var(--neon-glow);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 2px solid var(--cyber-blue);
+            padding: 2rem;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 245, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--cyber-pink);
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.4);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--cyber-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--cyber-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Industries Section */
+        .industries {
+            background: var(--darker-bg);
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+            border-top: 2px solid var(--cyber-pink);
+            border-bottom: 2px solid var(--cyber-pink);
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.2);
+        }
+
+        .industry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .industry-card {
+            background: var(--card-bg);
+            border: 2px solid var(--cyber-purple);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 10px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .industry-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyber-pink), var(--cyber-blue), var(--cyber-purple));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .industry-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .industry-card:hover {
+            transform: scale(1.05);
+            border-color: var(--cyber-blue);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.4);
+        }
+
+        .industry-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--cyber-purple);
+        }
+
+        .industry-card h3 {
+            font-size: 1.3rem;
+            color: var(--cyber-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 2px solid var(--cyber-yellow);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--cyber-yellow);
+            text-shadow: 0 0 20px var(--cyber-yellow);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        /* Benefits Section */
+        .benefits {
+            margin: 4rem 0;
+        }
+
+        .benefit-item {
+            background: var(--card-bg);
+            border-left: 4px solid var(--cyber-pink);
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .benefit-item:hover {
+            border-left-color: var(--cyber-blue);
+            transform: translateX(10px);
+            box-shadow: 0 0 30px rgba(0, 245, 255, 0.3);
+        }
+
+        .benefit-item h3 {
+            color: var(--cyber-pink);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .benefit-item ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .benefit-item li {
+            color: var(--text-secondary);
+            margin: 0.5rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .benefit-item li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--cyber-blue);
+            font-size: 1.2rem;
+        }
+
+        /* Tech Stack */
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin: 3rem 0;
+        }
+
+        .tech-badge {
+            background: var(--card-bg);
+            border: 2px solid var(--cyber-purple);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            color: var(--cyber-blue);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(139, 0, 255, 0.3);
+        }
+
+        .tech-badge:hover {
+            background: var(--cyber-purple);
+            color: var(--text-primary);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(139, 0, 255, 0.6);
+        }
+
+        /* Pricing Section */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border: 2px solid var(--cyber-blue);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--cyber-pink);
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(255, 0, 110, 0.4);
+        }
+
+        .pricing-card:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.4);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.8rem;
+            color: var(--cyber-blue);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .price {
+            font-size: 3rem;
+            color: var(--cyber-pink);
+            font-weight: bold;
+            margin: 1rem 0;
+            text-shadow: var(--pink-glow);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--cyber-blue);
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Contact Section */
+        .contact {
+            background: var(--darker-bg);
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+            text-align: center;
+            border: 2px solid var(--cyber-pink);
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(255, 0, 110, 0.3);
+        }
+
+        .contact h2 {
+            font-size: 2.5rem;
+            color: var(--cyber-pink);
+            margin-bottom: 1rem;
+            text-shadow: var(--pink-glow);
+        }
+
+        .contact p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--cyber-blue);
+            font-size: 1.1rem;
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            color: var(--cyber-pink);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 2px solid var(--cyber-blue);
+            background: var(--darker-bg);
+            color: var(--text-secondary);
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--cyber-blue);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--cyber-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        /* Scroll Animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInScroll 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInScroll {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .features-grid,
+            .industry-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Glowing Border Animation */
+        @keyframes borderGlow {
+            0%, 100% { border-color: var(--cyber-blue); }
+            50% { border-color: var(--cyber-pink); }
+        }
+
+        .glow-border {
+            animation: borderGlow 3s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="cyber-bg"></div>
+    <div class="grid-overlay"></div>
+
+    <header>
+        <div class="logo">STUDIO NEXUS</div>
+        <p class="tagline">Next-Generation Studio Management Platform</p>
+    </header>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Transform Your Studio Management</h1>
+            <p>
+                A cutting-edge, all-in-one platform designed for dance studios, sports clubs, 
+                fitness centers, and any organization that needs powerful scheduling, booking, 
+                and member management capabilities.
+            </p>
+            <a href="#contact" class="cta-button">Request Demo</a>
+        </section>
+
+        <!-- Stats Section -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Cloud-Based</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Access Anywhere</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Scalability</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Languages</div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <h2 class="section-title">Core Features</h2>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📅</div>
+                <h3>Smart Calendar</h3>
+                <p>
+                    Dual-studio calendar system with color-coded events, recurring class management, 
+                    and automatic conflict detection. Never double-book again.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">👥</div>
+                <h3>User Management</h3>
+                <p>
+                    Complete member database with role-based permissions, contract tracking, 
+                    payment history, and CSV bulk import capabilities.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎯</div>
+                <h3>Booking System</h3>
+                <p>
+                    Automated booking approval workflow with 24-hour cancellation policy, 
+                    time slot validation, and real-time availability updates.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">💬</div>
+                <h3>Messaging Hub</h3>
+                <p>
+                    Built-in communication system with individual, group, and bulk messaging. 
+                    Keep your members informed and engaged.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📰</div>
+                <h3>News & Updates</h3>
+                <p>
+                    Publish announcements, updates, and information with rich content support. 
+                    Draft and schedule posts for maximum impact.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎪</div>
+                <h3>Event Management</h3>
+                <p>
+                    Create and manage special events with registration tracking, capacity limits, 
+                    pricing, and automatic waitlist management.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📊</div>
+                <h3>Analytics Dashboard</h3>
+                <p>
+                    Real-time statistics on members, bookings, revenue, and utilization. 
+                    Make data-driven decisions to grow your business.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🌍</div>
+                <h3>Multi-Language</h3>
+                <p>
+                    Full support for German, English, and Spanish. Serve diverse communities 
+                    with localized interfaces and content.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure & Reliable</h3>
+                <p>
+                    Enterprise-grade security with Firebase backend, encrypted data, 
+                    role-based access control, and automatic backups.
+                </p>
+            </div>
+        </div>
+
+        <!-- Industries Section -->
+        <div class="industries">
+            <h2 class="section-title">Perfect For Multiple Industries</h2>
+            <div class="industry-grid">
+                <div class="industry-card">
+                    <div class="industry-icon">💃</div>
+                    <h3>Dance Studios</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🏋️</div>
+                    <h3>Fitness Centers</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🥋</div>
+                    <h3>Martial Arts</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🎭</div>
+                    <h3>Theater Groups</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🎵</div>
+                    <h3>Music Schools</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🧘</div>
+                    <h3>Yoga Studios</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">⚽</div>
+                    <h3>Sports Clubs</h3>
+                </div>
+                <div class="industry-card">
+                    <div class="industry-icon">🎨</div>
+                    <h3>Art Studios</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits Section -->
+        <h2 class="section-title">Why Choose Studio Nexus?</h2>
+        <div class="benefits">
+            <div class="benefit-item fade-in">
+                <h3>⚡ Save Time & Reduce Admin Work</h3>
+                <ul>
+                    <li>Automated booking approvals and conflict detection</li>
+                    <li>Bulk user import via CSV</li>
+                    <li>Recurring class scheduling with one click</li>
+                    <li>Automatic holiday period management</li>
+                    <li>Real-time calendar updates</li>
+                </ul>
+            </div>
+
+            <div class="benefit-item fade-in">
+                <h3>💰 Increase Revenue & Efficiency</h3>
+                <ul>
+                    <li>Maximize studio utilization with smart scheduling</li>
+                    <li>Track member contracts and payment history</li>
+                    <li>Special event registration with capacity management</li>
+                    <li>Analytics to identify peak times and optimize pricing</li>
+                    <li>Reduce no-shows with automated reminders</li>
+                </ul>
+            </div>
+
+            <div class="benefit-item fade-in">
+                <h3>🤝 Improve Member Experience</h3>
+                <ul>
+                    <li>24/7 online booking from any device</li>
+                    <li>Instant booking confirmations</li>
+                    <li>Easy-to-use mobile and web interfaces</li>
+                    <li>Direct messaging with instructors and admin</li>
+                    <li>Stay informed with news and updates</li>
+                </ul>
+            </div>
+
+            <div class="benefit-item fade-in">
+                <h3>🚀 Scale Your Business</h3>
+                <ul>
+                    <li>Support unlimited members and bookings</li>
+                    <li>Multi-studio management from one platform</li>
+                    <li>Role-based access for admins, instructors, and members</li>
+                    <li>Cloud-based with automatic updates</li>
+                    <li>Export data for external analysis</li>
+                </ul>
+            </div>
+
+            <div class="benefit-item fade-in">
+                <h3>🌐 Cross-Platform Accessibility</h3>
+                <ul>
+                    <li>Responsive web application works on any browser</li>
+                    <li>Native iOS and Android mobile apps</li>
+                    <li>Desktop application support</li>
+                    <li>Offline-capable with automatic sync</li>
+                    <li>Progressive Web App (PWA) technology</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tech Stack Section -->
+        <h2 class="section-title">Built With Modern Technology</h2>
+        <div class="tech-stack">
+            <div class="tech-badge">React Native</div>
+            <div class="tech-badge">TypeScript</div>
+            <div class="tech-badge">Firebase</div>
+            <div class="tech-badge">Cloud Firestore</div>
+            <div class="tech-badge">Expo</div>
+            <div class="tech-badge">PWA</div>
+            <div class="tech-badge">Real-time Sync</div>
+            <div class="tech-badge">Responsive Design</div>
+            <div class="tech-badge">i18n</div>
+            <div class="tech-badge">REST API</div>
+        </div>
+
+        <!-- Pricing Section -->
+        <h2 class="section-title">Flexible Pricing Plans</h2>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Starter</h3>
+                <div class="price">€299</div>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">One-time setup</p>
+                <ul class="pricing-features">
+                    <li>Up to 100 members</li>
+                    <li>1 studio/location</li>
+                    <li>Basic calendar & booking</li>
+                    <li>Member management</li>
+                    <li>Email support</li>
+                    <li>Mobile & web access</li>
+                </ul>
+                <a href="#contact" class="cta-button" style="margin-top: 2rem; padding: 0.8rem 2rem; font-size: 1rem;">Get Started</a>
+            </div>
+
+            <div class="pricing-card featured glow-border">
+                <h3>Professional</h3>
+                <div class="price">€599</div>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">One-time setup</p>
+                <ul class="pricing-features">
+                    <li>Up to 500 members</li>
+                    <li>Multiple studios</li>
+                    <li>Advanced analytics</li>
+                    <li>Messaging system</li>
+                    <li>News & events</li>
+                    <li>Priority support</li>
+                    <li>Custom branding</li>
+                    <li>CSV import</li>
+                </ul>
+                <a href="#contact" class="cta-button" style="margin-top: 2rem; padding: 0.8rem 2rem; font-size: 1rem;">Most Popular</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="price">Custom</div>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Contact for quote</p>
+                <ul class="pricing-features">
+                    <li>Unlimited members</li>
+                    <li>Unlimited studios</li>
+                    <li>White-label solution</li>
+                    <li>Custom integrations</li>
+                    <li>Dedicated support</li>
+                    <li>Training & onboarding</li>
+                    <li>SLA guarantee</li>
+                    <li>Custom features</li>
+                </ul>
+                <a href="#contact" class="cta-button" style="margin-top: 2rem; padding: 0.8rem 2rem; font-size: 1rem;">Contact Sales</a>
+            </div>
+        </div>
+
+        <!-- Use Cases Section -->
+        <h2 class="section-title">Real-World Applications</h2>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎭</div>
+                <h3>Dance Studio</h3>
+                <p>
+                    Manage multiple class levels, track student progress, handle studio bookings 
+                    for practice, and organize special workshops and performances.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🏋️</div>
+                <h3>Fitness Center</h3>
+                <p>
+                    Schedule group classes, manage personal training sessions, track member 
+                    contracts, and handle equipment room bookings.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🥋</div>
+                <h3>Martial Arts Dojo</h3>
+                <p>
+                    Organize belt levels, schedule sparring sessions, manage tournament 
+                    registrations, and communicate with students and parents.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎵</div>
+                <h3>Music School</h3>
+                <p>
+                    Schedule individual lessons, manage practice room bookings, organize 
+                    recitals, and track student instrument rentals.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🧘</div>
+                <h3>Yoga Studio</h3>
+                <p>
+                    Manage class schedules, handle mat rentals, organize retreats, track 
+                    membership packages, and send wellness tips.
+                </p>
+            </div>
+
+            <div class="feature-card fade-in">
+                <div class="feature-icon">⚽</div>
+                <h3>Sports Club</h3>
+                <p>
+                    Schedule team practices, manage field bookings, organize tournaments, 
+                    track player registrations, and communicate with parents.
+                </p>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <section class="contact" id="contact">
+            <h2>Ready to Transform Your Studio?</h2>
+            <p>Get in touch for a personalized demo and see how Studio Nexus can revolutionize your operations.</p>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>mail@antoniodias.de</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📱</span>
+                    <span>+49 177 7855744</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">🌐</span>
+                    <span>www.flamenco-werkstatt.de</span>
+                </div>
+            </div>
+
+            <a href="mailto:mail@antoniodias.de?subject=Studio Nexus Demo Request" class="cta-button" style="margin-top: 2rem;">
+                Schedule Demo
+            </a>
+        </section>
+    </div>
+
+    <footer>
+        <div class="footer-links">
+            <a href="#features">Features</a>
+            <a href="#industries">Industries</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#contact">Contact</a>
+        </div>
+        <p>&copy; 2026 Studio Nexus. Built for Antonio Dias Flamenco Werkstatt.</p>
+        <p style="color: var(--cyber-blue); margin-top: 1rem;">Powered by cutting-edge technology. Designed for the future.</p>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationDelay = '0s';
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .benefit-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Dynamic year in footer
+        const currentYear = new Date().getFullYear();
+        document.querySelector('footer p').textContent = `© ${currentYear} Studio Nexus. Built for Antonio Dias Flamenco Werkstatt.`;
+
+        // Add glitch effect on logo hover
+        const logo = document.querySelector('.logo');
+        logo.addEventListener('mouseenter', () => {
+            logo.style.animation = 'glitch 0.3s infinite';
+        });
+        logo.addEventListener('mouseleave', () => {
+            logo.style.animation = 'glitch 3s infinite';
+        });
+    </script>
+</body>
+</html>
