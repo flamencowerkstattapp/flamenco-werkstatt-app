@@ -29,7 +29,9 @@ import { Group, GroupType, User, ClassLevel, ClassType } from '../types';
 export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
+  const membersScrollViewRef = useRef<ScrollView>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showMembersScrollTop, setShowMembersScrollTop] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [membersSearchQuery, setMembersSearchQuery] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -163,6 +166,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
       ...formData,
       memberIds: group.memberIds,
     });
+    setMembersSearchQuery('');
     setShowMembersModal(true);
   };
 
@@ -280,6 +284,11 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
     setShowScrollTop(yOffset > 200);
   };
 
+  const handleMembersScroll = (event: any) => {
+    const yOffset = event.nativeEvent?.contentOffset?.y || 0;
+    setShowMembersScrollTop(yOffset > 200);
+  };
+
   const getGroupTypeIcon = (type: GroupType) => {
     switch (type) {
       case 'class':
@@ -379,32 +388,67 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.membersList}>
-            {users.map((user) => (
+          <View style={styles.membersSearchContainer}>
+            <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              value={membersSearchQuery}
+              onChangeText={setMembersSearchQuery}
+              placeholder={t('groups.searchMembers')}
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+            {membersSearchQuery.length > 0 && (
               <TouchableOpacity
-                key={user.id}
-                style={styles.memberItem}
-                onPress={() => toggleMember(user.id)}
+                style={styles.clearSearchButton}
+                onPress={() => setMembersSearchQuery('')}
               >
-                <View style={styles.memberInfo}>
-                  <Ionicons
-                    name="person-outline"
-                    size={20}
-                    color={theme.colors.textSecondary}
-                  />
-                  <Text style={styles.memberName}>
-                    {user.firstName} {user.lastName}
-                  </Text>
-                  <Text style={styles.memberRole}>({user.role})</Text>
-                </View>
-                <Ionicons
-                  name={formData.memberIds.includes(user.id) ? 'checkmark-circle' : 'ellipse-outline'}
-                  size={24}
-                  color={formData.memberIds.includes(user.id) ? theme.colors.success : theme.colors.border}
-                />
+                <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
+          </View>
+
+          <View style={styles.membersListContainer}>
+            <ScrollView
+              ref={membersScrollViewRef}
+              style={styles.membersList}
+              onScroll={handleMembersScroll}
+              scrollEventThrottle={16}
+            >
+              {users
+                .filter(user => {
+                  if (!membersSearchQuery) return true;
+                  const query = membersSearchQuery.toLowerCase();
+                  const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+                  const role = user.role.toLowerCase();
+                  return fullName.includes(query) || role.includes(query);
+                })
+                .map((user) => (
+                <TouchableOpacity
+                  key={user.id}
+                  style={styles.memberItem}
+                  onPress={() => toggleMember(user.id)}
+                >
+                  <View style={styles.memberInfo}>
+                    <Ionicons
+                      name="person-outline"
+                      size={20}
+                      color={theme.colors.textSecondary}
+                    />
+                    <Text style={styles.memberName}>
+                      {user.firstName} {user.lastName}
+                    </Text>
+                    <Text style={styles.memberRole}>({user.role})</Text>
+                  </View>
+                  <Ionicons
+                    name={formData.memberIds.includes(user.id) ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={24}
+                    color={formData.memberIds.includes(user.id) ? theme.colors.success : theme.colors.border}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {showMembersScrollTop && <ScrollToTopButton scrollViewRef={membersScrollViewRef} />}
+          </View>
 
           <View style={styles.modalActions}>
             <Button
@@ -900,6 +944,22 @@ const styles = StyleSheet.create({
   },
   switchThumbActive: {
     alignSelf: 'flex-end',
+  },
+  membersSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  membersListContainer: {
+    position: 'relative',
+    maxHeight: 400,
   },
   membersList: {
     maxHeight: 400,

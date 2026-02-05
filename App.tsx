@@ -193,7 +193,47 @@ const AppNavigator = () => {
 export default function App() {
   const navigationRef = React.useRef<any>(null);
 
+  // Update page title based on current route
+  const updatePageTitle = (routeName?: string) => {
+    if (Platform.OS === 'web') {
+      const baseTitle = 'Antonio Dias Flamenco Werkstatt';
+      
+      const titleMap: { [key: string]: string } = {
+        'CalendarMain': t('navigation.calendar'),
+        'Calendar': t('navigation.calendar'),
+        'MessagesList': t('navigation.messages'),
+        'Messages': t('navigation.messages'),
+        'MessageDetails': t('messages.messageDetails'),
+        'ComposeMessage': t('messages.compose'),
+        'NewsList': t('navigation.news'),
+        'News': t('navigation.news'),
+        'NewsDetails': t('news.title'),
+        'EventsList': t('navigation.events'),
+        'Events': t('navigation.events'),
+        'EventDetails': t('events.eventDetails'),
+        'AdminDashboard': t('navigation.admin'),
+        'Admin': t('navigation.admin'),
+        'ManageUsers': t('admin.manageUsers'),
+        'ManageEvents': t('admin.manageEvents'),
+        'ManageNews': t('admin.manageNews'),
+        'ManageGroups': t('admin.manageGroups'),
+        'Statistics': t('admin.statistics'),
+        'BookStudio': t('calendar.bookStudio'),
+        'BookingDetails': t('calendar.bookingDetails'),
+        'Login': t('common.login'),
+        'SignUp': t('auth.signUp'),
+        'ForgotPassword': t('auth.forgotPassword'),
+      };
+
+      const screenTitle = routeName && titleMap[routeName] ? titleMap[routeName] : t('navigation.calendar');
+      document.title = `${screenTitle} - ${baseTitle}`;
+    }
+  };
+
   useEffect(() => {
+    // Set initial title
+    updatePageTitle('Calendar');
+
     const backAction = () => {
       if (navigationRef.current) {
         const canGoBack = navigationRef.current.canGoBack();
@@ -217,7 +257,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <NotificationProvider>
-          <NavigationContainer ref={navigationRef}>
+          <NavigationContainer 
+            ref={navigationRef}
+            onStateChange={() => {
+              const currentRoute = navigationRef.current?.getCurrentRoute();
+              updatePageTitle(currentRoute?.name);
+            }}
+          >
             <AppNavigator />
           </NavigationContainer>
         </NotificationProvider>

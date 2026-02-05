@@ -16,6 +16,7 @@ import { theme } from '../constants/theme';
 import { AppNotification } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
 import { t } from '../locales';
+import { ConfirmModal } from './ConfirmModal';
 
 interface NotificationCenterProps {
   visible: boolean;
@@ -41,6 +42,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   } = useNotifications();
 
   const [selectedTab, setSelectedTab] = useState<'all' | 'unread' | 'settings'>('all');
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const filteredNotifications =
     selectedTab === 'unread'
@@ -58,26 +60,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     }
   };
 
-  const handleMarkAllAsRead = () => {
-    Alert.alert(
-      t('notifications.markAllRead'),
-      t('notifications.markAllReadConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('notifications.markAllRead'), onPress: markAllAsRead },
-      ]
-    );
-  };
-
   const handleDeleteAll = () => {
-    Alert.alert(
-      t('notifications.deleteAll'),
-      t('notifications.deleteAllConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('notifications.deleteAll'), style: 'destructive', onPress: deleteAllNotifications },
-      ]
-    );
+    deleteAllNotifications();
+    setShowDeleteAllConfirm(false);
   };
 
   const handleTogglePushNotifications = async (value: boolean) => {
@@ -297,12 +282,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           <>
             {notifications.length > 0 && (
               <View style={styles.actions}>
-                <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.actionButton}>
-                  <Ionicons name="checkmark-done" size={18} color={theme.colors.primary} />
-                  <Text style={styles.actionButtonText}>{t('notifications.markAllRead')}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleDeleteAll} style={styles.actionButton}>
+                <TouchableOpacity onPress={() => setShowDeleteAllConfirm(true)} style={styles.actionButton}>
                   <Ionicons name="trash" size={18} color={theme.colors.error} />
                   <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
                     {t('notifications.deleteAll')}
@@ -328,6 +308,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           </>
         )}
       </View>
+
+      <ConfirmModal
+        visible={showDeleteAllConfirm}
+        title={t('notifications.deleteAll')}
+        message={t('notifications.deleteAllConfirm')}
+        confirmText={t('notifications.deleteAll')}
+        cancelText={t('common.cancel')}
+        onConfirm={handleDeleteAll}
+        onCancel={() => setShowDeleteAllConfirm(false)}
+        destructive={true}
+      />
     </Modal>
   );
 };
@@ -384,7 +375,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.surface,

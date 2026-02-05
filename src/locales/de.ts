@@ -508,6 +508,7 @@ export default {
   groups: {
     title: 'Gruppen',
     searchGroups: 'Gruppen nach Name, Beschreibung oder Typ suchen...',
+    searchMembers: 'Mitglieder nach Name oder Rolle suchen...',
     manageGroups: 'Gruppen verwalten',
     createGroup: 'Gruppe erstellen',
     editGroup: 'Gruppe bearbeiten',

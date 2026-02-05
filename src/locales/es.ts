@@ -498,6 +498,7 @@ export default {
   groups: {
     title: 'Grupos',
     searchGroups: 'Buscar grupos por nombre, descripción o tipo...',
+    searchMembers: 'Buscar miembros por nombre o rol...',
     manageGroups: 'Gestionar Grupos',
     createGroup: 'Crear Grupo',
     editGroup: 'Editar Grupo',

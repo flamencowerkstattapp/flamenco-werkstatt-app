@@ -29,6 +29,7 @@ Fill in the CSV with member information. Required columns:
 Optional columns:
 - **phone** - Phone number (e.g., +49123456789)
 - **membershipType** - Options: `1-class`, `2-classes`, `3-classes`, `all-you-can-dance`
+- **noMembership** - Contract status: `true` (no contract), `false` (has contract) (default: false)
 - **role** - Options: `member`, `instructor`, `admin` (default: member)
 - **danceLevel** - Options: `beginner`, `intermediate`, `advanced`, `professional`
 - **emergencyContact** - Emergency contact name
@@ -53,9 +54,9 @@ The import modal will show:
 ## CSV Format Example
 
 ```csv
-firstName,lastName,email,phone,membershipType,role,danceLevel,emergencyContact,emergencyPhone,preferredStyles,preferredLanguage
-John,Doe,john.doe@example.com,+49123456789,2-classes,member,intermediate,Jane Doe,+49987654321,Flamenco,en
-Maria,Garcia,maria.garcia@example.com,+34612345678,all-you-can-dance,member,advanced,Carlos Garcia,+34698765432,"Flamenco,Sevillanas",es
+firstName,lastName,email,phone,membershipType,noMembership,role,danceLevel,emergencyContact,emergencyPhone,preferredStyles,preferredLanguage
+John,Doe,john.doe@example.com,+49123456789,2-classes,false,member,intermediate,Jane Doe,+49987654321,Flamenco,en
+Maria,Garcia,maria.garcia@example.com,+34612345678,all-you-can-dance,false,member,advanced,Carlos Garcia,+34698765432,"Flamenco,Sevillanas",es
 ```
 
 ## Important Notes
@@ -134,7 +135,7 @@ Members are stored in Firestore collection: `users`
 Each member document includes:
 - id, email, firstName, lastName
 - role, phone, memberSince, isActive
-- preferredLanguage, membershipType
+- preferredLanguage, membershipType, noMembership
 - emergencyContact, emergencyPhone
 - danceLevel, preferredStyles
 - createdAt, updatedAt

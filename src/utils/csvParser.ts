@@ -6,6 +6,7 @@ export interface CSVRow {
   email: string;
   phone?: string;
   membershipType?: '1-class' | '2-classes' | '3-classes' | 'all-you-can-dance';
+  noMembership?: boolean;
   role?: UserRole;
   danceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';
   emergencyContact?: string;
@@ -81,6 +82,7 @@ export const parseCSV = (csvContent: string): ParseResult => {
         email: row.email || '',
         phone: row.phone || undefined,
         membershipType: row.membershiptype || row.membershipType || undefined,
+        noMembership: parseBoolean(row.nomembership || row.noMembership),
         role: (row.role || 'member') as UserRole,
         danceLevel: row.dancelevel || row.danceLevel || undefined,
         emergencyContact: row.emergencycontact || row.emergencyContact || undefined,
@@ -185,6 +187,17 @@ const isValidPhone = (phone: string): boolean => {
 };
 
 /**
+ * Parse boolean values from CSV (handles various formats)
+ */
+const parseBoolean = (value: string | undefined): boolean | undefined => {
+  if (!value || value.trim() === '') return undefined;
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+  return undefined;
+};
+
+/**
  * Generate CSV template for download
  */
 export const generateCSVTemplate = (): string => {
@@ -194,6 +207,7 @@ export const generateCSVTemplate = (): string => {
     'email',
     'phone',
     'membershipType',
+    'noMembership',
     'role',
     'danceLevel',
     'emergencyContact',
@@ -208,6 +222,7 @@ export const generateCSVTemplate = (): string => {
     'john.doe@example.com',
     '+49123456789',
     '2-classes',
+    'false',
     'member',
     'intermediate',
     'Jane Doe',

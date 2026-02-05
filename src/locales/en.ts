@@ -512,6 +512,7 @@ export default {
   groups: {
     title: 'Groups',
     searchGroups: 'Search groups by name, description or type...',
+    searchMembers: 'Search members by name or role...',
     manageGroups: 'Manage Groups',
     createGroup: 'Create Group',
     editGroup: 'Edit Group',
