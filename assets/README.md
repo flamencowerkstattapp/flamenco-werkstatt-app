@@ -1,31 +1,50 @@
 # Assets Folder
 
-This folder contains the application's visual assets.
+This folder contains all production-ready visual assets for the Antonio Dias Flamenco Werkstatt PWA.
 
-## Required Assets
+## ✅ Production Assets
 
-You need to add the following image files:
+All required assets are in place and production-ready:
 
-1. **icon.png** (1024x1024px) - App icon
-2. **splash.png** (1242x2436px) - Splash screen image
-3. **adaptive-icon.png** (1024x1024px) - Android adaptive icon
-4. **favicon.png** (48x48px) - Web favicon
+### Core Assets
+- **logo.png** (525KB) - High-quality source logo for icon generation
+- **icon.png** (1024x1024px) - App icon
+- **adaptive-icon.png** (1024x1024px) - Android adaptive icon
+- **favicon.png** - Web favicon
+- **favicon.ico** - Browser favicon
+- **logo.ico** - Alternative icon format
 
-## Temporary Placeholder
+### PWA Icons (All Sizes)
+All icons are automatically copied to `/dist` during build:
+- icon-48x48.png (4.3 KB)
+- icon-64x64.png (6.7 KB)
+- icon-72x72.png (7.9 KB)
+- icon-96x96.png (12 KB)
+- icon-128x128.png (19 KB)
+- icon-144x144.png (23 KB)
+- icon-152x152.png (25 KB)
+- **icon-192x192.png (36 KB)** - Critical for Android home screen
+- icon-384x384.png (109 KB)
+- **icon-512x512.png (175 KB)** - Critical for splash screens
 
-For now, you can use placeholder images or create simple colored squares with the brand color (#8B0000 - dark red).
+## 🎨 Brand Colors
 
-You can generate these using any image editor or online tools like:
-- https://placeholder.com/
-- Canva
-- Figma
-- Photoshop
+- **Primary**: #8B0000 (Dark Red)
+- **Secondary**: #D4AF37 (Gold)
+- **Background**: #FFFFFF (White)
+- **Text**: #000000 (Black)
 
-## Brand Colors
+## 🔄 Build Process
 
-Use these colors for your assets:
-- Primary: #8B0000 (Dark Red)
-- Secondary: #D4AF37 (Gold)
-- Background: #FFFFFF (White)
+The build script (`scripts/inject-env.js`) automatically:
+1. Copies all icon files from `/assets` to `/dist`
+2. Copies `manifest.json` from `/public` to `/dist`
+3. Ensures all PWA assets are deployed to Netlify
 
-The app will run without these files, but you'll see warnings in the console.
+**No manual copying required!**
+
+## 📖 Documentation
+
+For detailed PWA icon information, see:
+- **[PWA-ICONS-README.md](PWA-ICONS-README.md)** - Icon requirements and quality guidelines
+- **[docs/PWA_SETUP.md](../docs/PWA_SETUP.md)** - Complete PWA setup guide
