@@ -31,37 +31,44 @@ Utility to register the service worker on web platforms.
 
 ## Required Assets
 
-Before deploying, you need to create the following assets:
+All icon files are stored in `/assets/` and are **automatically copied** to the `dist/` folder during the build process.
 
 ### Icons
-Create these in `/assets/icons/`:
+The following icons are already configured in `/assets/`:
+- icon-48x48.png
+- icon-64x64.png
 - icon-72x72.png
 - icon-96x96.png
 - icon-128x128.png
 - icon-144x144.png
 - icon-152x152.png
-- icon-192x192.png ⭐ (minimum required)
+- icon-192x192.png ⭐ (critical for Android home screen)
 - icon-384x384.png
-- icon-512x512.png ⭐ (recommended)
+- icon-512x512.png ⭐ (critical for splash screens)
 
 ### Favicon
-Create in `/assets/`:
 - favicon.png (32x32 or 64x64)
+- favicon.ico
 
-### Splash Screens (Optional, for iOS)
-Create these in `/assets/splash/`:
-- Various sizes for different iOS devices (see `/assets/splash/README.md`)
+**Note**: The build script (`scripts/inject-env.js`) automatically copies all icons and `manifest.json` from `/assets/` and `/public/` to the `/dist/` folder during `npm run build:web`. You don't need to manually copy icons.
 
-**Quick Icon Generation:**
+### Icon Quality Guidelines
+For sharp, non-blurry icons on Android:
+- **icon-192x192.png**: Minimum 35KB, recommended 60-80KB
+- **icon-512x512.png**: Minimum 150KB, recommended 200-250KB
+- Use high-quality source images (logo.png is 525KB)
+- Avoid over-compression
+
+**Regenerating Icons** (if needed):
 ```bash
-# Using online tools (easiest)
-Visit: https://realfavicongenerator.net/
-Upload your logo.png and download all sizes
+# Using online tools (recommended)
+Visit: https://www.pwabuilder.com/imageGenerator
+Upload assets/logo.png and download all sizes
 
 # OR using ImageMagick
 cd assets
-convert logo.png -resize 192x192 icons/icon-192x192.png
-convert logo.png -resize 512x512 icons/icon-512x512.png
+magick logo.png -resize 192x192 -quality 95 icon-192x192.png
+magick logo.png -resize 512x512 -quality 95 icon-512x512.png
 # ... repeat for other sizes
 ```
 
@@ -95,7 +102,11 @@ This starts the Expo web server at `http://localhost:19006` (or similar port).
 npm run build:web
 ```
 
-This creates an optimized production build in the `/web-build` directory.
+This creates an optimized production build in the `/dist` directory and automatically:
+- Exports the Expo web app
+- Injects environment variables
+- Copies all PWA icons from `/assets/` to `/dist/`
+- Copies `manifest.json` from `/public/` to `/dist/`
 
 ### Test Production Build Locally
 ```bash
@@ -106,22 +117,24 @@ This serves the production build locally for testing.
 
 ## Deployment Options
 
-### Option 1: Netlify (Recommended)
+### Option 1: Netlify (Recommended) ✅ Currently Configured
 1. Create account at https://netlify.com
 2. Connect your Git repository
 3. Build settings:
    - **Build command**: `npm run build:web`
-   - **Publish directory**: `web-build`
+   - **Publish directory**: `dist`
 4. Deploy!
 
 **Custom Domain**: Configure in Netlify settings
+
+**Note**: The current app is already configured for Netlify deployment via `netlify.toml`.
 
 ### Option 2: Vercel
 1. Create account at https://vercel.com
 2. Import your Git repository
 3. Build settings:
    - **Build command**: `npm run build:web`
-   - **Output directory**: `web-build`
+   - **Output directory**: `dist`
 4. Deploy!
 
 ### Option 3: Firebase Hosting
@@ -147,12 +160,12 @@ firebase deploy --only hosting
 2. Install gh-pages: `npm install --save-dev gh-pages`
 3. Add to package.json scripts:
    ```json
-   "deploy:github": "gh-pages -d web-build"
+   "deploy:github": "gh-pages -d dist"
    ```
 4. Deploy: `npm run deploy:github`
 
 ### Option 5: Any Static Host
-Upload the contents of `/web-build` to any static hosting service:
+Upload the contents of `/dist` to any static hosting service:
 - AWS S3 + CloudFront
 - Azure Static Web Apps
 - Cloudflare Pages
