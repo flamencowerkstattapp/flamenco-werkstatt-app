@@ -13,6 +13,7 @@ import { getMessageService } from '../services/messageService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
 import { MessageStatusIndicator } from '../components/MessageStatusIndicator';
+import { LinkableText } from '../components/LinkableText';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { Message, User } from '../types';
@@ -272,7 +273,7 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
 
         <View style={styles.messageContent}>
           <Text style={styles.subject}>{message.subject}</Text>
-          <Text style={styles.body}>{message.body}</Text>
+          <LinkableText style={styles.body}>{message.body}</LinkableText>
         </View>
 
         {message.updatedAt.getTime() !== message.createdAt.getTime() && (

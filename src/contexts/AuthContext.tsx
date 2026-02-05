@@ -9,7 +9,7 @@ import {
   sendEmailVerification,
   ActionCodeSettings,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { User, UserRole } from '../types';
 
@@ -185,60 +185,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       // Try sending email verification without custom settings first
-      console.log('Sending basic email verification...');
-      
-      await withTimeout(
-        sendEmailVerification(userCredential.user),
-        15000,
-        'Timed out while sending verification email.'
-      );
-      
-      console.log('Basic email verification sent successfully');
+      await sendEmailVerification(userCredential.user);
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);
-      console.error('Email verification error details:', emailError.code, emailError.message);
     }
 
     try {
       // Check if user profile already exists (from CSV import)
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
+      const q = query(usersRef, where('email', '==', email.toLowerCase().trim()), limit(1));
       const snapshot = await getDocs(q);
       
       if (!snapshot.empty) {
         // Profile exists from CSV import - update it with Auth UID
-        console.log('Auth: Found existing profile from CSV import, linking to Auth account');
         const existingDoc = snapshot.docs[0];
         const existingData = existingDoc.data() as User;
         
-        // Update existing profile with Auth UID and merge with signup data
-        const updatedUser: User = {
-          ...existingData,
-          id: uid, // Link to Auth UID
-          firstName: userData.firstName || existingData.firstName,
-          lastName: userData.lastName || existingData.lastName,
-          phone: userData.phone || existingData.phone,
-          updatedAt: new Date(),
-        };
-        
-        // Delete old document and create new one with Auth UID
-        await withTimeout(
-          deleteDoc(doc(db, 'users', existingDoc.id)),
-          15000,
-          'Timed out while updating profile.'
-        );
-        
-        await withTimeout(
-          setDoc(doc(db, 'users', uid), updatedUser),
-          15000,
-          'Timed out while saving profile.'
-        );
-        
-        console.log('Auth: Successfully linked CSV profile to Auth account');
+        // If the existing doc ID is different from Auth UID, we need to migrate
+        if (existingDoc.id !== uid) {
+          
+          // Update existing profile with Auth UID and merge with signup data
+          const updatedUser: User = {
+            ...existingData,
+            id: uid, // Link to Auth UID
+            firstName: userData.firstName || existingData.firstName,
+            lastName: userData.lastName || existingData.lastName,
+            phone: userData.phone || existingData.phone,
+            updatedAt: new Date(),
+          };
+          
+          // Create new document with Auth UID
+          await withTimeout(
+            setDoc(doc(db, 'users', uid), updatedUser),
+            15000,
+            'Timed out while saving profile.'
+          );
+          
+          // Delete old CSV document
+          try {
+            await withTimeout(
+              deleteDoc(doc(db, 'users', existingDoc.id)),
+              15000,
+              'Timed out while cleaning up old profile.'
+            );
+          } catch (deleteError) {
+            console.warn('Could not delete old CSV profile, admin cleanup may be needed:', deleteError);
+          }
+        } else {
+          // Doc ID already matches, just update it
+          const updatedUser: User = {
+            ...existingData,
+            firstName: userData.firstName || existingData.firstName,
+            lastName: userData.lastName || existingData.lastName,
+            phone: userData.phone || existingData.phone,
+            updatedAt: new Date(),
+          };
+          
+          await withTimeout(
+            setDoc(doc(db, 'users', uid), updatedUser, { merge: true }),
+            15000,
+            'Timed out while updating profile.'
+          );
+        }
       } else {
         // No existing profile - create new one
-        console.log('Auth: Creating new user profile');
         const newUser: User = {
           id: uid,
           email,

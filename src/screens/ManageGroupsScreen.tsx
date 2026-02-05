@@ -41,6 +41,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const [saving, setSaving] = useState(false);
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -442,6 +443,26 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
           />
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={t('groups.searchGroups')}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearSearchButton}
+              onPress={() => setSearchQuery('')}
+            >
+              <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {groups.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
@@ -449,7 +470,18 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
             <Text style={styles.emptyStateSubtext}>{t('groups.createFirstGroup')}</Text>
           </View>
         ) : (
-          groups.map((group) => (
+          groups
+            .filter(group => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const name = group.name.toLowerCase();
+              const description = group.description?.toLowerCase() || '';
+              const type = t(`groups.type.${group.type}`).toLowerCase();
+              return name.includes(query) || 
+                     description.includes(query) || 
+                     type.includes(query);
+            })
+            .map((group) => (
             <View key={group.id} style={styles.groupCard}>
               <View style={styles.groupHeader}>
                 <View style={styles.groupTitleRow}>
@@ -894,5 +926,29 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     marginHorizontal: theme.spacing.xs,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+  },
+  searchIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.text,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+  },
+  clearSearchButton: {
+    padding: theme.spacing.xs,
   },
 });

@@ -15,6 +15,7 @@ import { messageService, getMessageService } from '../services/messageService';
 import { groupsService } from '../services/groupsService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
+import { ScrollToTopButton } from '../components/ScrollToTopButton';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { User, UserRole, Group } from '../types';
@@ -59,12 +60,15 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
   const [messageSent, setMessageSent] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [showRecipientModal, setShowRecipientModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<RecipientOption[]>([]);
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [showGroupScrollToTop, setShowGroupScrollToTop] = useState(false);
   const individualListRef = useRef<ScrollView>(null);
+  const groupListRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     console.log('ComposeMessageScreen: replyTo received:', replyTo);
@@ -369,6 +373,12 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
     user.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Filter groups based on search query
+  const filteredGroups = availableGroups.filter(group =>
+    group.name.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
+    (group.description && group.description.toLowerCase().includes(groupSearchQuery.toLowerCase()))
+  );
+
   const handleIndividualScroll = (event: any) => {
     const yOffset = event.nativeEvent?.contentOffset?.y || 0;
     setShowScrollToTop(yOffset > 200);
@@ -376,6 +386,15 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
 
   const scrollToTop = () => {
     individualListRef.current?.scrollTo({ y: 0, animated: true });
+  };
+
+  const handleGroupScroll = (event: any) => {
+    const yOffset = event.nativeEvent?.contentOffset?.y || 0;
+    setShowGroupScrollToTop(yOffset > 200);
+  };
+
+  const scrollGroupToTop = () => {
+    groupListRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   return (
@@ -587,7 +606,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
                     style={styles.searchInput}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    placeholder="Search by name, email, or role..."
+                    placeholder={t('messages.searchRecipients')}
                     placeholderTextColor={theme.colors.textSecondary}
                   />
                   {searchQuery.length > 0 && (
@@ -658,15 +677,47 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent}>
-            {availableGroups.length === 0 ? (
-              <View style={styles.emptyGroupsContainer}>
-                <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
-                <Text style={styles.emptyGroupsText}>{t('messages.noGroupsAvailable')}</Text>
-                <Text style={styles.emptyGroupsSubtext}>{t('messages.createGroupsInAdmin')}</Text>
-              </View>
-            ) : (
-              availableGroups.map((group) => (
+          <View style={styles.groupModalContent}>
+            {/* Search Bar for Groups */}
+            <View style={styles.searchContainer}>
+              <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                value={groupSearchQuery}
+                onChangeText={setGroupSearchQuery}
+                placeholder={t('messages.searchGroups')}
+                placeholderTextColor={theme.colors.textSecondary}
+              />
+              {groupSearchQuery.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => setGroupSearchQuery('')}
+                >
+                  <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView 
+              ref={groupListRef}
+              style={styles.groupListScrollView}
+              onScroll={handleGroupScroll}
+              scrollEventThrottle={16}
+            >
+              {availableGroups.length === 0 ? (
+                <View style={styles.emptyGroupsContainer}>
+                  <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
+                  <Text style={styles.emptyGroupsText}>{t('messages.noGroupsAvailable')}</Text>
+                  <Text style={styles.emptyGroupsSubtext}>{t('messages.createGroupsInAdmin')}</Text>
+                </View>
+              ) : filteredGroups.length === 0 ? (
+                <View style={styles.emptyGroupsContainer}>
+                  <Ionicons name="search-outline" size={64} color={theme.colors.textSecondary} />
+                  <Text style={styles.emptyGroupsText}>No groups found</Text>
+                  <Text style={styles.emptyGroupsSubtext}>Try a different search term</Text>
+                </View>
+              ) : (
+                filteredGroups.map((group) => (
                 <TouchableOpacity
                   key={group.id}
                   style={[
@@ -694,9 +745,20 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
                     <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
                   )}
                 </TouchableOpacity>
-              ))
+                ))
+              )}
+            </ScrollView>
+
+            {/* Scroll to Top Button for Groups */}
+            {showGroupScrollToTop && filteredGroups.length > 0 && (
+              <TouchableOpacity
+                style={styles.scrollToTopButton}
+                onPress={scrollGroupToTop}
+              >
+                <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
             )}
-          </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -825,6 +887,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: theme.spacing.md,
   },
+  groupModalContent: {
+    flex: 1,
+    padding: theme.spacing.md,
+  },
   recipientTypeOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -887,12 +953,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
     paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
   },
   clearButton: {
     padding: theme.spacing.xs,
   },
   individualListScroll: {
     maxHeight: 300,
+  },
+  groupListScrollView: {
+    flex: 1,
   },
   scrollToTopButton: {
     position: 'absolute',

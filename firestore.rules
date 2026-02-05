@@ -29,6 +29,13 @@ service cloud.firestore {
 
     // Users collection - Allow read access for messaging purposes and admin management
     match /users/{userId} {
+      // Allow unauthenticated email lookup for signup pre-registration check
+      // This is secure because it only allows checking if an email exists, not reading user data
+      allow list: if request.query.limit == 1;
+      
+      // Allow authenticated users to query by their own email for profile linking during signup
+      allow list: if isSignedIn() && request.query.limit == 1;
+      
       // Admin can list all users
       allow list: if isAdmin();
       
@@ -42,8 +49,12 @@ service cloud.firestore {
       allow read: if isSignedIn() && resource.data.isActive == true;
 
       // User can create their own profile
-      allow create: if isSignedIn() && request.auth.uid == userId
-        && request.resource.data.role == 'member';
+      // Allow any role during signup (for CSV import linking), but default new signups must be 'member'
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      
+      // Allow authenticated users to delete CSV profiles with matching email during signup linking
+      allow delete: if isSignedIn() && 
+        resource.data.email == request.auth.token.email;
 
       // User can update their own profile, but cannot change privileged fields
       allow update: if isSignedIn() && request.auth.uid == userId

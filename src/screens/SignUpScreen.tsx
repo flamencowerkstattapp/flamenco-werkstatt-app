@@ -18,7 +18,7 @@ import { FlamencoLoading } from '../components/FlamencoLoading';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { validateEmail, validatePassword, validatePhone } from '../utils/validation';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getFirestoreDB } from '../services/firebase';
 
 export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -33,6 +33,8 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showVerificationScreen, setShowVerificationScreen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const { signUp } = useAuth();
 
@@ -83,27 +85,19 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     
     try {
       // Check if email is pre-registered in Firestore
-      console.log('Signup: Checking if email is pre-registered:', formData.email);
       const db = getFirestoreDB();
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', formData.email.toLowerCase().trim()));
+      const q = query(usersRef, where('email', '==', formData.email.toLowerCase().trim()), limit(1));
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        console.log('Signup: Email not pre-registered');
-        Alert.alert(
-          'Registration Required',
-          'Your email is not registered in our system. Please contact the studio administrator to be added to the member list before creating an account.',
-          [{ text: 'OK' }]
-        );
+        setErrorMessage('Your email is not registered in our system. Please contact the studio administrator to be added to the member list before creating an account.');
         setLoading(false);
         return;
       }
-      
-      console.log('Signup: Email is pre-registered, proceeding with signup');
     } catch (error) {
-      console.error('Signup: Error checking pre-registration:', error);
-      Alert.alert('Error', 'Failed to verify registration. Please try again.');
+      console.error('Error checking pre-registration:', error);
+      setErrorMessage('Failed to verify registration. Please try again.');
       setLoading(false);
       return;
     }
@@ -130,22 +124,10 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         timeoutPromise,
       ]);
       
-      // Show success feedback before verification screen
-      Alert.alert(
-        t('auth.signupSuccessTitle'),
-        t('auth.signupSuccessBody'),
-        [
-          {
-            text: t('common.ok'),
-            onPress: () => {
-              // Show verification screen
-              setShowVerificationScreen(true);
-            },
-          },
-        ]
-      );
+      // Show verification screen immediately
+      setShowVerificationScreen(true);
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || t('errors.general'));
+      setErrorMessage(error.message || t('errors.general'));
     } finally {
       setLoading(false);
     }
@@ -185,6 +167,12 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 <Text style={styles.verificationText}>
                   {t('auth.checkInboxAndVerify')}
                 </Text>
+                
+                <View style={styles.warningBox}>
+                  <Text style={styles.warningText}>
+                    ⚠️ IMPORTANT: Check your spam/junk folder if you don't see the email in your inbox. You must verify your email before you can log in.
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.verificationActions}>
@@ -224,6 +212,28 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             <Image source={require('../../assets/logo.png')} style={styles.logo} />
             <Text style={styles.title}>{t('auth.createAccount')}</Text>
           </View>
+
+          {errorMessage ? (
+            <View style={styles.messageBox}>
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <TouchableOpacity onPress={() => setErrorMessage('')} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+
+          {successMessage ? (
+            <View style={styles.messageBox}>
+              <View style={styles.successBox}>
+                <Text style={styles.successText}>{successMessage}</Text>
+                <TouchableOpacity onPress={() => setSuccessMessage('')} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
 
           <View style={styles.formContainer}>
             <Input
@@ -406,6 +416,65 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginBottom: theme.spacing.md,
+  },
+  messageBox: {
+    marginBottom: theme.spacing.md,
+  },
+  errorBox: {
+    backgroundColor: '#fee',
+    borderLeftWidth: 4,
+    borderLeftColor: '#c00',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  errorText: {
+    color: '#c00',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
+  },
+  successBox: {
+    backgroundColor: '#efe',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0a0',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  successText: {
+    color: '#0a0',
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
+  },
+  closeButton: {
+    marginLeft: theme.spacing.sm,
+    padding: theme.spacing.xs,
+  },
+  closeButtonText: {
+    color: theme.colors.textSecondary,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  warningBox: {
+    backgroundColor: '#fff3cd',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9800',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  warningText: {
+    color: '#856404',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   backButton: {
     alignItems: 'center',

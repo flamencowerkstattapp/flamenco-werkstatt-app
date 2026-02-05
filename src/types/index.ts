@@ -38,6 +38,7 @@ export interface User {
   isActive: boolean;
   preferredLanguage: 'de' | 'en' | 'es';
   membershipType?: '1-class' | '2-classes' | '3-classes' | 'all-you-can-dance';
+  noMembership?: boolean;
   emergencyContact?: string;
   emergencyPhone?: string;
   danceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';

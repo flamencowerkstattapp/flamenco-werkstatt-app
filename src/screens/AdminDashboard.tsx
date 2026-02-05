@@ -154,11 +154,16 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       try {
         const usersQuery = query(collection(db!, 'users'));
         const usersSnapshot = await getDocs(usersQuery);
-        totalMembers = usersSnapshot.size;
         
-        // Count users by role
+        // Count users by role and membership status
         usersSnapshot.docs.forEach((doc) => {
           const userData = doc.data();
+          
+          // Only count users with active membership (not noMembership)
+          if (!userData.noMembership) {
+            totalMembers++;
+          }
+          
           if (userData.role === 'admin') {
             adminCount++;
           }
@@ -612,12 +617,18 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: 'row',
-    padding: theme.spacing.md,  },
+    flexWrap: 'wrap',
+    padding: theme.spacing.md,
+  },
   statCard: {
-    flex: 1,
+    minWidth: 100,
+    flexBasis: '18%',
+    flexGrow: 1,
+    flexShrink: 1,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
+    margin: theme.spacing.xs,
     alignItems: 'center',
     ...theme.shadows.small,
   },

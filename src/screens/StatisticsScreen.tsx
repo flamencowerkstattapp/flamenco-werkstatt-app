@@ -145,7 +145,8 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       // Calculate revenue from user memberships
       const usersData = usersSnapshot.docs.map(doc => doc.data());
       const membershipRevenue = usersData.reduce((total, user) => {
-        if (user.isActive && user.membershipType) {
+        // Only include users with active membership AND who have a contract (not noMembership)
+        if (user.isActive && user.membershipType && !user.noMembership) {
           return total + MEMBERSHIP_PRICING[user.membershipType as keyof typeof MEMBERSHIP_PRICING];
         }
         return total;

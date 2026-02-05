@@ -36,6 +36,8 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [showUserModal, setShowUserModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{userId: string; currentRole: UserRole; userName: string} | null>(null);
+  const [showMembershipConfirmModal, setShowMembershipConfirmModal] = useState(false);
+  const [pendingMembershipChange, setPendingMembershipChange] = useState<boolean | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
@@ -46,6 +48,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [paymentType, setPaymentType] = useState<PaymentType>('weekly-class');
   const [userPayments, setUserPayments] = useState<{[userId: string]: Payment[]}>({});
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<Set<string>>(new Set()); // Track completed actions
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,6 +56,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     phone: '',
     password: '',
     membershipType: '1-class' as '1-class' | '2-classes' | '3-classes' | 'all-you-can-dance',
+    noMembership: false,
     role: 'member' as UserRole,
     isInstructor: false,
     emergencyContact: '',
@@ -254,6 +258,34 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     }
   };
 
+  const handleMembershipStatusChange = (newValue: boolean) => {
+    setPendingMembershipChange(newValue);
+    setShowMembershipConfirmModal(true);
+  };
+
+  const handleConfirmMembershipChange = () => {
+    if (pendingMembershipChange !== null) {
+      // If setting to "No Contract", clear the membershipType to prevent revenue calculation
+      if (pendingMembershipChange === true) {
+        setFormData({...formData, noMembership: true, membershipType: undefined as any});
+      } else {
+        // If setting to "Contract", keep existing membershipType or default to '1-class'
+        setFormData({
+          ...formData, 
+          noMembership: false,
+          membershipType: formData.membershipType || '1-class'
+        });
+      }
+    }
+    setShowMembershipConfirmModal(false);
+    setPendingMembershipChange(null);
+  };
+
+  const handleCancelMembershipChange = () => {
+    setShowMembershipConfirmModal(false);
+    setPendingMembershipChange(null);
+  };
+
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     const actionKey = `status-${userId}`;
     if (completedActions.has(actionKey)) return; // Prevent duplicate actions
@@ -284,6 +316,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       phone: '',
       password: '',
       membershipType: '1-class',
+      noMembership: false,
       role: 'member',
       isInstructor: false,
       emergencyContact: '',
@@ -308,6 +341,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       phone: userToEdit.phone || '',
       password: '', // Not used for editing existing users
       membershipType: userToEdit.membershipType || '1-class',
+      noMembership: userToEdit.noMembership || false,
       role: userToEdit.role,
       isInstructor: userToEdit.isInstructor || false,
       emergencyContact: userToEdit.emergencyContact || '',
@@ -349,6 +383,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           role: formData.role,
           isInstructor: formData.isInstructor,
           membershipType: formData.membershipType,
+          noMembership: formData.noMembership,
           emergencyContact: formData.emergencyContact,
           emergencyPhone: formData.emergencyPhone,
           danceLevel: formData.danceLevel,
@@ -383,6 +418,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
             role: formData.role,
             isInstructor: formData.isInstructor,
             membershipType: formData.membershipType,
+            noMembership: formData.noMembership,
             emergencyContact: formData.emergencyContact,
             emergencyPhone: formData.emergencyPhone,
             danceLevel: formData.danceLevel,
@@ -542,6 +578,26 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           </View>
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={t('admin.searchUsers')}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearSearchButton}
+              onPress={() => setSearchQuery('')}
+            >
+              <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {loading ? (
           <FlamencoLoading 
             message={t('admin.loadingUsers')} 
@@ -558,7 +614,20 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {users.map((user) => (
+          {users
+            .filter(user => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+              const email = user.email.toLowerCase();
+              const phone = user.phone?.toLowerCase() || '';
+              const role = user.role.toLowerCase();
+              return fullName.includes(query) || 
+                     email.includes(query) || 
+                     phone.includes(query) || 
+                     role.includes(query);
+            })
+            .map((user) => (
             <View key={user.id} style={[
               styles.userCard,
               { width: `${getCardWidth()}%` }
@@ -885,6 +954,40 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                 </View>
               </View>
 
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{t('user.membershipStatus')}</Text>
+                <View style={styles.instructorOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.instructorOption,
+                      !formData.noMembership && styles.selectedInstructor
+                    ]}
+                    onPress={() => handleMembershipStatusChange(false)}
+                  >
+                    <Text style={[
+                      styles.instructorText,
+                      !formData.noMembership && styles.selectedInstructorText
+                    ]}>
+                      {t('user.hasMembership')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.instructorOption,
+                      formData.noMembership && styles.selectedInstructor
+                    ]}
+                    onPress={() => handleMembershipStatusChange(true)}
+                  >
+                    <Text style={[
+                      styles.instructorText,
+                      formData.noMembership && styles.selectedInstructorText
+                    ]}>
+                      {t('user.noMembership')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <Text style={styles.sectionTitle}>{t('user.emergencyContact')}</Text>
 
               <View style={styles.inputGroup}>
@@ -1111,6 +1214,46 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Button
                 title="Confirm"
                 onPress={handleConfirmRoleChange}
+                variant="danger"
+                style={styles.confirmModalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Membership Status Change Confirmation Modal */}
+      <Modal
+        visible={showMembershipConfirmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelMembershipChange}
+      >
+        <View style={styles.confirmModalOverlay}>
+          <View style={styles.confirmModalContent}>
+            <View style={styles.confirmModalHeader}>
+              <Ionicons name="warning" size={48} color={theme.colors.warning} />
+              <Text style={styles.confirmModalTitle}>{t('user.confirmMembershipChange')}</Text>
+            </View>
+            
+            <Text style={styles.confirmModalMessage}>
+              {pendingMembershipChange 
+                ? t('user.confirmNoMembershipMessage')
+                : t('user.confirmHasMembershipMessage')}
+              {'\n\n'}
+              {t('user.membershipChangeWarning')}
+            </Text>
+            
+            <View style={styles.confirmModalActions}>
+              <Button
+                title={t('common.cancel')}
+                onPress={handleCancelMembershipChange}
+                variant="outline"
+                style={styles.confirmModalButton}
+              />
+              <Button
+                title={t('common.confirm')}
+                onPress={handleConfirmMembershipChange}
                 variant="danger"
                 style={styles.confirmModalButton}
               />
@@ -1774,5 +1917,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     padding: theme.spacing.md,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+  },
+  searchIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.text,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+  },
+  clearSearchButton: {
+    padding: theme.spacing.xs,
   },
 });
