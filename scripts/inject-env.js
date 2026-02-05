@@ -63,6 +63,50 @@ if (fs.existsSync(indexPath)) {
   // Write the modified content back
   fs.writeFileSync(indexPath, indexContent);
   console.log('Environment variables and meta tags injected successfully');
+  
+  // Copy PWA icons and manifest to dist folder
+  console.log('\nCopying PWA assets to dist folder...');
+  const publicDir = path.join(__dirname, '../public');
+  const distDir = path.join(__dirname, '../dist');
+  
+  // Copy manifest.json
+  const manifestSrc = path.join(publicDir, 'manifest.json');
+  const manifestDest = path.join(distDir, 'manifest.json');
+  if (fs.existsSync(manifestSrc)) {
+    fs.copyFileSync(manifestSrc, manifestDest);
+    console.log('✓ Copied manifest.json');
+  }
+  
+  // Copy all icon files from assets to dist
+  const assetsDir = path.join(__dirname, '../assets');
+  const iconFiles = [
+    'icon-48x48.png',
+    'icon-64x64.png',
+    'icon-72x72.png',
+    'icon-96x96.png',
+    'icon-128x128.png',
+    'icon-144x144.png',
+    'icon-152x152.png',
+    'icon-192x192.png',
+    'icon-384x384.png',
+    'icon-512x512.png',
+    'favicon.png',
+    'favicon.ico'
+  ];
+  
+  let copiedCount = 0;
+  iconFiles.forEach(file => {
+    const src = path.join(assetsDir, file);
+    const dest = path.join(distDir, file);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, dest);
+      copiedCount++;
+    }
+  });
+  
+  console.log(`✓ Copied ${copiedCount} icon files to dist folder`);
+  console.log('\nPWA assets ready for deployment!');
+  
 } else {
   console.log('index.html not found, skipping environment injection');
 }
