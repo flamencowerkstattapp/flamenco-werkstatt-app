@@ -10,7 +10,8 @@ import {
   where, 
   orderBy, 
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  onSnapshot 
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { imageService } from './imageService';
@@ -70,6 +71,49 @@ export class EventsService {
       }
       
       throw new Error('Failed to fetch published events');
+    }
+  }
+
+  subscribeToPublishedEvents(callback: (events: SpecialEvent[]) => void): () => void {
+    try {
+      const now = new Date();
+      const eventsQuery = query(
+        this.collection,
+        where('isPublished', '==', true),
+        where('endDate', '>=', now),
+        orderBy('endDate', 'asc'),
+        orderBy('startDate', 'asc')
+      );
+
+      const unsubscribe = onSnapshot(
+        eventsQuery,
+        (snapshot) => {
+          const events = snapshot.docs.map(this.convertDocToEvent);
+          callback(events);
+        },
+        (error) => {
+          console.error('Error in events subscription:', error);
+          
+          // Fallback: Use client-side filtering if index doesn't exist
+          if (error.message.includes('requires an index')) {
+            console.log('Index not ready, using fallback subscription');
+            const fallbackQuery = query(this.collection, orderBy('startDate', 'asc'));
+            return onSnapshot(fallbackQuery, (snapshot) => {
+              const allEvents = snapshot.docs.map(this.convertDocToEvent);
+              const now = new Date();
+              const publishedEvents = allEvents.filter(event => 
+                event.isPublished && event.endDate >= now
+              );
+              callback(publishedEvents);
+            });
+          }
+        }
+      );
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up events subscription:', error);
+      return () => {};
     }
   }
 

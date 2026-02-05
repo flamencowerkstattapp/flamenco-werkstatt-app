@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl, SafeAreaView, TextInput, Modal, TouchableOpacity, ViewStyle, Dimensions, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, getDocs, where, updateDoc, doc } from 'firebase/firestore';
 import { getFirestoreDB } from '../services/firebase';
@@ -75,6 +76,19 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     });
     return () => subscription?.remove();
   }, []);
+
+  // Scroll to top when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const scrollToTop = () => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        }
+      };
+      
+      scrollToTop();
+    }, [])
+  );
 
   // Determine columns based on screen width
   const getColumns = () => {
@@ -375,14 +389,13 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     try {
       if (editingUserId) {
         // Update existing user
-        await updateDoc(doc(getFirestoreDB(), 'users', editingUserId), {
+        const updateData: any = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
           role: formData.role,
           isInstructor: formData.isInstructor,
-          membershipType: formData.membershipType,
           noMembership: formData.noMembership,
           emergencyContact: formData.emergencyContact,
           emergencyPhone: formData.emergencyPhone,
@@ -390,7 +403,17 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
           preferredStyles: formData.preferredStyles,
           preferredLanguage: formData.preferredLanguage,
           updatedAt: new Date(),
-        });
+        };
+
+        // Only include membershipType if it has a value (not undefined)
+        if (formData.membershipType) {
+          updateData.membershipType = formData.membershipType;
+        } else {
+          // Explicitly delete the field if it's undefined
+          updateData.membershipType = null;
+        }
+
+        await updateDoc(doc(getFirestoreDB(), 'users', editingUserId), updateData);
         Alert.alert(
           t('admin.userUpdatedTitle'),
           t('admin.userUpdatedBody', { name: `${formData.firstName} ${formData.lastName}` })
@@ -414,17 +437,25 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
         
         if (!usersSnapshot.empty) {
           const newUserId = usersSnapshot.docs[0].id;
-          await updateDoc(doc(getFirestoreDB(), 'users', newUserId), {
+          const newUserData: any = {
             role: formData.role,
             isInstructor: formData.isInstructor,
-            membershipType: formData.membershipType,
             noMembership: formData.noMembership,
             emergencyContact: formData.emergencyContact,
             emergencyPhone: formData.emergencyPhone,
             danceLevel: formData.danceLevel,
             preferredStyles: formData.preferredStyles,
             preferredLanguage: formData.preferredLanguage,
-          });
+          };
+
+          // Only include membershipType if it has a value
+          if (formData.membershipType) {
+            newUserData.membershipType = formData.membershipType;
+          } else {
+            newUserData.membershipType = null;
+          }
+
+          await updateDoc(doc(getFirestoreDB(), 'users', newUserId), newUserData);
         }
         
         Alert.alert(
@@ -643,6 +674,10 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       <Ionicons name="school-outline" size={12} color="#fff" style={screenWidth >= 768 ? styles.instructorBadgeIcon : undefined} />
                       {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{t('user.instructor')}</Text>}
                     </View>}
+                    <View style={[styles.contractBadge, { backgroundColor: user.noMembership ? theme.colors.textSecondary : theme.colors.success }]}>
+                      <Ionicons name={user.noMembership ? "close-circle-outline" : "document-text-outline"} size={12} color="#fff" style={screenWidth >= 768 ? styles.contractBadgeIcon : undefined} />
+                      {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{user.noMembership ? t('user.noMembership') : t('user.hasMembership')}</Text>}
+                    </View>
                   </View>
                 </View>
                 
@@ -1374,6 +1409,17 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
   instructorBadgeIcon: {
+    marginRight: 4,
+  },
+  contractBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.xs,
+  },
+  contractBadgeIcon: {
     marginRight: 4,
   },
   userEmail: {

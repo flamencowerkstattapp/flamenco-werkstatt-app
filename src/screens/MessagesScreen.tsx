@@ -46,14 +46,33 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
   }, [route?.params?.initialTab]);
 
   useEffect(() => {
-    loadMessages();
-  }, [activeTab]);
+    if (!user) return;
 
-  // Reload messages and scroll to top when screen gains focus
+    // Set up real-time listener based on active tab
+    const service = getMessageService();
+    let unsubscribe: () => void;
+
+    if (activeTab === 'inbox') {
+      unsubscribe = service.subscribeToInboxMessages(user.id, (messagesData) => {
+        setMessages(messagesData);
+        setLoading(false);
+      });
+    } else {
+      unsubscribe = service.subscribeToSentMessages(user.id, (messagesData) => {
+        setMessages(messagesData);
+        setLoading(false);
+        // Load recipient names for sent messages
+        loadRecipientNames(messagesData);
+      });
+    }
+
+    // Cleanup listener on unmount or tab change
+    return () => unsubscribe();
+  }, [activeTab, user]);
+
+  // Scroll to top when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
-      loadMessages(); // Reload messages to get updated read status
-      
       const scrollToTop = () => {
         if (scrollViewRef.current) {
           scrollViewRef.current.scrollToOffset({ offset: 0, animated: false });

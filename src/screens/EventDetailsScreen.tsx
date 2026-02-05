@@ -214,7 +214,8 @@ export const EventDetailsScreen: React.FC = () => {
           )}
         </View>
 
-        {!isFull && registrationOpen && (
+        {/* Registration buttons hidden until registration flow is finalized with dance club */}
+        {/* {!isFull && registrationOpen && (
           <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
             <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
             <Text style={styles.registerButtonText}>{t('events.register')}</Text>
@@ -233,7 +234,7 @@ export const EventDetailsScreen: React.FC = () => {
             <Ionicons name="time-outline" size={20} color={theme.colors.textSecondary} />
             <Text style={styles.disabledButtonText}>Registration Closed</Text>
           </View>
-        )}
+        )} */}
       </ScrollView>
     </View>
   );

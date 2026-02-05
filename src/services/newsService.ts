@@ -10,7 +10,8 @@ import {
   where, 
   orderBy, 
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  onSnapshot 
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { imageService } from './imageService';
@@ -67,6 +68,44 @@ export class NewsService {
       }
       
       throw new Error('Failed to fetch published news');
+    }
+  }
+
+  subscribeToPublishedNews(callback: (news: NewsItem[]) => void): () => void {
+    try {
+      const newsQuery = query(
+        this.collection,
+        where('isPublished', '==', true),
+        orderBy('publishedAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        newsQuery,
+        (snapshot) => {
+          const newsItems = snapshot.docs.map(this.convertDocToNewsItem);
+          callback(newsItems);
+        },
+        (error) => {
+          console.error('Error in news subscription:', error);
+          
+          // Fallback: Use client-side filtering if index doesn't exist
+          if (error.message.includes('requires an index')) {
+            console.log('Index not ready, using fallback subscription');
+            const fallbackQuery = query(this.collection, orderBy('publishedAt', 'desc'));
+            return onSnapshot(fallbackQuery, (snapshot) => {
+              const allNews = snapshot.docs.map(this.convertDocToNewsItem);
+              const publishedNews = allNews.filter(news => news.isPublished);
+              callback(publishedNews);
+            });
+          }
+        }
+      );
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up news subscription:', error);
+      // Return a no-op unsubscribe function
+      return () => {};
     }
   }
 

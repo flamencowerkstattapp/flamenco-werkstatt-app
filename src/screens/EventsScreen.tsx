@@ -55,7 +55,14 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    loadEvents();
+    // Set up real-time listener for published events
+    const unsubscribe = eventsService.subscribeToPublishedEvents((eventsData) => {
+      setEvents(eventsData);
+      setLoading(false);
+    });
+
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   // Scroll to top when screen gains focus
@@ -284,9 +291,8 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                           <Text style={styles.statusText}>Closed</Text>
                         </View>
                       ) : (
-                        <View style={styles.registerButton}>
-                          <Text style={styles.registerButtonText}>{t('events.register')}</Text>
-                          <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
+                        <View style={[styles.statusBadge, { backgroundColor: theme.colors.success }]}>
+                          <Text style={styles.statusText}>Open</Text>
                         </View>
                       )}
                     </View>

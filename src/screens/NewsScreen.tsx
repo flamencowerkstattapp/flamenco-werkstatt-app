@@ -57,7 +57,14 @@ export const NewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    loadNews();
+    // Set up real-time listener for news updates
+    const unsubscribe = newsService.subscribeToPublishedNews((newsData) => {
+      setNews(newsData);
+      setLoading(false);
+    });
+
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   // Scroll to top when screen gains focus

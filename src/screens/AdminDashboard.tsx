@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
@@ -33,26 +34,132 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   const [showScrollTop, setShowScrollTop] = useState(false);
     const [stats, setStats] = useState({
     totalMembers: 0,
+    contractUsers: 0,
+    noContractUsers: 0,
     pendingBookings: 0,
     upcomingEvents: 0,
     adminCount: 0,
     instructorCount: 0,
   });
 
+  // Scroll to top when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const scrollToTop = () => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        }
+      };
+      
+      scrollToTop();
+    }, [])
+  );
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      return; // Don't load data until password authenticated
+    if (!isAuthenticated || !user || !db) {
+      return; // Don't load data until authenticated
     }
-    
-    // For now, just require Firebase authentication (we'll add role check later)
-    if (!user) {
-      return; // Wait for Firebase authentication
+
+    if (DEMO_MODE) {
+      loadDashboardData(); // Demo mode uses static data
+      return;
     }
-    
+
+    // Set up real-time listener for pending bookings
+    const bookingsQuery = query(
+      collection(db, 'bookings'),
+      where('status', '==', 'pending')
+    );
+
+    let currentPendingCount = 0;
+
+    const unsubscribeBookings = onSnapshot(bookingsQuery, (snapshot) => {
+      const bookingsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userId: data.userId,
+          userName: data.userName,
+          studioId: data.studioId,
+          startTime: data.startTime.toDate(),
+          endTime: data.endTime.toDate(),
+          status: data.status,
+          purpose: data.purpose,
+          recurringPattern: data.recurringPattern,
+          recurringGroupId: data.recurringGroupId,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+          recurringEndDate: data.recurringEndDate ? data.recurringEndDate.toDate() : undefined,
+        };
+      }) as Booking[];
+
+      setPendingBookings(bookingsData);
+      currentPendingCount = bookingsData.length;
+    });
+
+    // Set up real-time listener for users (for stats)
+    const usersQuery = query(collection(db, 'users'));
+    const unsubscribeUsers = onSnapshot(usersQuery, (usersSnapshot) => {
+      let totalMembers = 0;
+      let contractUsers = 0;
+      let noContractUsers = 0;
+      let adminCount = 0;
+      let instructorCount = 0;
+
+      usersSnapshot.docs.forEach((doc) => {
+        const userData = doc.data();
         
-    // Load data when admin is authenticated via password protection AND Firebase auth
-    loadDashboardData();
-  }, [isAuthenticated, user]);
+        // Count all users
+        totalMembers++;
+        
+        // Count contract vs no-contract users
+        if (userData.noMembership === true) {
+          noContractUsers++;
+        } else {
+          contractUsers++;
+        }
+        
+        if (userData.role === 'admin') {
+          adminCount++;
+        }
+        if (userData.isInstructor === true) {
+          instructorCount++;
+        }
+      });
+
+      // Get upcoming events count
+      const eventsQuery = query(collection(db!, 'specialEvents'), where('endDate', '>=', new Date()));
+      getDocs(eventsQuery).then((eventsSnapshot) => {
+        setStats({
+          totalMembers,
+          contractUsers,
+          noContractUsers,
+          pendingBookings: currentPendingCount,
+          upcomingEvents: eventsSnapshot.size,
+          adminCount,
+          instructorCount,
+        });
+        setLoading(false);
+      }).catch(() => {
+        setStats({
+          totalMembers,
+          contractUsers,
+          noContractUsers,
+          pendingBookings: currentPendingCount,
+          upcomingEvents: 0,
+          adminCount,
+          instructorCount,
+        });
+        setLoading(false);
+      });
+    });
+
+    // Cleanup listeners
+    return () => {
+      unsubscribeBookings();
+      unsubscribeUsers();
+    };
+  }, [isAuthenticated, user, db]);
 
   // Handle admin logout - clear password protection when Firebase user logs out
   useEffect(() => {
@@ -112,6 +219,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         setPendingBookings(demoBookings);
         setStats({
           totalMembers: 47,
+          contractUsers: 42,
+          noContractUsers: 5,
           pendingBookings: demoBookings.length,
           upcomingEvents: 5,
           adminCount: 3,
@@ -147,6 +256,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       // Try to load additional stats with graceful fallback
       let totalMembers = 0;
+      let contractUsers = 0;
+      let noContractUsers = 0;
       let upcomingEvents = 0;
       let adminCount = 0;
       let instructorCount = 0;
@@ -159,9 +270,14 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         usersSnapshot.docs.forEach((doc) => {
           const userData = doc.data();
           
-          // Only count users with active membership (not noMembership)
-          if (!userData.noMembership) {
-            totalMembers++;
+          // Count all users
+          totalMembers++;
+          
+          // Count contract vs no-contract users
+          if (userData.noMembership === true) {
+            noContractUsers++;
+          } else {
+            contractUsers++;
           }
           
           if (userData.role === 'admin') {
@@ -175,6 +291,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
         // Silently handle users query failure
         console.error('Error loading users count:', usersError);
         totalMembers = 0;
+        contractUsers = 0;
+        noContractUsers = 0;
         adminCount = 0;
         instructorCount = 0;
       }
@@ -190,6 +308,8 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
 
       setStats({
         totalMembers,
+        contractUsers,
+        noContractUsers,
         pendingBookings: bookingsData.length,
         upcomingEvents,
         adminCount,
@@ -229,7 +349,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       );
 
       Alert.alert(t('common.success'), `${bookingsToApprove.length} recurring bookings approved`);
-      loadDashboardData();
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
     }
@@ -262,7 +381,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       );
 
       Alert.alert(t('common.success'), `${bookingsToReject.length} recurring bookings rejected`);
-      loadDashboardData();
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
     }
@@ -288,7 +406,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       });
 
       Alert.alert(t('common.success'), 'Booking approved');
-      loadDashboardData();
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
     }
@@ -316,7 +433,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
       });
 
       Alert.alert(t('common.success'), 'Booking rejected');
-      loadDashboardData();
     } catch (error) {
       Alert.alert(t('common.error'), t('errors.general'));
     };
@@ -349,6 +465,18 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
                 <Ionicons name="people-outline" size={32} color={theme.colors.primary} />
                 <Text style={styles.statValue}>{stats.totalMembers}</Text>
                 <Text style={styles.statLabel}>{t('admin.totalMembers')}</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="document-text-outline" size={32} color={theme.colors.success} />
+                <Text style={styles.statValue}>{stats.contractUsers}</Text>
+                <Text style={styles.statLabel}>{t('admin.contractUsers')}</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="close-circle-outline" size={32} color={theme.colors.textSecondary} />
+                <Text style={styles.statValue}>{stats.noContractUsers}</Text>
+                <Text style={styles.statLabel}>{t('admin.noContractUsers')}</Text>
               </View>
 
               <View style={styles.statCard}>
@@ -630,6 +758,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
     margin: theme.spacing.xs,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     ...theme.shadows.small,
   },
   statValue: {

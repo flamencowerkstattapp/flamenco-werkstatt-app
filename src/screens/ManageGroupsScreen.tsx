@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { groupsService } from '../services/groupsService';
@@ -58,6 +59,19 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   useEffect(() => {
     loadData();
   }, []);
+
+  // Scroll to top when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const scrollToTop = () => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        }
+      };
+      
+      scrollToTop();
+    }, [])
+  );
 
   useEffect(() => {
     const onChange = (result: { window: { width: number } }) => {

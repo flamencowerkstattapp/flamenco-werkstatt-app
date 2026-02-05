@@ -63,14 +63,6 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'd
       >
         <Text style={isNarrowScreen ? styles.flagCompact : styles.flag}>{currentLanguage.flag}</Text>
         {!isNarrowScreen && (
-          <Text style={[
-            styles.code,
-            variant === 'light' && styles.codeLight
-          ]}>
-            {currentLanguage.code.toUpperCase()}
-          </Text>
-        )}
-        {!isNarrowScreen && (
           <Ionicons 
             name="chevron-down" 
             size={16} 

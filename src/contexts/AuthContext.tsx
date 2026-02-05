@@ -257,6 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastName: userData.lastName || '',
           role: 'member' as UserRole,
           isInstructor: false,
+          noMembership: false,
           phone: userData.phone,
           memberSince: new Date(),
           isActive: true,

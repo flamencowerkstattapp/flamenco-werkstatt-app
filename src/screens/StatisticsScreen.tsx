@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, getDocs, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -61,6 +62,19 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   useEffect(() => {
     loadStatistics();
   }, []);
+
+  // Scroll to top when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const scrollToTop = () => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
+        }
+      };
+      
+      scrollToTop();
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -145,8 +159,11 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       // Calculate revenue from user memberships
       const usersData = usersSnapshot.docs.map(doc => doc.data());
       const membershipRevenue = usersData.reduce((total, user) => {
-        // Only include users with active membership AND who have a contract (not noMembership)
-        if (user.isActive && user.membershipType && !user.noMembership) {
+        // Only include users who:
+        // 1. Are active
+        // 2. Have a contract (noMembership is false, null, or undefined)
+        // 3. Have a membershipType set
+        if (user.isActive && user.noMembership !== true && user.membershipType) {
           return total + MEMBERSHIP_PRICING[user.membershipType as keyof typeof MEMBERSHIP_PRICING];
         }
         return total;
@@ -362,11 +379,18 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
               subtitle={`${statistics.pendingBookings} ${t('calendar.pending')}`}
             />
             <StatCard
-              title={t('admin.totalRevenue')}
+              title={t('admin.totalPaymentsReceived')}
               value={`€${statistics.totalRevenue.toFixed(2)}`}
               icon="cash-outline"
-              color={theme.colors.warning}
+              color={theme.colors.success}
               subtitle={`€${statistics.monthlyRevenue.toFixed(2)} ${t('admin.thisMonth')}`}
+            />
+            <StatCard
+              title={t('admin.expectedMonthlyRevenue')}
+              value={`€${statistics.expectedMonthlyRevenue.toFixed(2)}`}
+              icon="card-outline"
+              color={theme.colors.warning}
+              subtitle={t('admin.fromActiveContracts')}
             />
             <StatCard
               title={t('admin.content')}
@@ -514,6 +538,10 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     alignItems: 'center',
     width: '48%',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+    marginRight: theme.spacing.sm,
     ...theme.shadows.small,
   },
   statValue: {

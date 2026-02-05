@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useFocusEffect } from '@react-navigation/native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, getDocs, Timestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
@@ -77,16 +77,83 @@ export const CalendarScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   }, [currentLocale]);
 
   useEffect(() => {
-    loadEventsAndBookings();
-  }, [selectedDate, selectedStudio]);
+    if (!db) return;
 
-  // Refresh data when screen comes into focus
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadEventsAndBookings();
+    setLoading(true);
+    const dateObj = new Date(selectedDate);
+    const startOfDay = new Date(dateObj.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(dateObj.setHours(23, 59, 59, 999));
+
+    // Set up real-time listener for events
+    const eventsQuery = query(
+      collection(db, 'events'),
+      where('studioId', '==', selectedStudio),
+      where('startTime', '>=', Timestamp.fromDate(startOfDay)),
+      where('startTime', '<=', Timestamp.fromDate(endOfDay))
+    );
+
+    // Set up real-time listener for special events
+    const specialEventsQuery = query(
+      collection(db, 'specialEvents'),
+      where('isPublished', '==', true)
+    );
+
+    // Set up real-time listener for bookings
+    const bookingsQuery = query(
+      collection(db, 'bookings'),
+      where('studioId', '==', selectedStudio),
+      where('startTime', '>=', Timestamp.fromDate(startOfDay)),
+      where('startTime', '<=', Timestamp.fromDate(endOfDay))
+    );
+
+    // Subscribe to all three collections
+    const unsubscribeEvents = onSnapshot(eventsQuery, (eventsSnapshot) => {
+      const eventsData = eventsSnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+        startTime: doc.data().startTime.toDate(),
+        endTime: doc.data().endTime.toDate(),
+      })) as CalendarEvent[];
+
+      setEvents(eventsData);
     });
-    return unsubscribe;
-  }, [navigation, selectedDate, selectedStudio]);
+
+    const unsubscribeSpecialEvents = onSnapshot(specialEventsQuery, (specialEventsSnapshot) => {
+      const specialEventsData = specialEventsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          startDate: data.startDate.toDate(),
+          endDate: data.endDate.toDate(),
+        };
+      }) as SpecialEvent[];
+
+      setSpecialEvents(specialEventsData);
+    });
+
+    const unsubscribeBookings = onSnapshot(bookingsQuery, (bookingsSnapshot) => {
+      const bookingsData = bookingsSnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+        startTime: doc.data().startTime.toDate(),
+        endTime: doc.data().endTime.toDate(),
+        createdAt: doc.data().createdAt.toDate(),
+        updatedAt: doc.data().updatedAt.toDate(),
+      })) as Booking[];
+
+      setBookings(bookingsData);
+      setLoading(false);
+    });
+
+    // Cleanup all listeners
+    return () => {
+      unsubscribeEvents();
+      unsubscribeSpecialEvents();
+      unsubscribeBookings();
+    };
+  }, [selectedDate, selectedStudio, db]);
+
 
   // Scroll to top when screen gains focus
   useFocusEffect(

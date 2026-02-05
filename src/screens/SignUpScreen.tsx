@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,8 +35,16 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const scrollViewRef = useRef<any>(null);
 
   const { signUp } = useAuth();
+
+  // Scroll to top when verification screen is shown
+  useEffect(() => {
+    if (showVerificationScreen && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    }
+  }, [showVerificationScreen]);
 
   const updateField = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -91,25 +99,20 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        setErrorMessage('Your email is not registered in our system. Please contact the studio administrator to be added to the member list before creating an account.');
+        setErrorMessage(t('auth.emailNotRegistered'));
         setLoading(false);
         return;
       }
     } catch (error) {
       console.error('Error checking pre-registration:', error);
-      setErrorMessage('Failed to verify registration. Please try again.');
+      setErrorMessage(t('auth.registrationCheckFailed'));
       setLoading(false);
       return;
     }
     try {
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(
-          () =>
-            reject(
-              new Error(
-                'Signup is taking too long. Please check your internet connection and try again.'
-              )
-            ),
+          () => reject(new Error(t('auth.signupTimeout'))),
           20000
         )
       );
@@ -145,6 +148,7 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           style={styles.gradient}
         >
           <ScrollView
+            ref={scrollViewRef}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
@@ -170,7 +174,7 @@ export const SignUpScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 
                 <View style={styles.warningBox}>
                   <Text style={styles.warningText}>
-                    ⚠️ IMPORTANT: Check your spam/junk folder if you don't see the email in your inbox. You must verify your email before you can log in.
+                    {t('auth.spamFolderWarning')}
                   </Text>
                 </View>
               </View>
