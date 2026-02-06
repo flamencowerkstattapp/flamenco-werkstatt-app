@@ -29,8 +29,9 @@ service cloud.firestore {
 
     // Users collection - Allow read access for messaging purposes and admin management
     match /users/{userId} {
-      // Allow authenticated users to query by their own email for profile linking during signup
-      allow list: if isSignedIn() && request.query.limit == 1;
+      // Allow limited queries for pre-registration check during signup (before auth)
+      // and for profile linking after signup (after auth)
+      allow list: if request.query.limit == 1;
       
       // Admin can list all users
       allow list: if isAdmin();
