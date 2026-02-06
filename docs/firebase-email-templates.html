@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Email Templates - Antonio Dias Flamenco Werkstatt</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #fff; }
+    .nav { background: linear-gradient(135deg, #8B0000, #C41E3A); padding: 30px 40px; text-align: center; }
+    .nav h1 { font-size: 28px; margin-bottom: 8px; }
+    .nav p { color: #D4AF37; font-size: 14px; letter-spacing: 1px; }
+    .tabs { display: flex; justify-content: center; flex-wrap: wrap; background: #222; padding: 16px; border-bottom: 2px solid #D4AF37; }
+    .tab-group { margin: 8px 16px; }
+    .tab-group-title { color: #D4AF37; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; text-align: center; }
+    .tab-buttons { display: flex; }
+    .tab-btn { padding: 8px 16px; background: #333; color: #ccc; border: 1px solid #444; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .tab-btn:first-child { border-radius: 6px 0 0 6px; }
+    .tab-btn:last-child { border-radius: 0 6px 6px 0; }
+    .tab-btn.active { background: #8B0000; color: #fff; border-color: #C41E3A; }
+    .tab-btn:hover { background: #444; }
+    .tab-btn.active:hover { background: #a00000; }
+    .preview { max-width: 700px; margin: 30px auto; padding: 0 20px; }
+    .template-section { display: none; }
+    .template-section.active { display: block; }
+    .copy-hint { background: #333; border: 1px solid #D4AF37; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; font-size: 13px; color: #ccc; line-height: 1.6; }
+    .copy-hint strong { color: #D4AF37; }
+    .template-frame { border: 1px solid #444; border-radius: 8px; overflow: hidden; background: #F5F5F5; }
+    .instructions { max-width: 700px; margin: 40px auto; padding: 0 20px 60px; }
+    .instructions h2 { color: #D4AF37; margin-bottom: 16px; font-size: 20px; }
+    .instructions p, .instructions li { color: #bbb; font-size: 14px; line-height: 1.8; }
+    .instructions code { background: #333; padding: 2px 6px; border-radius: 4px; color: #D4AF37; font-size: 13px; }
+    .instructions ol { padding-left: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="nav">
+  <h1>Firebase Email Templates</h1>
+  <p>ANTONIO DIAS FLAMENCO WERKSTATT</p>
+</div>
+
+<div class="tabs">
+  <div class="tab-group">
+    <div class="tab-group-title">Template Type</div>
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchType('verify')">Email Verification</button>
+      <button class="tab-btn" onclick="switchType('reset')">Password Reset</button>
+      <button class="tab-btn" onclick="switchType('change')">Email Change</button>
+    </div>
+  </div>
+  <div class="tab-group">
+    <div class="tab-group-title">Language</div>
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchLang('de')">Deutsch</button>
+      <button class="tab-btn" onclick="switchLang('en')">English</button>
+      <button class="tab-btn" onclick="switchLang('es')">Espanol</button>
+    </div>
+  </div>
+</div>
+
+<div class="preview">
+  <div class="copy-hint">
+    <strong>How to use:</strong> Select template type + language above. Copy the HTML from the corresponding 
+    standalone file and paste it into <strong>Firebase Console &rarr; Authentication &rarr; Templates</strong>. 
+    You must add one template per language in Firebase Console's template editor.
+  </div>
+
+  <!-- ==================== GERMAN VERIFICATION ==================== -->
+  <div class="template-section active" id="verify-de">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Willkommen!</h2>
+              <h3 style="margin: 0 0 24px 0; color: #333333; font-size: 18px; font-weight: 600;">Bitte bestätigen Sie Ihre E-Mail-Adresse</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Vielen Dank für Ihre Registrierung bei <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Klicken Sie auf den Button unten, um Ihre E-Mail-Adresse <strong>%EMAIL%</strong> zu bestätigen und Ihr Konto zu aktivieren.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">E-Mail bestätigen</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFF8E1; border-left: 4px solid #D4AF37; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #333333;">Wichtig:</strong> Dieser Link ist nur für eine begrenzte Zeit gültig. Falls Sie sich nicht registriert haben, können Sie diese E-Mail ignorieren.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco mit Leidenschaft und Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Diese E-Mail wurde automatisch gesendet. Bitte antworten Sie nicht auf diese E-Mail.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== ENGLISH VERIFICATION ==================== -->
+  <div class="template-section" id="verify-en">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Welcome!</h2>
+              <h3 style="margin: 0 0 24px 0; color: #333333; font-size: 18px; font-weight: 600;">Please verify your email address</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Thank you for registering with <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Click the button below to verify your email address <strong>%EMAIL%</strong> and activate your account.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Verify Email</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFF8E1; border-left: 4px solid #D4AF37; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #333333;">Important:</strong> This link is only valid for a limited time. If you did not register, you can safely ignore this email.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco with Passion and Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">This email was sent automatically. Please do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SPANISH VERIFICATION ==================== -->
+  <div class="template-section" id="verify-es">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">¡Bienvenido/a!</h2>
+              <h3 style="margin: 0 0 24px 0; color: #333333; font-size: 18px; font-weight: 600;">Por favor, verifica tu direccion de correo electronico</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Gracias por registrarte en <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Haz clic en el boton de abajo para verificar tu direccion de correo electronico <strong>%EMAIL%</strong> y activar tu cuenta.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Verificar correo</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Si el boton no funciona, copia y pega este enlace en tu navegador:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFF8E1; border-left: 4px solid #D4AF37; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #333333;">Importante:</strong> Este enlace solo es valido por un tiempo limitado. Si no te has registrado, puedes ignorar este correo.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco con Pasion y Tradicion</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Este correo fue enviado automaticamente. Por favor, no respondas a este correo.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== GERMAN PASSWORD RESET ==================== -->
+  <div class="template-section" id="reset-de">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Passwort zurücksetzen</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">Wir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hallo,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Sie haben eine Anfrage zum Zurücksetzen des Passworts für Ihr Konto bei <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong> gestellt.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Klicken Sie auf den Button unten, um ein neues Passwort festzulegen:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Neues Passwort festlegen</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Sicherheitshinweis:</strong> Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie bitte diese E-Mail. Ihr Passwort bleibt unverändert.</p>
+                </td>
+              </tr></table>
+              <p style="margin: 24px 0 0 0; color: #999999; font-size: 13px; line-height: 20px; text-align: center;">Dieser Link ist nur für eine begrenzte Zeit gültig.</p>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco mit Leidenschaft und Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Diese E-Mail wurde automatisch gesendet. Bitte antworten Sie nicht auf diese E-Mail.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== ENGLISH PASSWORD RESET ==================== -->
+  <div class="template-section" id="reset-en">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Reset Your Password</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">We received a request to reset your password.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hello,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">You have requested to reset the password for your account at <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Click the button below to set a new password:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Set New Password</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Security notice:</strong> If you did not request this, please ignore this email. Your password will remain unchanged.</p>
+                </td>
+              </tr></table>
+              <p style="margin: 24px 0 0 0; color: #999999; font-size: 13px; line-height: 20px; text-align: center;">This link is only valid for a limited time.</p>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco with Passion and Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">This email was sent automatically. Please do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SPANISH PASSWORD RESET ==================== -->
+  <div class="template-section" id="reset-es">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Restablecer contrasena</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">Hemos recibido una solicitud para restablecer tu contrasena.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hola,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Has solicitado restablecer la contrasena de tu cuenta en <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Haz clic en el boton de abajo para establecer una nueva contrasena:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Establecer nueva contrasena</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Si el boton no funciona, copia y pega este enlace en tu navegador:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Aviso de seguridad:</strong> Si no has solicitado esto, ignora este correo. Tu contrasena permanecera sin cambios.</p>
+                </td>
+              </tr></table>
+              <p style="margin: 24px 0 0 0; color: #999999; font-size: 13px; line-height: 20px; text-align: center;">Este enlace solo es valido por un tiempo limitado.</p>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco con Pasion y Tradicion</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Este correo fue enviado automaticamente. Por favor, no respondas a este correo.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== GERMAN EMAIL CHANGE ==================== -->
+  <div class="template-section" id="change-de">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">E-Mail-Adresse ändern</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">Wir haben eine Anfrage zur Änderung Ihrer E-Mail-Adresse erhalten.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hallo,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Ihre E-Mail-Adresse für Ihr Konto bei <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong> wird geändert zu: <strong>%NEW_EMAIL%</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Falls Sie diese Änderung nicht angefordert haben, klicken Sie auf den Button unten, um die Änderung rückgängig zu machen:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Änderung rückgängig machen</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Sicherheitshinweis:</strong> Falls Sie diese Änderung selbst vorgenommen haben, können Sie diese E-Mail ignorieren.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco mit Leidenschaft und Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Diese E-Mail wurde automatisch gesendet. Bitte antworten Sie nicht auf diese E-Mail.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== ENGLISH EMAIL CHANGE ==================== -->
+  <div class="template-section" id="change-en">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Email Address Change</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">We received a request to change your email address.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hello,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Your email address for your account at <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong> is being changed to: <strong>%NEW_EMAIL%</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">If you did not request this change, click the button below to revert it:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Revert Change</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Security notice:</strong> If you made this change yourself, you can safely ignore this email.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco with Passion and Tradition</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">This email was sent automatically. Please do not reply to this email.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== SPANISH EMAIL CHANGE ==================== -->
+  <div class="template-section" id="change-es">
+    <div class="template-frame">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F5F5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
+            <tr><td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
+              <div style="margin-bottom: 16px;"><span style="font-size: 48px;">💃</span></div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
+              <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
+            </td></tr>
+            <tr><td style="background-color: #FFFFFF; padding: 40px; border-left: 1px solid #E0E0E0; border-right: 1px solid #E0E0E0;">
+              <h2 style="margin: 0 0 8px 0; color: #333333; font-size: 22px; font-weight: bold;">Cambio de correo electronico</h2>
+              <h3 style="margin: 0 0 24px 0; color: #666666; font-size: 16px; font-weight: normal;">Hemos recibido una solicitud para cambiar tu direccion de correo electronico.</h3>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Hola,</p>
+              <p style="margin: 0 0 16px 0; color: #666666; font-size: 16px; line-height: 24px;">Tu direccion de correo electronico para tu cuenta en <strong style="color: #8B0000;">Antonio Dias Flamenco Werkstatt</strong> se esta cambiando a: <strong>%NEW_EMAIL%</strong>.</p>
+              <p style="margin: 0 0 32px 0; color: #666666; font-size: 16px; line-height: 24px;">Si no solicitaste este cambio, haz clic en el boton de abajo para revertirlo:</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding: 0 0 32px 0;">
+                <a href="%LINK%" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #8B0000, #C41E3A); color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: bold; padding: 16px 48px; border-radius: 8px; letter-spacing: 0.5px;">Revertir cambio</a>
+              </td></tr></table>
+              <div style="border-top: 1px solid #E0E0E0; margin: 0 0 24px 0;"></div>
+              <p style="margin: 0 0 8px 0; color: #999999; font-size: 13px; line-height: 20px;">Si el boton no funciona, copia y pega este enlace en tu navegador:</p>
+              <p style="margin: 0 0 24px 0; word-break: break-all;"><a href="%LINK%" style="color: #8B0000; font-size: 13px; text-decoration: underline;">%LINK%</a></p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td style="background-color: #FFEBEE; border-left: 4px solid #C41E3A; padding: 16px; border-radius: 0 8px 8px 0;">
+                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 22px;"><strong style="color: #8B0000;">Aviso de seguridad:</strong> Si realizaste este cambio tu mismo/a, puedes ignorar este correo.</p>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="background-color: #333333; border-radius: 0 0 12px 12px; padding: 30px 40px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #D4AF37; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</p>
+              <p style="margin: 0 0 16px 0; color: #999999; font-size: 12px; line-height: 18px;">Flamenco con Pasion y Tradicion</p>
+              <div style="width: 40px; height: 2px; background-color: #D4AF37; margin: 0 auto 16px auto; border-radius: 1px;"></div>
+              <p style="margin: 0; color: #777777; font-size: 11px; line-height: 16px;">Este correo fue enviado automaticamente. Por favor, no respondas a este correo.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="instructions">
+  <h2>Firebase Console Setup Instructions</h2>
+  <p style="margin-bottom: 16px;">Firebase Authentication supports <strong>one custom template per language</strong> for each template type. Here's how to set them up:</p>
+  <ol>
+    <li>Go to <strong>Firebase Console &rarr; Authentication &rarr; Templates</strong></li>
+    <li>Click the <strong>pencil icon</strong> on the template you want to customize (e.g., "Email address verification")</li>
+    <li>Set the <strong>default language</strong> template (German/de) by editing the template body</li>
+    <li>Click <strong>"Customize by language"</strong> to add English (en) and Spanish (es) versions</li>
+    <li>For each language, paste the corresponding HTML from this preview</li>
+    <li>Set the <strong>Subject line</strong> for each language (see below)</li>
+  </ol>
+
+  <h2 style="margin-top: 32px;">Recommended Subject Lines</h2>
+  <p style="margin-bottom: 8px;"><strong>Email Verification:</strong></p>
+  <ul style="padding-left: 20px; margin-bottom: 16px;">
+    <li><code>de</code>: Bestätigen Sie Ihre E-Mail – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>en</code>: Verify your email – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>es</code>: Verifica tu correo – Antonio Dias Flamenco Werkstatt</li>
+  </ul>
+  <p style="margin-bottom: 8px;"><strong>Password Reset:</strong></p>
+  <ul style="padding-left: 20px; margin-bottom: 16px;">
+    <li><code>de</code>: Passwort zurücksetzen – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>en</code>: Reset your password – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>es</code>: Restablecer contrasena – Antonio Dias Flamenco Werkstatt</li>
+  </ul>
+  <p style="margin-bottom: 8px;"><strong>Email Change:</strong></p>
+  <ul style="padding-left: 20px; margin-bottom: 16px;">
+    <li><code>de</code>: E-Mail-Adresse geändert – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>en</code>: Email address changed – Antonio Dias Flamenco Werkstatt</li>
+    <li><code>es</code>: Cambio de correo electronico – Antonio Dias Flamenco Werkstatt</li>
+  </ul>
+
+  <h2 style="margin-top: 32px;">How Language Switching Works (Code)</h2>
+  <p>In <code>AuthContext.tsx</code>, the app sets <code>auth.languageCode = getLocale()</code> before calling <code>sendEmailVerification()</code> or <code>sendPasswordResetEmail()</code>. This tells Firebase which language template to use. The locale is determined by the language the user selected via the <code>LanguageSwitcher</code> component on the login/signup screen.</p>
+</div>
+
+<script>
+  let currentType = 'verify';
+  let currentLang = 'de';
+
+  function switchType(type) {
+    currentType = type;
+    updateView();
+    // Update type buttons
+    document.querySelectorAll('.tab-group:first-child .tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  function switchLang(lang) {
+    currentLang = lang;
+    updateView();
+    // Update lang buttons
+    document.querySelectorAll('.tab-group:last-child .tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  function updateView() {
+    document.querySelectorAll('.template-section').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(currentType + '-' + currentLang);
+    if (target) target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

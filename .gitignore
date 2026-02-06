@@ -20,6 +20,8 @@ eas.json
 # Firebase Admin SDK keys (never commit)
 serviceAccount*.json
 firebase-adminsdk*.json
+**/firebase-adminsdk*.json
+**/flamenco-werkstatt-app-firebase-adminsdk*.json
 
 # macOS
 .DS_Store

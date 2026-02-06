@@ -5,12 +5,10 @@ import {
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
-  sendPasswordResetEmail,
-  sendEmailVerification,
-  ActionCodeSettings,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
+import { getLocale } from '../locales';
 import { User, UserRole } from '../types';
 
 interface AuthContextType {
@@ -144,12 +142,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let firestoreError: any = null;
 
     try {
-      const actionCodeSettings: ActionCodeSettings = {
-        url: `${window.location.origin}/?verified=true`,
-        handleCodeInApp: true,
-      };
-      
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      // Send branded verification email via custom Netlify function
+      const response = await fetch('/.netlify/functions/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'verification',
+          email,
+          lang: getLocale(),
+          continueUrl: window.location.origin,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Email service returned an error');
+      }
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);
@@ -268,7 +274,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    // Send branded password reset email via custom Netlify function
+    const response = await fetch('/.netlify/functions/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'resetPassword',
+        email,
+        lang: getLocale(),
+        continueUrl: window.location.origin,
+      }),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to send reset email');
+    }
   };
 
   const value: AuthContextType = {
