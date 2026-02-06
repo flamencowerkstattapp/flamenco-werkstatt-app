@@ -154,7 +154,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
       if (!response.ok) {
-        throw new Error('Email service returned an error');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Email service error:', response.status, errorData);
+        throw new Error(errorData.error || `Email service returned status ${response.status}`);
       }
     } catch (emailError: any) {
       verificationError = emailError;
