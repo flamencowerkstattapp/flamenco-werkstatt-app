@@ -41,7 +41,7 @@ const getAccessToken = async () => {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   const claimSet = Buffer.from(JSON.stringify({
     iss: clientEmail,
-    scope: 'https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase.auth',
+    scope: 'https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/identitytoolkit',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
@@ -73,6 +73,9 @@ const getAccessToken = async () => {
           const parsed = JSON.parse(data);
           if (parsed.access_token) {
             resolve(parsed.access_token);
+          } else if (parsed.id_token) {
+            // Some scope combinations return id_token instead of access_token
+            resolve(parsed.id_token);
           } else {
             reject(new Error(`OAuth error: ${data}`));
           }
