@@ -3,26 +3,39 @@ const https = require('https');
 
 // Google OAuth2: get access token from service account
 const getAccessToken = async () => {
+  const crypto = require('crypto');
   const now = Math.floor(Date.now() / 1000);
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = '';
-  // Support two formats:
-  // 1. FIREBASE_PRIVATE_KEY_BASE64 — the entire private key Base64-encoded (recommended, avoids newline issues)
-  // 2. FIREBASE_PRIVATE_KEY — raw PEM key with \n escape sequences
+
+  // Parse private key from environment variable
+  let rawKey = '';
   if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
-    privateKey = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf8');
+    rawKey = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf8');
   } else {
-    privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
-    // Handle literal \n strings from env vars
-    privateKey = privateKey.replace(/\\n/g, '\n');
-    // If JSON-stringified (wrapped in quotes), parse it
-    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      try { privateKey = JSON.parse(privateKey); } catch (e) { /* keep as-is */ }
+    rawKey = process.env.FIREBASE_PRIVATE_KEY || '';
+    rawKey = rawKey.replace(/\\n/g, '\n');
+    if (rawKey.startsWith('"') && rawKey.endsWith('"')) {
+      try { rawKey = JSON.parse(rawKey); } catch (e) { /* keep as-is */ }
     }
   }
 
-  console.log('Private key format check - starts with BEGIN:', privateKey.startsWith('-----BEGIN'));
-  console.log('Private key length:', privateKey.length);
+  console.log('Key starts with BEGIN:', rawKey.substring(0, 32));
+  console.log('Key length:', rawKey.length);
+  console.log('Key has real newlines:', rawKey.includes('\n'));
+  console.log('Key ends with:', rawKey.substring(rawKey.length - 40));
+
+  // Use crypto.createPrivateKey to properly parse the PEM regardless of format
+  let keyObject;
+  try {
+    keyObject = crypto.createPrivateKey({
+      key: rawKey,
+      format: 'pem',
+    });
+    console.log('Key parsed successfully, type:', keyObject.type, 'asymmetricKeyType:', keyObject.asymmetricKeyType);
+  } catch (parseErr) {
+    console.error('Failed to parse private key:', parseErr.message);
+    throw new Error(`Private key parse error: ${parseErr.message}`);
+  }
 
   // Build JWT header and claim set
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
@@ -36,11 +49,8 @@ const getAccessToken = async () => {
 
   const signInput = `${header}.${claimSet}`;
 
-  // Sign with RSA-SHA256 using Node's built-in crypto
-  const crypto = require('crypto');
-  const sign = crypto.createSign('RSA-SHA256');
-  sign.update(signInput);
-  const signature = sign.sign(privateKey, 'base64url');
+  // Sign using the parsed key object
+  const signature = crypto.sign('RSA-SHA256', Buffer.from(signInput), keyObject).toString('base64url');
 
   const jwt = `${signInput}.${signature}`;
 
