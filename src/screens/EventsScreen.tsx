@@ -227,6 +227,20 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                       </View>
                     )}
 
+                    {item.dailyStartTime && item.dailyEndTime && (
+                      <View style={[
+                      styles.eventDetail,
+                      {
+                        marginBottom: screenWidth >= 768 ? 2 : screenWidth >= 480 ? 1 : 0,
+                      }
+                    ]}>
+                        <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
+                        <Text style={styles.eventDetailText} numberOfLines={1}>
+                          {item.dailyStartTime} - {item.dailyEndTime}
+                        </Text>
+                      </View>
+                    )}
+
                     {item.registrationDeadline && (
                       <View style={[
                       styles.eventDetail,

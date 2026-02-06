@@ -180,6 +180,18 @@ export const EventDetailsScreen: React.FC = () => {
             </View>
           </View>
 
+          {event.dailyStartTime && event.dailyEndTime && (
+            <View style={styles.detailRow}>
+              <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Daily Schedule</Text>
+                <Text style={styles.detailValue}>
+                  {event.dailyStartTime} - {event.dailyEndTime}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {event.registrationDeadline && (
             <View style={styles.detailRow}>
               <Ionicons name="alarm-outline" size={20} color={theme.colors.primary} />
