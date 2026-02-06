@@ -5,10 +5,12 @@ import { theme } from '../constants/theme';
 import { setLocale, getLocale } from '../locales';
 
 const LANGUAGES = [
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪', flagImage: '/flags/de.svg' },
+  { code: 'en', name: 'English', flag: '🇬🇧', flagImage: '/flags/gb.svg' },
+  { code: 'es', name: 'Español', flag: '🇪🇸', flagImage: '/flags/es.svg' },
 ];
+
+const isWeb = Platform.OS === 'web';
 
 interface LanguageSwitcherProps {
   variant?: 'default' | 'light';
@@ -61,7 +63,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'd
         ]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={isNarrowScreen ? styles.flagCompact : styles.flag}>{currentLanguage.flag}</Text>
+        {isWeb ? (
+          <Image source={{ uri: currentLanguage.flagImage }} style={isNarrowScreen ? styles.flagImageCompact : styles.flagImage} />
+        ) : (
+          <Text style={isNarrowScreen ? styles.flagCompact : styles.flag}>{currentLanguage.flag}</Text>
+        )}
         {!isNarrowScreen && (
           <Ionicons 
             name="chevron-down" 
@@ -94,7 +100,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'd
                 ]}
                 onPress={() => handleLanguageChange(language.code)}
               >
-                <Text style={styles.languageFlag}>{language.flag}</Text>
+                {isWeb ? (
+                  <Image source={{ uri: language.flagImage }} style={styles.languageFlagImage} />
+                ) : (
+                  <Text style={styles.languageFlag}>{language.flag}</Text>
+                )}
                 <Text style={styles.languageName}>{language.name}</Text>
                 {currentLocale === language.code && (
                   <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
@@ -185,6 +195,23 @@ const styles = StyleSheet.create({
   },
   languageFlag: {
     fontSize: 24,
+  },
+  languageFlagImage: {
+    width: 28,
+    height: 20,
+    borderRadius: 2,
+    marginRight: theme.spacing.sm,
+  },
+  flagImage: {
+    width: 24,
+    height: 16,
+    borderRadius: 2,
+    marginRight: theme.spacing.xs,
+  },
+  flagImageCompact: {
+    width: 20,
+    height: 14,
+    borderRadius: 2,
   },
   languageName: {
     flex: 1,
