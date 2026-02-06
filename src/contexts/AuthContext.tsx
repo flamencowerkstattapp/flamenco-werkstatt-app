@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  applyActionCode,
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
@@ -92,6 +93,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return unsubscribe;
+  }, []);
+
+  // Handle email verification links: ?mode=verifyEmail&oobCode=XXX
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const oobCode = params.get('oobCode');
+    if (mode === 'verifyEmail' && oobCode) {
+      console.log('Email verification link detected, applying action code...');
+      applyActionCode(auth, oobCode)
+        .then(() => {
+          console.log('Email verified successfully!');
+          // Clean URL parameters
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+          // Show success - the user can now log in
+          window.alert('Your email has been verified! You can now log in.');
+        })
+        .catch((error) => {
+          console.error('Email verification failed:', error);
+          if (error.code === 'auth/invalid-action-code') {
+            window.alert('This verification link has expired or already been used. Please request a new one.');
+          } else {
+            window.alert('Email verification failed. Please try again or contact support.');
+          }
+          // Clean URL even on error
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, '', cleanUrl);
+        });
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {

@@ -91,12 +91,14 @@ const getAccessToken = async () => {
 };
 
 // Call Google Identity Toolkit REST API to generate action links
+// Returns a custom link pointing to the Netlify app (not Firebase's /__/auth/action)
+// The app handles verification via applyActionCode
 const generateActionLink = async (type, email, continueUrl, accessToken) => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
+  const appUrl = process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
   const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
 
-  // Use Firebase auth domain as continueUrl (always authorized by Identity Toolkit)
-  // A redirect page deployed to Firebase Hosting will send users to the actual app
+  // continueUrl must be an authorized Firebase domain for the API to accept it
   const firebaseDomain = `https://${projectId}.firebaseapp.com`;
 
   const body = JSON.stringify({
@@ -123,7 +125,15 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
         try {
           const parsed = JSON.parse(data);
           if (parsed.oobLink) {
-            resolve(parsed.oobLink);
+            // Extract oobCode and apiKey from the Firebase-generated link
+            // and build a custom link pointing to our Netlify app
+            const url = new URL(parsed.oobLink);
+            const oobCode = url.searchParams.get('oobCode');
+            const apiKey = url.searchParams.get('apiKey');
+            const mode = type === 'verification' ? 'verifyEmail' : 'resetPassword';
+            const customLink = `${appUrl}/?mode=${mode}&oobCode=${oobCode}&apiKey=${apiKey}`;
+            console.log(`Custom ${type} link generated for ${email}`);
+            resolve(customLink);
           } else {
             reject(new Error(`Identity Toolkit error: ${data}`));
           }
