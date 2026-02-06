@@ -1,16 +1,108 @@
-const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
+const https = require('https');
 
-// Initialize Firebase Admin (only once)
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-    }),
+// Google OAuth2: get access token from service account
+const getAccessToken = async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+
+  // Build JWT header and claim set
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const claimSet = Buffer.from(JSON.stringify({
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase.auth',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  })).toString('base64url');
+
+  const signInput = `${header}.${claimSet}`;
+
+  // Sign with RSA-SHA256 using Node's built-in crypto
+  const crypto = require('crypto');
+  const sign = crypto.createSign('RSA-SHA256');
+  sign.update(signInput);
+  const signature = sign.sign(privateKey, 'base64url');
+
+  const jwt = `${signInput}.${signature}`;
+
+  // Exchange JWT for access token
+  return new Promise((resolve, reject) => {
+    const postData = `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`;
+    const req = https.request({
+      hostname: 'oauth2.googleapis.com',
+      path: '/token',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.access_token) {
+            resolve(parsed.access_token);
+          } else {
+            reject(new Error(`OAuth error: ${data}`));
+          }
+        } catch (e) {
+          reject(new Error(`OAuth parse error: ${data}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
   });
-}
+};
+
+// Call Google Identity Toolkit REST API to generate action links
+const generateActionLink = async (type, email, continueUrl, accessToken) => {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
+
+  const body = JSON.stringify({
+    requestType,
+    email,
+    returnOobLink: true,
+    continueUrl: type === 'verification' ? `${continueUrl}/?verified=true` : continueUrl,
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'identitytoolkit.googleapis.com',
+      path: `/v1/accounts:sendOobCode?key=`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'X-Goog-User-Project': projectId,
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.oobLink) {
+            resolve(parsed.oobLink);
+          } else {
+            reject(new Error(`Identity Toolkit error: ${data}`));
+          }
+        } catch (e) {
+          reject(new Error(`Identity Toolkit parse error: ${data}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+};
 
 // Create reusable SMTP transporter
 const createTransporter = () => {
@@ -205,21 +297,15 @@ exports.handler = async (event) => {
     const language = ['de', 'en', 'es'].includes(lang) ? lang : 'de';
     const actionUrl = continueUrl || process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
 
-    let link;
-
-    if (type === 'verification') {
-      // Generate email verification link via Firebase Admin SDK
-      link = await admin.auth().generateEmailVerificationLink(email, {
-        url: `${actionUrl}/?verified=true`,
-      });
-    } else if (type === 'resetPassword') {
-      // Generate password reset link via Firebase Admin SDK
-      link = await admin.auth().generatePasswordResetLink(email, {
-        url: actionUrl,
-      });
-    } else {
+    if (type !== 'verification' && type !== 'resetPassword') {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid type. Use "verification" or "resetPassword"' }) };
     }
+
+    // Get OAuth2 access token from service account credentials
+    const accessToken = await getAccessToken();
+
+    // Generate action link via Google Identity Toolkit REST API
+    const link = await generateActionLink(type, email, actionUrl, accessToken);
 
     // Generate email content
     const template = getEmailTemplate(type, language, { email, link });
