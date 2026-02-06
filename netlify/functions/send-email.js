@@ -102,7 +102,7 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: 'identitytoolkit.googleapis.com',
-      path: `/v1/accounts:sendOobCode?key=`,
+      path: `/v1/projects/${projectId}/accounts:sendOobCode`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -328,16 +328,22 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid type. Use "verification" or "resetPassword"' }) };
     }
 
-    // Get OAuth2 access token from service account credentials
+    // Step 1: Get OAuth2 access token
+    console.log('Step 1: Getting OAuth2 access token...');
     const accessToken = await getAccessToken();
+    console.log('Step 1: OK - access token obtained');
 
-    // Generate action link via Google Identity Toolkit REST API
+    // Step 2: Generate action link via Google Identity Toolkit REST API
+    console.log(`Step 2: Generating ${type} link for ${email}...`);
     const link = await generateActionLink(type, email, actionUrl, accessToken);
+    console.log('Step 2: OK - action link generated');
 
-    // Generate email content
+    // Step 3: Generate email content
     const template = getEmailTemplate(type, language, { email, link });
+    console.log('Step 3: OK - template generated, subject:', template.subject);
 
-    // Send email via SMTP
+    // Step 4: Send email via SMTP
+    console.log('Step 4: Sending email via SMTP...');
     const transporter = createTransporter();
     await transporter.sendMail({
       from: `"Flamenco Werkstatt" <${process.env.SMTP_EMAIL}>`,
@@ -347,7 +353,7 @@ exports.handler = async (event) => {
       html: template.html,
     });
 
-    console.log(`Email sent: type=${type}, lang=${language}, to=${email}`);
+    console.log(`Step 4: OK - Email sent: type=${type}, lang=${language}, to=${email}`);
 
     return {
       statusCode: 200,
