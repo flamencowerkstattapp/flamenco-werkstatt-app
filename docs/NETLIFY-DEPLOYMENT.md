@@ -12,14 +12,12 @@ Before deploying, ensure you have:
 ### 1. Build the App
 
 ```bash
-npm run build
-# or
-expo export:web
+npm run build:web
 ```
 
 ### 2. Ensure Assets are Copied
 
-Make sure the following files are in your build output directory (usually `web-build` or `dist`):
+The build script automatically copies all required files to the `dist` folder. Verify these files are present:
 
 **Required Files:**
 - `/manifest.json` (from `public/` folder)
@@ -39,13 +37,26 @@ Create a `netlify.toml` file in your project root:
 
 ```toml
 [build]
-  command = "expo export:web"
-  publish = "web-build"
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
 
 [[headers]]
   for = "/manifest.json"
@@ -54,21 +65,9 @@ Create a `netlify.toml` file in your project root:
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
-  for = "/*.png"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
   for = "/icon-*.png"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
 ```
 
 ### 4. Deploy to Netlify
@@ -85,8 +84,8 @@ netlify deploy --prod
 2. Click "Add new site" > "Import an existing project"
 3. Connect your Git repository
 4. Configure build settings:
-   - Build command: `expo export:web`
-   - Publish directory: `web-build`
+   - Build command: `npm run build:web`
+   - Publish directory: `dist`
 5. Click "Deploy site"
 
 ### 5. Verify PWA Installation

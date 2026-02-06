@@ -23,8 +23,6 @@ import { Booking } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
 import { STUDIOS } from '../constants/studios';
 
-const DEMO_MODE = false; // Production: false, Testing: true
-
 export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user, logout } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -58,11 +56,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   useEffect(() => {
     if (!isAuthenticated || !user || !db) {
       return; // Don't load data until authenticated
-    }
-
-    if (DEMO_MODE) {
-      loadDashboardData(); // Demo mode uses static data
-      return;
     }
 
     // Set up real-time listener for pending bookings
@@ -173,64 +166,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   const loadDashboardData = async () => {
     setLoading(true);
     
-    if (DEMO_MODE) {
-      // Demo mode - simulate data loading
-      setTimeout(() => {
-        // Sample pending bookings
-        const demoBookings: Booking[] = [
-          {
-            id: 'booking-1',
-            userId: 'user-1',
-            userName: 'Maria Schmidt',
-            studioId: 'studio-1-big',
-            startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-            endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // Tomorrow + 2 hours
-            status: 'pending',
-            purpose: 'Flamenco practice for upcoming performance',
-            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          },
-          {
-            id: 'booking-2',
-            userId: 'user-2',
-            userName: 'John Weber',
-            studioId: 'studio-2-small',
-            startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
-            endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 1.5 * 60 * 60 * 1000), // + 1.5 hours
-            status: 'pending',
-            purpose: 'Private lesson preparation',
-            createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-            updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-          },
-          {
-            id: 'booking-3',
-            userId: 'user-3',
-            userName: 'Ana Garcia',
-            studioId: 'studio-1-big',
-            startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // In 3 days
-            endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // + 3 hours
-            status: 'pending',
-            purpose: 'Group rehearsal for festival',
-            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-            updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          },
-        ];
-
-        setPendingBookings(demoBookings);
-        setStats({
-          totalMembers: 47,
-          contractUsers: 42,
-          noContractUsers: 5,
-          pendingBookings: demoBookings.length,
-          upcomingEvents: 5,
-          adminCount: 3,
-          instructorCount: 8,
-        });
-        setLoading(false);
-      }, 1000);
-      return;
-    }
-
     try {
       const bookingsQuery = query(
         collection(db!, 'bookings'),
@@ -324,16 +259,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   const handleApproveRecurringGroup = async (recurringGroupId: string) => {
-    if (DEMO_MODE) {
-      setTimeout(() => {
-        setPendingBookings(prev => prev.filter(booking => booking.recurringGroupId !== recurringGroupId));
-        const count = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId).length;
-        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - count }));
-        Alert.alert(t('common.success'), `${count} recurring bookings approved`);
-      }, 500);
-      return;
-    }
-
     try {
       const bookingsToApprove = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId);
       
@@ -357,16 +282,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   const handleRejectRecurringGroup = async (recurringGroupId: string) => {
     const reason = 'Rejected by admin';
 
-    if (DEMO_MODE) {
-      setTimeout(() => {
-        setPendingBookings(prev => prev.filter(booking => booking.recurringGroupId !== recurringGroupId));
-        const count = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId).length;
-        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - count }));
-        Alert.alert(t('common.success'), `${count} recurring bookings rejected`);
-      }, 500);
-      return;
-    }
-
     try {
       const bookingsToReject = pendingBookings.filter(b => b.recurringGroupId === recurringGroupId);
       
@@ -387,16 +302,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   const handleApproveBooking = async (bookingId: string) => {
-    if (DEMO_MODE) {
-      // Demo mode - simulate approval
-      setTimeout(() => {
-        setPendingBookings(prev => prev.filter(booking => booking.id !== bookingId));
-        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - 1 }));
-        Alert.alert(t('common.success'), 'Booking approved');
-      }, 500);
-      return;
-    }
-
     try {
       await updateDoc(doc(db!, 'bookings', bookingId), {
         status: 'approved',
@@ -414,16 +319,6 @@ export const AdminDashboard: React.FC<{ navigation: any }> = ({ navigation }) =>
   const handleRejectBooking = async (bookingId: string) => {
     // For web compatibility, use a simple confirmation. In production, replace with a custom modal.
     const reason = 'Rejected by admin'; // You can replace this with a custom modal input later.
-
-    if (DEMO_MODE) {
-      // Demo mode - simulate rejection
-      setTimeout(() => {
-        setPendingBookings(prev => prev.filter(booking => booking.id !== bookingId));
-        setStats(prev => ({ ...prev, pendingBookings: prev.pendingBookings - 1 }));
-        Alert.alert(t('common.success'), 'Booking rejected');
-      }, 500);
-      return;
-    }
 
     try {
       await updateDoc(doc(db!, 'bookings', bookingId), {

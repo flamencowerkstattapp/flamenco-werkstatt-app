@@ -37,6 +37,8 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [showUserModal, setShowUserModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{userId: string; currentRole: UserRole; userName: string} | null>(null);
+  const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
+  const [confirmStatusAction, setConfirmStatusAction] = useState<{userId: string; currentStatus: boolean; userName: string} | null>(null);
   const [showMembershipConfirmModal, setShowMembershipConfirmModal] = useState(false);
   const [pendingMembershipChange, setPendingMembershipChange] = useState<boolean | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -300,11 +302,23 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     setPendingMembershipChange(null);
   };
 
-  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    const actionKey = `status-${userId}`;
-    if (completedActions.has(actionKey)) return; // Prevent duplicate actions
+  const handleToggleUserStatus = (userId: string, currentStatus: boolean) => {
+    const user = users.find(u => u.id === userId);
+    const userName = user ? `${user.firstName} ${user.lastName}` : 'User';
     
+    // Show confirmation modal
+    setConfirmStatusAction({ userId, currentStatus, userName });
+    setShowStatusConfirmModal(true);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (!confirmStatusAction) return;
+    
+    const { userId, currentStatus } = confirmStatusAction;
+    const actionKey = `status-${userId}`;
     const newStatus = !currentStatus;
+    
+    setShowStatusConfirmModal(false);
     
     try {
       await updateDoc(doc(getFirestoreDB(), 'users', userId), { isActive: newStatus });
@@ -319,6 +333,8 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     } catch (error) {
       console.error('Error updating user status:', error);
       Alert.alert(t('common.error'), t('admin.errorUpdatingUserStatus'));
+    } finally {
+      setConfirmStatusAction(null);
     }
   };
 
@@ -792,7 +808,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  onPress={() => toggleUserStatus(user.id, user.isActive)}
+                  onPress={() => handleToggleUserStatus(user.id, user.isActive)}
                   disabled={completedActions.has(`status-${user.id}`)}
                   style={[
                     styles.iconButton,
@@ -1289,6 +1305,49 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Button
                 title={t('common.confirm')}
                 onPress={handleConfirmMembershipChange}
+                variant="danger"
+                style={styles.confirmModalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Status Change Confirmation Modal */}
+      <Modal
+        visible={showStatusConfirmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowStatusConfirmModal(false)}
+      >
+        <View style={styles.confirmModalOverlay}>
+          <View style={styles.confirmModalContent}>
+            <View style={styles.confirmModalHeader}>
+              <Ionicons name="warning" size={48} color={theme.colors.warning} />
+              <Text style={styles.confirmModalTitle}>{t('admin.confirmStatusChangeTitle')}</Text>
+            </View>
+            
+            {confirmStatusAction && (
+              <Text style={styles.confirmModalMessage}>
+                {confirmStatusAction.currentStatus 
+                  ? t('admin.confirmDeactivateMessage', { userName: confirmStatusAction.userName })
+                  : t('admin.confirmActivateMessage', { userName: confirmStatusAction.userName })}
+              </Text>
+            )}
+            
+            <View style={styles.confirmModalActions}>
+              <Button
+                title={t('common.cancel')}
+                onPress={() => {
+                  setShowStatusConfirmModal(false);
+                  setConfirmStatusAction(null);
+                }}
+                variant="outline"
+                style={styles.confirmModalButton}
+              />
+              <Button
+                title={t('common.confirm')}
+                onPress={handleConfirmStatusChange}
                 variant="danger"
                 style={styles.confirmModalButton}
               />

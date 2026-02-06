@@ -18,7 +18,27 @@ interface AdminPasswordProtectionProps {
   onAuthenticated: () => void;
 }
 
-const ADMIN_PASSWORD = 'Flamencowerkstatt2026@'; // Change this to your desired admin password
+// Admin password is read from environment variable for security
+// Set EXPO_PUBLIC_ADMIN_PASSWORD_HASH in your .env file
+const getAdminPasswordHash = (): string => {
+  const env = process.env as Record<string, string | undefined>;
+  if (env.EXPO_PUBLIC_ADMIN_PASSWORD_HASH) return env.EXPO_PUBLIC_ADMIN_PASSWORD_HASH;
+  if (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_ADMIN_PASSWORD_HASH) {
+    return (window as any).__ENV__.EXPO_PUBLIC_ADMIN_PASSWORD_HASH;
+  }
+  return '';
+};
+
+// Simple hash function for client-side password comparison
+const hashPassword = (password: string): string => {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString(36);
+};
 
 // Persistent storage using localStorage for web and AsyncStorage for mobile
 const persistentStorageGetItem = async (key: string): Promise<string | null> => {
@@ -134,7 +154,9 @@ export const AdminPasswordProtection: React.FC<AdminPasswordProtectionProps> = (
 
     // Simulate verification delay
     setTimeout(async () => {
-      if (password === ADMIN_PASSWORD) {
+      const passwordHash = hashPassword(password);
+      const storedHash = getAdminPasswordHash();
+      if (storedHash && passwordHash === storedHash) {
         // Reset attempts on successful login and set persistent auth
         setAttempts(0);
         try {

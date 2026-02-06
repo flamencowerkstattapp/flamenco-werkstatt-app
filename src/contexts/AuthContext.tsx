@@ -13,38 +13,6 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limi
 import { auth, db } from '../services/firebase';
 import { User, UserRole } from '../types';
 
-const DEMO_MODE = false;
-
-const DEMO_USER: User = {
-  id: 'demo-member-1',
-  email: 'member@flamenco-werkstatt.de',
-  firstName: 'Maria',
-  lastName: 'Garcia',
-  role: 'member',
-  isInstructor: false,
-  phone: '+49 177 1234567',
-  memberSince: new Date('2024-01-15'),
-  isActive: true,
-  preferredLanguage: 'de',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const DEMO_ADMIN: User = {
-  id: 'demo-admin-1',
-  email: 'admin@flamenco-werkstatt.de',
-  firstName: 'Antonio',
-  lastName: 'Dias',
-  role: 'admin',
-  isInstructor: false,
-  phone: '+49 177 7855744',
-  memberSince: new Date('2020-01-01'),
-  isActive: true,
-  preferredLanguage: 'de',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
 interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
@@ -78,14 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (DEMO_MODE) {
-      setTimeout(() => {
-        setUser(DEMO_ADMIN);
-        setLoading(false);
-      }, 500);
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser && !firebaseUser.emailVerified) {

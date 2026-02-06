@@ -19,14 +19,11 @@ interface AdminFirebaseAuthProps {
   onAuthenticated: () => void;
 }
 
-const ADMIN_EMAIL = 'flamencowerkstattapp@gmail.com';
-const ADMIN_PASSWORD = 'Flamencowerkstatt2026@';
-
 export const AdminFirebaseAuth: React.FC<AdminFirebaseAuthProps> = ({
   onAuthenticated,
 }) => {
   const { signIn, user } = useAuth();
-  const [email, setEmail] = useState(ADMIN_EMAIL);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

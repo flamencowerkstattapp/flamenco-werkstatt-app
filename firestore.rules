@@ -29,10 +29,6 @@ service cloud.firestore {
 
     // Users collection - Allow read access for messaging purposes and admin management
     match /users/{userId} {
-      // Allow unauthenticated email lookup for signup pre-registration check
-      // This is secure because it only allows checking if an email exists, not reading user data
-      allow list: if request.query.limit == 1;
-      
       // Allow authenticated users to query by their own email for profile linking during signup
       allow list: if isSignedIn() && request.query.limit == 1;
       
@@ -77,11 +73,13 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == request.resource.data.userId;
 
-      // Owner can update their own booking; staff can update any booking
-      allow update: if isSignedIn() && (
-        request.auth.uid == resource.data.userId ||
-        isStaff()
-      );
+      // Staff can update any booking field
+      allow update: if isSignedIn() && isStaff();
+
+      // Owner can update their own booking, but cannot change status or approval fields
+      allow update: if isSignedIn() && 
+        request.auth.uid == resource.data.userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'approvedBy', 'approvedAt']);
 
       allow delete: if isSignedIn() && (
         request.auth.uid == resource.data.userId ||
@@ -173,8 +171,8 @@ service cloud.firestore {
       // Users can read their own notifications
       allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
       
-      // System can create notifications for users
-      allow create: if isSignedIn();
+      // Only admins can create notifications for users
+      allow create: if isAdmin();
       
       // Users can update their own notifications (mark as read, etc.)
       allow update: if isSignedIn() && request.auth.uid == resource.data.userId;

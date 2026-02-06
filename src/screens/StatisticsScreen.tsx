@@ -12,8 +12,6 @@ import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { getPaymentStats } from '../services/paymentService';
 
-const DEMO_MODE = false;
-
 // Membership pricing structure
 const MEMBERSHIP_PRICING = {
   '1-class': 55,
@@ -90,58 +88,6 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
   const loadStatistics = async () => {
     setLoading(true);
     
-    if (DEMO_MODE) {
-      // Demo mode - simulate statistics loading with realistic revenue calculations
-      setTimeout(() => {
-        // Simulate user distribution across membership types
-        const membershipDistribution = {
-          '1-class': 15,      // 15 users × €55 = €825
-          '2-classes': 18,    // 18 users × €90 = €1620  
-          '3-classes': 10,    // 10 users × €120 = €1200
-          'all-you-can-dance': 4, // 4 users × €130 = €520
-        };
-        
-        // Calculate total monthly revenue
-        const monthlyRevenue = Object.entries(membershipDistribution).reduce(
-          (total, [type, count]) => total + (count * MEMBERSHIP_PRICING[type as keyof typeof MEMBERSHIP_PRICING]), 
-          0
-        );
-        
-        const demoStats: Statistics = {
-          totalUsers: 47,
-          activeUsers: 42,
-          totalBookings: 156,
-          pendingBookings: 3,
-          completedBookings: 153,
-          totalRevenue: monthlyRevenue * 12,
-          monthlyRevenue: monthlyRevenue,
-          yearlyRevenue: monthlyRevenue * 12,
-          expectedMonthlyRevenue: monthlyRevenue,
-          cashPayments: monthlyRevenue * 0.4,
-          bankPayments: monthlyRevenue * 0.6,
-          upcomingEvents: 3,
-          publishedNews: 4,
-          studioUtilization: {
-            studioBig: 78,
-            studioSmall: 65,
-          },
-          userGrowth: {
-            thisMonth: 8,
-            lastMonth: 5,
-          },
-          bookingTrends: {
-            daily: 12,
-            weekly: 45,
-            monthly: 156,
-          },
-        };
-
-        setStatistics(demoStats);
-        setLoading(false);
-      }, 1000);
-      return;
-    }
-
     try {
       // In a real app, these would be actual Firebase queries
       const usersQuery = query(collection(db!, 'users'));
@@ -365,7 +311,7 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
           <Text style={styles.sectionTitle}>{t('admin.overview')}</Text>
           <View style={styles.statsGrid}>
             <StatCard
-              title={t('admin.totalUsers')}
+              title={t('admin.totalMembers')}
               value={statistics.totalUsers}
               icon="people-outline"
               color={theme.colors.primary}
@@ -531,17 +477,21 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',  },
+    flexWrap: 'wrap',
+    padding: theme.spacing.md,
+  },
   statCard: {
+    minWidth: 100,
+    flexBasis: '18%',
+    flexGrow: 1,
+    flexShrink: 1,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
+    margin: theme.spacing.xs,
     alignItems: 'center',
-    width: '48%',
     borderWidth: 1,
     borderColor: theme.colors.border,
-    marginBottom: theme.spacing.md,
-    marginRight: theme.spacing.sm,
     ...theme.shadows.small,
   },
   statValue: {
@@ -596,7 +546,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   growthContainer: {
-    flexDirection: 'row',  },
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: theme.spacing.md,
+  },
   growthCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
@@ -620,12 +573,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   trendsContainer: {
-    flexDirection: 'row',  },
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: theme.spacing.md,
+  },
   metricsContainer: {  },
   metricCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     ...theme.shadows.small,
   },
   metricHeader: {

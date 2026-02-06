@@ -37,11 +37,6 @@ if (fs.existsSync(indexPath)) {
     indexContent = indexContent.replace('</title>', '</title>\n  <meta property="og:title" content="Antonio Dias Flamenco Werkstatt">\n  <meta property="og:description" content="Antonio Dias Flamenco Werkstatt - Dance studio management and booking app">');
   }
   
-  // Debug environment variables
-  console.log('Environment variables being injected:');
-  console.log('EXPO_PUBLIC_FIREBASE_API_KEY:', process.env.EXPO_PUBLIC_FIREBASE_API_KEY ? 'SET' : 'MISSING');
-  console.log('EXPO_PUBLIC_FIREBASE_PROJECT_ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ? 'SET' : 'MISSING');
-  
   // Create environment injection script
   const envScript = `
     <script>
@@ -51,9 +46,9 @@ if (fs.existsSync(indexPath)) {
         EXPO_PUBLIC_FIREBASE_PROJECT_ID: '${process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || ''}',
         EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: '${process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || ''}',
         EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '${process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || ''}',
-        EXPO_PUBLIC_FIREBASE_APP_ID: '${process.env.EXPO_PUBLIC_FIREBASE_APP_ID || ''}'
+        EXPO_PUBLIC_FIREBASE_APP_ID: '${process.env.EXPO_PUBLIC_FIREBASE_APP_ID || ''}',
+        EXPO_PUBLIC_ADMIN_PASSWORD_HASH: '${process.env.EXPO_PUBLIC_ADMIN_PASSWORD_HASH || ''}'
       };
-      console.log('Environment variables loaded:', Object.keys(window.__ENV__));
     </script>
   `;
   
