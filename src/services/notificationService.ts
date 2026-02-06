@@ -18,7 +18,16 @@ import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging
 import { getFirestoreDB } from './firebase';
 import { AppNotification, NotificationPreferences, NotificationType } from '../types';
 
-const VAPID_KEY = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY || '';
+const getVapidKey = (): string => {
+  const env = process.env as Record<string, string | undefined>;
+  if (env.EXPO_PUBLIC_FIREBASE_VAPID_KEY) return env.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
+  if (typeof window !== 'undefined' && (window as any).__ENV__?.EXPO_PUBLIC_FIREBASE_VAPID_KEY) {
+    return (window as any).__ENV__.EXPO_PUBLIC_FIREBASE_VAPID_KEY;
+  }
+  return '';
+};
+
+const VAPID_KEY = getVapidKey();
 
 export class NotificationService {
   private db = getFirestoreDB();
