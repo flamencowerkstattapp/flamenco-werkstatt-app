@@ -257,7 +257,7 @@ const getEmailTemplate = (type, lang, data) => {
       <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
         <tr>
           <td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
-            <div style="margin-bottom: 16px;"><img src="https://flamenco-werkstatt.netlify.app/logo.png" alt="Flamenco Werkstatt" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" /></div>
+            <div style="margin-bottom: 16px;"><img src="https://flamenco-werkstatt-app.web.app/logo.png" alt="Flamenco Werkstatt" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" /></div>
             <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
             <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
           </td>

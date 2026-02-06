@@ -10,7 +10,7 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "redirects": [
       {
-        "source": "**",
+        "source": "/",
         "destination": "https://flamenco-werkstatt.netlify.app",
         "type": 302
       }
