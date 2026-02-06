@@ -246,6 +246,14 @@ export const getPaymentStats = async () => {
       .filter(p => p.paymentType === 'special-class')
       .reduce((sum, p) => sum + p.amount, 0);
 
+    const sessionCardRevenue = payments
+      .filter(p => p.paymentType === 'session-card')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    const sessionCardCount = payments
+      .filter(p => p.paymentType === 'session-card')
+      .length;
+
     return {
       totalRevenue,
       monthlyRevenue,
@@ -254,6 +262,8 @@ export const getPaymentStats = async () => {
       bankPayments,
       weeklyClassRevenue,
       specialClassRevenue,
+      sessionCardRevenue,
+      sessionCardCount,
       totalPayments: payments.length,
     };
   } catch (error) {

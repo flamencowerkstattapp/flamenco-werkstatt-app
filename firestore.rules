@@ -148,6 +148,21 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
+    // Session Cards rules - Admin only
+    match /sessionCards/{cardId} {
+      // Admins can read all session cards
+      allow read: if isAdmin();
+      
+      // Only admins can create session cards
+      allow create: if isAdmin();
+      
+      // Only admins can update session cards
+      allow update: if isAdmin();
+      
+      // Only admins can delete session cards
+      allow delete: if isAdmin();
+    }
+    
     // Groups rules - Admin only management
     match /groups/{groupId} {
       // Admins can read all groups

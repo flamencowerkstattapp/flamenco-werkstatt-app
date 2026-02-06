@@ -211,7 +211,7 @@ export interface NotificationPreferences {
 }
 
 export type PaymentMethod = 'cash' | 'bank';
-export type PaymentType = 'weekly-class' | 'special-class';
+export type PaymentType = 'weekly-class' | 'special-class' | 'session-card';
 export type SpecialClassType = 'technique' | 'special-event';
 
 export interface Payment {
@@ -229,6 +229,19 @@ export interface Payment {
   notes?: string;
   recordedBy: string;
   recordedByName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SessionCard {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  recordedBy: string;
+  recordedByName: string;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }

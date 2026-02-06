@@ -31,6 +31,7 @@ import { ManageEventsScreen } from './src/screens/ManageEventsScreen';
 import { ManageNewsScreen } from './src/screens/ManageNewsScreen';
 import { ManageGroupsScreen } from './src/screens/ManageGroupsScreen';
 import { StatisticsScreen } from './src/screens/StatisticsScreen';
+import { SessionCardsScreen } from './src/screens/SessionCardsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -81,6 +82,7 @@ const AdminStack = () => {
       <Stack.Screen name="ManageEvents" component={ManageEventsScreen} />
       <Stack.Screen name="ManageNews" component={ManageNewsScreen} />
       <Stack.Screen name="ManageGroups" component={ManageGroupsScreen} />
+      <Stack.Screen name="SessionCards" component={SessionCardsScreen} />
       <Stack.Screen name="Statistics" component={StatisticsScreen} />
     </Stack.Navigator>
   );
@@ -215,6 +217,7 @@ export default function App() {
         'ManageEvents': t('admin.manageEvents'),
         'ManageNews': t('admin.manageNews'),
         'ManageGroups': t('admin.manageGroups'),
+        'SessionCards': t('admin.sessionCards'),
         'Statistics': t('admin.statistics'),
         'BookStudio': t('calendar.bookStudio'),
         'BookingDetails': t('calendar.bookingDetails'),

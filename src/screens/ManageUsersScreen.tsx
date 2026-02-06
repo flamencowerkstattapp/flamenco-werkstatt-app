@@ -18,6 +18,7 @@ import { formatDateTime } from '../utils/dateUtils';
 import { parseCSV } from '../utils/csvParser';
 import { importUsersFromCSV, downloadCSVTemplate, ImportResult } from '../services/csvImportService';
 import { createPayment, getUserPayments, checkMonthlyPaymentStatus } from '../services/paymentService';
+import { getSessionCardCountsByUser } from '../services/sessionCardService';
 
 const MEMBERSHIP_OPTIONS = [
   { value: '1-class', labelKey: 'user.membershipTypes.1-class', priceKey: 'user.membershipPricing.1-class' },
@@ -52,6 +53,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [userPayments, setUserPayments] = useState<{[userId: string]: Payment[]}>({});
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<Set<string>>(new Set()); // Track completed actions
   const [searchQuery, setSearchQuery] = useState('');
+  const [sessionCardCounts, setSessionCardCounts] = useState<{ [userId: string]: number }>({});
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -223,6 +225,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       })) as User[];
 
       setUsers(usersData);
+
+      // Load session card counts per user
+      try {
+        const counts = await getSessionCardCountsByUser();
+        setSessionCardCounts(counts);
+      } catch (error) {
+        console.error('Error loading session card counts:', error);
+      }
     } catch (error) {
       console.error('Error loading users:', error);
       Alert.alert(t('common.error'), 'Failed to load users');
@@ -694,6 +704,12 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
                       <Ionicons name={user.noMembership ? "close-circle-outline" : "document-text-outline"} size={12} color="#fff" style={screenWidth >= 768 ? styles.contractBadgeIcon : undefined} />
                       {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{user.noMembership ? t('user.noMembership') : t('user.hasMembership')}</Text>}
                     </View>
+                    {sessionCardCounts[user.id] > 0 && (
+                      <View style={styles.sessionCardBadge}>
+                        <Ionicons name="card-outline" size={12} color="#fff" style={screenWidth >= 768 ? styles.sessionCardBadgeIcon : undefined} />
+                        {screenWidth >= 768 && <Text style={styles.roleBadgeText}>{sessionCardCounts[user.id]}x Card</Text>}
+                      </View>
+                    )}
                   </View>
                 </View>
                 
@@ -1426,10 +1442,12 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
     marginRight: '1%',
-    ...theme.shadows.small,
+    ...theme.shadows.medium,
   },
   userInfo: {
     flex: 1,
@@ -1479,6 +1497,18 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
   contractBadgeIcon: {
+    marginRight: 4,
+  },
+  sessionCardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.xs,
+    backgroundColor: theme.colors.primary,
+  },
+  sessionCardBadgeIcon: {
     marginRight: 4,
   },
   userEmail: {

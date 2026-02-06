@@ -11,6 +11,7 @@ import { AppHeader } from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { getPaymentStats } from '../services/paymentService';
+import { getSessionCardStats } from '../services/sessionCardService';
 
 // Membership pricing structure
 const MEMBERSHIP_PRICING = {
@@ -46,6 +47,12 @@ interface Statistics {
     daily: number;
     weekly: number;
     monthly: number;
+  };
+  sessionCards: {
+    totalCards: number;
+    totalRevenue: number;
+    monthlyCards: number;
+    monthlyRevenue: number;
   };
 }
 
@@ -188,6 +195,26 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
         console.error('Error loading payment stats:', error);
       }
 
+      // Get session card stats
+      let sessionCardStats = {
+        totalCards: 0,
+        totalRevenue: 0,
+        monthlyCards: 0,
+        monthlyRevenue: 0,
+      };
+
+      try {
+        const scStats = await getSessionCardStats();
+        sessionCardStats = {
+          totalCards: scStats.totalCards,
+          totalRevenue: scStats.totalRevenue,
+          monthlyCards: scStats.monthlyCards,
+          monthlyRevenue: scStats.monthlyRevenue,
+        };
+      } catch (error) {
+        console.error('Error loading session card stats:', error);
+      }
+
       // Calculate statistics from real data
       const stats: Statistics = {
         totalUsers: usersSnapshot.size,
@@ -216,6 +243,7 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
           weekly: weeklyBookings,
           monthly: monthlyBookings,
         },
+        sessionCards: sessionCardStats,
       };
 
       setStatistics(stats);
@@ -400,6 +428,26 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
               value={statistics.bookingTrends.monthly}
               icon="calendar-number-outline"
               color={theme.colors.warning}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('sessionCards.title')}</Text>
+          <View style={styles.statsGrid}>
+            <StatCard
+              title={t('sessionCards.totalCardsSold')}
+              value={statistics.sessionCards.totalCards}
+              icon="card-outline"
+              color={theme.colors.primary}
+              subtitle={`${statistics.sessionCards.monthlyCards} ${t('sessionCards.monthlyCardsSold').toLowerCase()}`}
+            />
+            <StatCard
+              title={t('sessionCards.totalRevenue')}
+              value={`\u20AC${statistics.sessionCards.totalRevenue.toFixed(2)}`}
+              icon="cash-outline"
+              color={theme.colors.success}
+              subtitle={`\u20AC${statistics.sessionCards.monthlyRevenue.toFixed(2)} ${t('admin.thisMonth').toLowerCase()}`}
             />
           </View>
         </View>
