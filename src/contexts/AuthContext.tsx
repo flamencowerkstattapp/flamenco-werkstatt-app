@@ -4,7 +4,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  applyActionCode,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
@@ -95,37 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  // Handle email verification links: ?mode=verifyEmail&oobCode=XXX
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const mode = params.get('mode');
-    const oobCode = params.get('oobCode');
-    if (mode === 'verifyEmail' && oobCode) {
-      console.log('Email verification link detected, applying action code...');
-      applyActionCode(auth, oobCode)
-        .then(() => {
-          console.log('Email verified successfully!');
-          // Clean URL parameters
-          const cleanUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, '', cleanUrl);
-          // Show success - the user can now log in
-          window.alert('Your email has been verified! You can now log in.');
-        })
-        .catch((error) => {
-          console.error('Email verification failed:', error);
-          if (error.code === 'auth/invalid-action-code') {
-            window.alert('This verification link has expired or already been used. Please request a new one.');
-          } else {
-            window.alert('Email verification failed. Please try again or contact support.');
-          }
-          // Clean URL even on error
-          const cleanUrl = window.location.origin + window.location.pathname;
-          window.history.replaceState({}, '', cleanUrl);
-        });
-    }
-  }, []);
-
   const signIn = async (email: string, password: string) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -174,22 +144,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let firestoreError: any = null;
 
     try {
-      // Send branded verification email via custom Netlify function
-      const response = await fetch('/.netlify/functions/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'verification',
-          email,
-          lang: getLocale(),
-          continueUrl: window.location.origin,
-        }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Email service error:', response.status, errorData);
-        throw new Error(errorData.error || `Email service returned status ${response.status}`);
-      }
+      // Set language for Firebase emails based on user's locale
+      auth.languageCode = getLocale();
+      await sendEmailVerification(userCredential.user);
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);
@@ -308,21 +265,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    // Send branded password reset email via custom Netlify function
-    const response = await fetch('/.netlify/functions/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'resetPassword',
-        email,
-        lang: getLocale(),
-        continueUrl: window.location.origin,
-      }),
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to send reset email');
-    }
+    // Set language for Firebase emails based on user's locale
+    auth.languageCode = getLocale();
+    await sendPasswordResetEmail(auth, email);
   };
 
   const value: AuthContextType = {
