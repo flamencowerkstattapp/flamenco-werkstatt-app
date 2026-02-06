@@ -41,7 +41,7 @@ const getAccessToken = async () => {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   const claimSet = Buffer.from(JSON.stringify({
     iss: clientEmail,
-    scope: 'https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/identitytoolkit',
+    scope: 'https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase.auth',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
@@ -73,9 +73,6 @@ const getAccessToken = async () => {
           const parsed = JSON.parse(data);
           if (parsed.access_token) {
             resolve(parsed.access_token);
-          } else if (parsed.id_token) {
-            // Some scope combinations return id_token instead of access_token
-            resolve(parsed.id_token);
           } else {
             reject(new Error(`OAuth error: ${data}`));
           }
@@ -91,27 +88,21 @@ const getAccessToken = async () => {
 };
 
 // Call Google Identity Toolkit REST API to generate action links
-// Returns a custom link pointing to the Netlify app (not Firebase's /__/auth/action)
-// The app handles verification via applyActionCode
 const generateActionLink = async (type, email, continueUrl, accessToken) => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
-  const appUrl = process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
   const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
-
-  // continueUrl must be an authorized Firebase domain for the API to accept it
-  const firebaseDomain = `https://${projectId}.firebaseapp.com`;
 
   const body = JSON.stringify({
     requestType,
     email,
     returnOobLink: true,
-    continueUrl: firebaseDomain,
+    continueUrl: type === 'verification' ? `${continueUrl}/?verified=true` : continueUrl,
   });
 
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: 'identitytoolkit.googleapis.com',
-      path: `/v1/projects/${projectId}/accounts:sendOobCode`,
+      path: `/v1/accounts:sendOobCode?key=`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,15 +116,7 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
         try {
           const parsed = JSON.parse(data);
           if (parsed.oobLink) {
-            // Extract oobCode and apiKey from the Firebase-generated link
-            // and build a custom link pointing to our Netlify app
-            const url = new URL(parsed.oobLink);
-            const oobCode = url.searchParams.get('oobCode');
-            const apiKey = url.searchParams.get('apiKey');
-            const mode = type === 'verification' ? 'verifyEmail' : 'resetPassword';
-            const customLink = `${appUrl}/?mode=${mode}&oobCode=${oobCode}&apiKey=${apiKey}`;
-            console.log(`Custom ${type} link generated for ${email}`);
-            resolve(customLink);
+            resolve(parsed.oobLink);
           } else {
             reject(new Error(`Identity Toolkit error: ${data}`));
           }

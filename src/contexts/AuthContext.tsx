@@ -4,13 +4,13 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  sendEmailVerification,
-  sendPasswordResetEmail,
   User as FirebaseUser,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  ActionCodeSettings,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
-import { getLocale } from '../locales';
 import { User, UserRole } from '../types';
 
 interface AuthContextType {
@@ -144,9 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let firestoreError: any = null;
 
     try {
-      // Set language for Firebase emails based on user's locale
-      auth.languageCode = getLocale();
-      await sendEmailVerification(userCredential.user);
+      const actionCodeSettings: ActionCodeSettings = {
+        url: `${window.location.origin}/?verified=true`,
+        handleCodeInApp: true,
+      };
+      
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);
@@ -265,8 +268,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    // Set language for Firebase emails based on user's locale
-    auth.languageCode = getLocale();
     await sendPasswordResetEmail(auth, email);
   };
 
