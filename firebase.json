@@ -4,5 +4,16 @@
     "location": "nam5",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "firebase-hosting",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "redirects": [
+      {
+        "source": "**",
+        "destination": "https://flamenco-werkstatt.netlify.app",
+        "type": 302
+      }
+    ]
   }
 }

@@ -95,16 +95,15 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
 
-  // continueUrl is where the user goes after clicking "Continue" on the verification page
-  // This domain MUST be in Firebase Auth > Settings > Authorized domains
-  const appUrl = continueUrl || process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
-  const finalUrl = type === 'verification' ? `${appUrl}/?verified=true` : appUrl;
+  // Use Firebase auth domain as continueUrl (always authorized by Identity Toolkit)
+  // A redirect page deployed to Firebase Hosting will send users to the actual app
+  const firebaseDomain = `https://${projectId}.firebaseapp.com`;
 
   const body = JSON.stringify({
     requestType,
     email,
     returnOobLink: true,
-    continueUrl: finalUrl,
+    continueUrl: firebaseDomain,
   });
 
   return new Promise((resolve, reject) => {
