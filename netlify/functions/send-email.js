@@ -5,7 +5,24 @@ const https = require('https');
 const getAccessToken = async () => {
   const now = Math.floor(Date.now() / 1000);
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  let privateKey = '';
+  // Support two formats:
+  // 1. FIREBASE_PRIVATE_KEY_BASE64 — the entire private key Base64-encoded (recommended, avoids newline issues)
+  // 2. FIREBASE_PRIVATE_KEY — raw PEM key with \n escape sequences
+  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
+    privateKey = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf8');
+  } else {
+    privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+    // Handle literal \n strings from env vars
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    // If JSON-stringified (wrapped in quotes), parse it
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      try { privateKey = JSON.parse(privateKey); } catch (e) { /* keep as-is */ }
+    }
+  }
+
+  console.log('Private key format check - starts with BEGIN:', privateKey.startsWith('-----BEGIN'));
+  console.log('Private key length:', privateKey.length);
 
   // Build JWT header and claim set
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
