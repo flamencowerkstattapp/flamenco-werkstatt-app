@@ -95,11 +95,19 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
 
+  // Use Firebase auth domain for continueUrl (always authorized)
+  // The actual app URL is passed as a query param so the user lands back on the app
+  const appUrl = continueUrl || process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
+  const firebaseAuthDomain = `https://${projectId}.firebaseapp.com`;
+  const redirectUrl = type === 'verification'
+    ? `${firebaseAuthDomain}/?verified=true&redirect=${encodeURIComponent(appUrl)}`
+    : `${firebaseAuthDomain}/?redirect=${encodeURIComponent(appUrl)}`;
+
   const body = JSON.stringify({
     requestType,
     email,
     returnOobLink: true,
-    continueUrl: type === 'verification' ? `${continueUrl}/?verified=true` : continueUrl,
+    continueUrl: redirectUrl,
   });
 
   return new Promise((resolve, reject) => {
