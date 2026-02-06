@@ -1,4 +1,4 @@
-# Antonio Dias Werkstatt - Feature Documentation
+# Antonio Dias Flamenco Werkstatt - Feature Documentation
 
 ## Core Features
 

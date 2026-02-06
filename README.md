@@ -188,7 +188,7 @@ This is a private application for Antonio Dias Flamenco Werkstatt. For issues or
 
 ## 📄 License
 
-MIT License - Antonio Dias Werkstatt © 2026
+MIT License - Antonio Dias Flamenco Werkstatt © 2026
 
 ---
 

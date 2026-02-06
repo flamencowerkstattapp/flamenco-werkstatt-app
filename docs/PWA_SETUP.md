@@ -1,6 +1,6 @@
 # Progressive Web App (PWA) Setup Guide
 
-This document explains how the Antonio Dias Werkstatt app has been configured as a Progressive Web App (PWA) and how to deploy it.
+This document explains how the Antonio Dias Flamenco Werkstatt app has been configured as a Progressive Web App (PWA) and how to deploy it.
 
 ## What is a PWA?
 

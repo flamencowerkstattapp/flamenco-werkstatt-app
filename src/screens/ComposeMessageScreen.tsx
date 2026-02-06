@@ -40,7 +40,7 @@ interface ComposeMessageScreenProps {
       replyTo?: ReplyToData;
     };
   };
-  navigation: any;
+  navigation?: any;
 }
 
 export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({ 
@@ -205,7 +205,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
           Alert.alert(
             t('common.error'),
             'No active users found. Please contact an administrator.',
-            [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
+            [{ text: t('common.ok'), onPress: () => navigation?.goBack() }]
           );
         }
       } else {
@@ -213,7 +213,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
         Alert.alert(
           t('common.error'),
           'Unable to load users. Please try again or contact an administrator.',
-          [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
+          [{ text: t('common.ok'), onPress: () => navigation?.goBack() }]
         );
       }
     } catch (error) {
@@ -333,7 +333,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       // After showing success animation, navigate to Sent messages
       setTimeout(() => {
         setSendSuccess(false);
-        navigation.navigate('Messages', { initialTab: 'sent' });
+        navigation?.navigate('Messages', { initialTab: 'sent' });
       }, 2000);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -457,7 +457,7 @@ export const ComposeMessageScreen: React.FC<ComposeMessageScreenProps> = ({
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation?.goBack()}
         >
           <Text style={styles.cancelText}>{t('common.cancel')}</Text>
         </TouchableOpacity>

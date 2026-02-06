@@ -1,6 +1,6 @@
 export default {
   common: {
-    appName: 'Antonio Dias Werkstatt',
+    appName: 'Antonio Dias Flamenco Werkstatt',
     welcome: 'Willkommen',
     login: 'Anmelden',
     logout: 'Abmelden',

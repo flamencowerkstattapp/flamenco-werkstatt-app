@@ -20,19 +20,19 @@ import { Message, User } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
 
 interface MessageDetailsScreenProps {
-  route: {
+  route?: {
     params: {
       messageId: string;
     };
   };
-  navigation: any;
+  navigation?: any;
 }
 
 export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({ 
   route, 
   navigation 
 }) => {
-  const { messageId } = route.params;
+  const { messageId } = route?.params ?? { messageId: '' };
   const { user } = useAuth();
   const [message, setMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,11 +115,11 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
         }
       } else {
         console.error('Message not found');
-        navigation.goBack();
+        navigation?.goBack();
       }
     } catch (error) {
       console.error('Error loading message:', error);
-      navigation.goBack();
+      navigation?.goBack();
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
   const handleReply = () => {
     if (!message) return;
     
-    navigation.navigate('ComposeMessage', {
+    navigation?.navigate('ComposeMessage', {
       replyTo: {
         id: message.id,
         senderName: message.senderName,
@@ -196,7 +196,7 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
       
       // Reset loading state and navigate back
       setLoading(false);
-      navigation.goBack();
+      navigation?.goBack();
       
     } catch (error) {
       console.error('Error deleting message:', error);

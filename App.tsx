@@ -196,8 +196,6 @@ export default function App() {
   // Update page title based on current route
   const updatePageTitle = (routeName?: string) => {
     if (Platform.OS === 'web') {
-      const baseTitle = 'Antonio Dias Flamenco Werkstatt';
-      
       const titleMap: { [key: string]: string } = {
         'CalendarMain': t('navigation.calendar'),
         'Calendar': t('navigation.calendar'),
@@ -226,7 +224,7 @@ export default function App() {
       };
 
       const screenTitle = routeName && titleMap[routeName] ? titleMap[routeName] : t('navigation.calendar');
-      document.title = `${screenTitle} - ${baseTitle}`;
+      document.title = screenTitle;
     }
   };
 

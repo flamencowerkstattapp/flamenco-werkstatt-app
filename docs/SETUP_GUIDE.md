@@ -1,4 +1,4 @@
-# Antonio Dias Werkstatt App - Setup Guide
+# Antonio Dias Flamenco Werkstatt App - Setup Guide
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ This will install all required packages including:
 
 1. Go to https://console.firebase.google.com/
 2. Click "Add project" and follow the wizard
-3. Name it "Antonio Dias Werkstatt" or similar
+3. Name it "Antonio Dias Flamenco Werkstatt" or similar
 4. Enable Google Analytics (optional)
 
 ### 2.2 Enable Firebase Services
