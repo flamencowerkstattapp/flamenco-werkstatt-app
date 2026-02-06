@@ -95,19 +95,16 @@ const generateActionLink = async (type, email, continueUrl, accessToken) => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const requestType = type === 'verification' ? 'VERIFY_EMAIL' : 'PASSWORD_RESET';
 
-  // Use Firebase auth domain for continueUrl (always authorized)
-  // The actual app URL is passed as a query param so the user lands back on the app
+  // continueUrl is where the user goes after clicking "Continue" on the verification page
+  // This domain MUST be in Firebase Auth > Settings > Authorized domains
   const appUrl = continueUrl || process.env.APP_URL || 'https://flamenco-werkstatt.netlify.app';
-  const firebaseAuthDomain = `https://${projectId}.firebaseapp.com`;
-  const redirectUrl = type === 'verification'
-    ? `${firebaseAuthDomain}/?verified=true&redirect=${encodeURIComponent(appUrl)}`
-    : `${firebaseAuthDomain}/?redirect=${encodeURIComponent(appUrl)}`;
+  const finalUrl = type === 'verification' ? `${appUrl}/?verified=true` : appUrl;
 
   const body = JSON.stringify({
     requestType,
     email,
     returnOobLink: true,
-    continueUrl: redirectUrl,
+    continueUrl: finalUrl,
   });
 
   return new Promise((resolve, reject) => {
@@ -261,7 +258,7 @@ const getEmailTemplate = (type, lang, data) => {
       <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%;">
         <tr>
           <td style="background: linear-gradient(135deg, #8B0000, #C41E3A); border-radius: 12px 12px 0 0; padding: 40px 40px 30px 40px; text-align: center;">
-            <div style="margin-bottom: 16px; font-size: 48px;">💃</div>
+            <div style="margin-bottom: 16px;"><img src="https://flamenco-werkstatt.netlify.app/logo.png" alt="Flamenco Werkstatt" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" /></div>
             <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">Antonio Dias Flamenco Werkstatt</h1>
             <div style="width: 60px; height: 3px; background-color: #D4AF37; margin: 16px auto 0 auto; border-radius: 2px;"></div>
           </td>
