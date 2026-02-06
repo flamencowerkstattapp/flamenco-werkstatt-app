@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const actionCodeSettings: ActionCodeSettings = {
         url: `${window.location.origin}/?verified=true`,
-        handleCodeInApp: true,
+        handleCodeInApp: false,
       };
       
       await sendEmailVerification(userCredential.user, actionCodeSettings);
