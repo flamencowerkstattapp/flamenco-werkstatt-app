@@ -19,6 +19,7 @@ import { t } from '../locales';
 import { SpecialEvent, RecurringPattern } from '../types';
 import { validateEventData, checkEventConflicts, checkRecurringEventConflicts } from '../utils/eventUtils';
 import { formatDateTime } from '../utils/dateUtils';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 
 // Helper function to normalize time input to HH:MM format
@@ -188,7 +189,7 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
     loadEvents();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -199,10 +200,16 @@ export const ManageEventsScreen: React.FC<{ navigation: any }> = ({ navigation }
       
       // Small delay to ensure the component is fully mounted
       const timeoutId = setTimeout(scrollToTop, 100);
+      loadEvents();
       
       return () => clearTimeout(timeoutId);
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadEvents();
+  });
 
   const loadEvents = async () => {
     setLoading(true);

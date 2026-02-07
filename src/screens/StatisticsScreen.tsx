@@ -12,6 +12,7 @@ import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { getPaymentStats } from '../services/paymentService';
 import { getSessionCardStats } from '../services/sessionCardService';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 // Membership pricing structure
 const MEMBERSHIP_PRICING = {
@@ -68,7 +69,7 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     loadStatistics();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -78,8 +79,14 @@ export const StatisticsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       };
       
       scrollToTop();
+      loadStatistics();
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadStatistics();
+  });
 
   const onRefresh = async () => {
     setRefreshing(true);

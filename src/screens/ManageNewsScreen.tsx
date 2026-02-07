@@ -26,6 +26,7 @@ import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { NewsItem } from '../types';
 import { formatDateTime } from '../utils/dateUtils';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user, firebaseUser } = useAuth();
@@ -129,7 +130,7 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
     loadNews();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -140,10 +141,16 @@ export const ManageNewsScreen: React.FC<{ navigation: any }> = ({ navigation }) 
       
       // Small delay to ensure the component is fully mounted
       const timeoutId = setTimeout(scrollToTop, 100);
+      loadNews();
       
       return () => clearTimeout(timeoutId);
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadNews();
+  });
 
   const loadNews = async () => {
     setLoading(true);

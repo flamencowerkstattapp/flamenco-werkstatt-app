@@ -25,6 +25,7 @@ import { t } from '../locales';
 import { User, PaymentMethod, SessionCard } from '../types';
 import { createSessionCard, getAllSessionCards, getSessionCardStats } from '../services/sessionCardService';
 import { formatDateTime } from '../utils/dateUtils';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 const SESSION_CARD_PRICES = [
   { value: 95, label: '€95', key: 'standard' },
@@ -58,7 +59,7 @@ export const SessionCardsScreen: React.FC<{ navigation: any }> = ({ navigation }
     return () => subscription?.remove();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -67,8 +68,14 @@ export const SessionCardsScreen: React.FC<{ navigation: any }> = ({ navigation }
         }
       };
       scrollToTop();
+      loadData();
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadData();
+  });
 
   useEffect(() => {
     loadData();

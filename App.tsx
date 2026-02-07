@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
-import { NotificationProvider } from './src/contexts/NotificationContext';
+import { NotificationProvider, useNotifications } from './src/contexts/NotificationContext';
 import { theme } from './src/constants/theme';
 import { t } from './src/locales';
 
@@ -91,6 +91,7 @@ const AdminStack = () => {
 
 const MainTabs = () => {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
 
   return (
     <Tab.Navigator
@@ -117,6 +118,13 @@ const MainTabs = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textSecondary,
         headerShown: false,
+        tabBarBadgeStyle: {
+          backgroundColor: theme.colors.error,
+          fontSize: 11,
+          minWidth: 18,
+          height: 18,
+          borderRadius: 9,
+        },
       })}
     >
       <Tab.Screen 
@@ -132,7 +140,10 @@ const MainTabs = () => {
       <Tab.Screen 
         name="Messages" 
         component={MessagesStack} 
-        options={{ title: t('navigation.messages') }} 
+        options={{ 
+          title: t('navigation.messages'),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }} 
         listeners={({ navigation }) => ({
           tabPress: (e) => {
             navigation.navigate('Messages', { screen: 'MessagesList' });
@@ -227,7 +238,9 @@ export default function App() {
       };
 
       const screenTitle = routeName && titleMap[routeName] ? titleMap[routeName] : t('navigation.calendar');
-      document.title = screenTitle;
+      // Preserve unread count prefix if present (e.g., "(3) Messages")
+      const existingPrefix = document.title.match(/^\(\d+\)\s*/);
+      document.title = existingPrefix ? `${existingPrefix[0]}${screenTitle}` : screenTitle;
     }
   };
 

@@ -19,6 +19,7 @@ import { parseCSV } from '../utils/csvParser';
 import { importUsersFromCSV, downloadCSVTemplate, ImportResult } from '../services/csvImportService';
 import { createPayment, getUserPayments, checkMonthlyPaymentStatus } from '../services/paymentService';
 import { getSessionCardCountsByUser } from '../services/sessionCardService';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 const MEMBERSHIP_OPTIONS = [
   { value: '1-class', labelKey: 'user.membershipTypes.1-class', priceKey: 'user.membershipPricing.1-class' },
@@ -84,7 +85,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
     return () => subscription?.remove();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -94,8 +95,14 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
       };
       
       scrollToTop();
+      loadUsers();
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadUsers();
+  });
 
   // Determine columns based on screen width
   const getColumns = () => {

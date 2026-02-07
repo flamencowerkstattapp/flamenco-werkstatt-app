@@ -26,6 +26,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { theme } from '../constants/theme';
 import { t } from '../locales';
 import { Group, GroupType, User, ClassLevel, ClassType } from '../types';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user } = useAuth();
@@ -67,7 +68,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
     loadData();
   }, []);
 
-  // Scroll to top when screen gains focus
+  // Scroll to top and reload data when screen gains focus
   useFocusEffect(
     React.useCallback(() => {
       const scrollToTop = () => {
@@ -77,8 +78,14 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
       };
       
       scrollToTop();
+      loadData();
     }, [])
   );
+
+  // Reload data when app returns to foreground
+  useAppForeground(() => {
+    loadData();
+  });
 
   useEffect(() => {
     const onChange = (result: { window: { width: number } }) => {

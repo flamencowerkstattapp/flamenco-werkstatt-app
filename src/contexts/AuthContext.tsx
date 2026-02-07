@@ -8,7 +8,7 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 import { User, UserRole } from '../types';
 
@@ -45,36 +45,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
+        // Clean up previous profile listener
+        if (unsubscribeProfile) {
+          unsubscribeProfile();
+          unsubscribeProfile = null;
+        }
+
         if (firebaseUser && !firebaseUser.emailVerified) {
           setUser(null);
           setFirebaseUser(firebaseUser);
+          setLoading(false);
           return;
         }
 
         setFirebaseUser(firebaseUser);
 
         if (firebaseUser) {
-          const userDoc = await withTimeout(
-            getDoc(doc(db, 'users', firebaseUser.uid)),
-            10000,
-            'Timed out while loading your profile.'
+          // Set up real-time listener for user profile
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          unsubscribeProfile = onSnapshot(
+            userDocRef,
+            (snapshot) => {
+              if (snapshot.exists()) {
+                const userData = snapshot.data() as User;
+                setUser({
+                  ...userData,
+                  memberSince: userData.memberSince instanceof Date ? userData.memberSince : new Date(userData.memberSince),
+                  createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt),
+                  updatedAt: userData.updatedAt instanceof Date ? userData.updatedAt : new Date(userData.updatedAt),
+                });
+              } else {
+                setUser(null);
+              }
+              setLoading(false);
+            },
+            (error) => {
+              console.error('Auth: Profile listener error:', error);
+              setUser(null);
+              setLoading(false);
+            }
           );
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            setUser({
-              ...userData,
-              memberSince: userData.memberSince instanceof Date ? userData.memberSince : new Date(userData.memberSince),
-              createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt),
-              updatedAt: userData.updatedAt instanceof Date ? userData.updatedAt : new Date(userData.updatedAt),
-            });
-          } else {
-            setUser(null);
-          }
         } else {
           setUser(null);
+          setLoading(false);
         }
       } catch (err) {
         console.error('Auth: Failed to load user profile:', err);
@@ -87,12 +104,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // ignore
           }
         }
-      } finally {
         setLoading(false);
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

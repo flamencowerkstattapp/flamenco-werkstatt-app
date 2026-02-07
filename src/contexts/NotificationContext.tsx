@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Platform } from 'react-native';
 import { useAuth } from './AuthContext';
 import { notificationService } from '../services/notificationService';
+import { getMessageService } from '../services/messageService';
 import { AppNotification, NotificationPreferences } from '../types';
 
 interface NotificationContextType {
@@ -28,35 +30,162 @@ export const useNotifications = () => {
   return context;
 };
 
+/**
+ * Update the app icon badge count on supported platforms.
+ * - Web: Uses the Badging API (navigator.setAppBadge) and updates document title
+ * - Mobile: Badge is handled via push notification payload from server
+ */
+// Store the original favicon href so we can restore it
+let originalFaviconHref: string | null = null;
+
+const updateAppBadge = (count: number) => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // Web Badging API (supported in Chrome, Edge, and installed PWAs)
+    try {
+      if ('setAppBadge' in navigator) {
+        if (count > 0) {
+          (navigator as any).setAppBadge(count);
+        } else {
+          (navigator as any).clearAppBadge();
+        }
+      }
+    } catch (error) {
+      // Badging API not supported or not a PWA — silently ignore
+    }
+
+    // Update document title with unread count prefix
+    try {
+      const baseTitle = document.title.replace(/^\(\d+\)\s*/, '');
+      document.title = count > 0 ? `(${count}) ${baseTitle}` : baseTitle;
+    } catch (error) {
+      // Ignore title update errors
+    }
+
+    // Update favicon with badge overlay
+    updateFaviconBadge(count);
+  }
+};
+
+const updateFaviconBadge = (count: number) => {
+  try {
+    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+    if (!favicon) return;
+
+    // Store original favicon on first call
+    if (!originalFaviconHref) {
+      originalFaviconHref = favicon.href;
+    }
+
+    if (count === 0) {
+      // Restore original favicon
+      favicon.href = originalFaviconHref;
+      return;
+    }
+
+    // Draw badge on favicon using canvas
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 64;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Draw original favicon
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Draw red badge circle
+      const badgeSize = count > 9 ? 28 : 24;
+      const badgeX = size - badgeSize / 2 - 2;
+      const badgeY = badgeSize / 2 + 2;
+
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, badgeSize / 2, 0, 2 * Math.PI);
+      ctx.fillStyle = '#B00020';
+      ctx.fill();
+
+      // Draw white border around badge
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw count text
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${count > 9 ? 14 : 16}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(count > 99 ? '99+' : String(count), badgeX, badgeY);
+
+      // Update favicon
+      favicon.href = canvas.toDataURL('image/png');
+    };
+    img.src = originalFaviconHref;
+  } catch (error) {
+    // Ignore favicon update errors
+  }
+};
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+
+  // Combined unread count from notifications + messages
+  const unreadCount = unreadNotificationCount + unreadMessageCount;
+
+  // Update app icon badge and browser tab title when unread count changes
+  useEffect(() => {
+    updateAppBadge(unreadCount);
+  }, [unreadCount]);
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
-      setUnreadCount(0);
+      setUnreadNotificationCount(0);
+      setUnreadMessageCount(0);
       setPreferences(null);
+      updateAppBadge(0);
       return;
     }
 
-    const unsubscribe = notificationService.subscribeToUserNotifications(
+    // Subscribe to app notifications
+    const unsubscribeNotifications = notificationService.subscribeToUserNotifications(
       user.id,
       (newNotifications) => {
         setNotifications(newNotifications);
         const unread = newNotifications.filter((n) => !n.isRead).length;
-        setUnreadCount(unread);
+        setUnreadNotificationCount(unread);
       }
     );
+
+    // Subscribe to unread messages
+    let unsubscribeMessages: (() => void) | null = null;
+    try {
+      const messageService = getMessageService();
+      unsubscribeMessages = messageService.subscribeToInboxMessages(user.id, (messages) => {
+        const unreadMessages = messages.filter((msg) => {
+          const isRead = msg.isRead as Record<string, boolean>;
+          return !isRead[user.id];
+        });
+        setUnreadMessageCount(unreadMessages.length);
+      });
+    } catch (error) {
+      console.warn('Message service not available for unread count:', error);
+    }
 
     setupForegroundListener();
     loadPreferences();
 
     return () => {
-      unsubscribe();
+      unsubscribeNotifications();
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+      }
     };
   }, [user]);
 
@@ -74,7 +203,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const userNotifications = await notificationService.getUserNotifications(user.id);
       setNotifications(userNotifications);
       const unread = userNotifications.filter((n) => !n.isRead).length;
-      setUnreadCount(unread);
+      setUnreadNotificationCount(unread);
     } catch (error) {
       console.error('Error refreshing notifications:', error);
     } finally {
@@ -88,7 +217,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      setUnreadNotificationCount((prev: number) => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -100,7 +229,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.markAllAsRead(user.id);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnreadCount(0);
+      setUnreadNotificationCount(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -121,7 +250,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.deleteAllNotifications(user.id);
       setNotifications([]);
-      setUnreadCount(0);
+      setUnreadNotificationCount(0);
     } catch (error) {
       console.error('Error deleting all notifications:', error);
     }
