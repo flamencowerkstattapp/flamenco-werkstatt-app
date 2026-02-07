@@ -273,6 +273,32 @@ export class NotificationService {
     }
   }
 
+  async markNotificationReadByReference(userId: string, referenceId: string): Promise<void> {
+    try {
+      const q = query(
+        this.notificationsCollection,
+        where('userId', '==', userId),
+        where('referenceId', '==', referenceId),
+        where('isRead', '==', false)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return;
+
+      const batch = writeBatch(this.db);
+      snapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+          isRead: true,
+          readAt: serverTimestamp(),
+        });
+      });
+
+      await batch.commit();
+    } catch (error) {
+      console.error('Error marking notification read by reference:', error);
+    }
+  }
+
   async markAllAsRead(userId: string): Promise<void> {
     try {
       const q = query(

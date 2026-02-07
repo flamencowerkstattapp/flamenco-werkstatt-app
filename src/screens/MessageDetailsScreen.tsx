@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { getMessageService } from '../services/messageService';
+import { notificationService } from '../services/notificationService';
 import { AppHeader } from '../components/AppHeader';
 import { FlamencoLoading } from '../components/FlamencoLoading';
 import { MessageStatusIndicator } from '../components/MessageStatusIndicator';
@@ -135,6 +136,10 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
       // Mark as read with enhanced tracking
       await service.markAsRead(messageId, user.id);
       
+      // Also mark the corresponding notification as read so the alert
+      // portal clears this entry when the message is opened via inbox
+      await notificationService.markNotificationReadByReference(user.id, messageId);
+      
       // Track message access (for analytics and engagement metrics)
       await service.trackMessageAccess(messageId, user.id);
       
@@ -187,12 +192,12 @@ export const MessageDetailsScreen: React.FC<MessageDetailsScreenProps> = ({
   };
 
   const performDelete = async () => {
-    if (!message) return;
+    if (!message || !user) return;
     
     try {
       setLoading(true);
       const service = getMessageService();
-      await service.deleteMessage(message.id);
+      await service.deleteMessage(message.id, user.id);
       
       // Reset loading state and navigate back
       setLoading(false);

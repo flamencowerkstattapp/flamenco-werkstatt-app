@@ -5,7 +5,6 @@ import {
   getDoc, 
   getDocs, 
   updateDoc, 
-  deleteDoc, 
   query, 
   where, 
   orderBy, 
@@ -13,7 +12,8 @@ import {
   Timestamp,
   Firestore,
   DocumentData,
-  increment
+  increment,
+  arrayUnion
 } from 'firebase/firestore';
 import { getFirestoreDB } from './firebase';
 import { Message, User } from '../types';
@@ -145,7 +145,8 @@ export class MessageService {
       );
 
       const snapshot = await getDocs(messagesQuery);
-      return snapshot.docs.map(doc => this.convertDocToMessage(doc));
+      const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
+      return this.filterDeletedMessages(messages, userId);
     } catch (error) {
       console.error('Error getting inbox messages:', error);
       
@@ -161,8 +162,11 @@ export class MessageService {
           const snapshot = await getDocs(fallbackQuery);
           const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
           
-          // Sort by createdAt descending in JavaScript
-          return messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          // Sort by createdAt descending in JavaScript and filter soft-deleted
+          return this.filterDeletedMessages(
+            messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+            userId
+          );
         } catch (fallbackError) {
           console.error('Fallback query also failed:', fallbackError);
           throw new Error('Failed to get inbox messages');
@@ -182,7 +186,8 @@ export class MessageService {
       );
 
       const snapshot = await getDocs(messagesQuery);
-      return snapshot.docs.map(doc => this.convertDocToMessage(doc));
+      const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
+      return this.filterDeletedMessages(messages, userId);
     } catch (error) {
       console.error('Error getting sent messages:', error);
       
@@ -198,8 +203,11 @@ export class MessageService {
           const snapshot = await getDocs(fallbackQuery);
           const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
           
-          // Sort by createdAt descending in JavaScript
-          return messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+          // Sort by createdAt descending in JavaScript and filter soft-deleted
+          return this.filterDeletedMessages(
+            messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+            userId
+          );
         } catch (fallbackError) {
           console.error('Fallback query also failed:', fallbackError);
           throw new Error('Failed to get sent messages');
@@ -314,17 +322,38 @@ export class MessageService {
     }
   }
 
-  async deleteMessage(messageId: string): Promise<void> {
+  async deleteMessage(messageId: string, userId: string): Promise<void> {
     try {
-      if (!messageId) {
-        throw new Error('Message ID is required');
+      if (!messageId || !userId) {
+        throw new Error('Message ID and User ID are required');
       }
-      
-      await deleteDoc(doc(this.db, 'messages', messageId));
+
+      const messageRef = doc(this.db, 'messages', messageId);
+      const messageDoc = await getDoc(messageRef);
+
+      if (!messageDoc.exists()) {
+        return; // Message already deleted
+      }
+
+      // Soft-delete: add userId to deletedBy array
+      // The message document stays in Firestore but is filtered out of
+      // this user's inbox/sent queries. The other party keeps their copy.
+      await updateDoc(messageRef, {
+        deletedBy: arrayUnion(userId),
+        updatedAt: Timestamp.now(),
+      });
     } catch (error) {
       console.error('Error deleting message:', error);
       throw new Error('Failed to delete message');
     }
+  }
+
+  private isDeletedByUser(message: Message, userId: string): boolean {
+    return Array.isArray(message.deletedBy) && message.deletedBy.includes(userId);
+  }
+
+  private filterDeletedMessages(messages: Message[], userId: string): Message[] {
+    return messages.filter(msg => !this.isDeletedByUser(msg, userId));
   }
 
   async getActiveUsers(): Promise<User[]> {
@@ -433,7 +462,7 @@ export class MessageService {
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
-      callback(messages);
+      callback(this.filterDeletedMessages(messages, userId));
     }, (error) => {
       console.error('Error subscribing to inbox messages:', error);
     });
@@ -453,7 +482,7 @@ export class MessageService {
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
-      callback(messages);
+      callback(this.filterDeletedMessages(messages, userId));
     }, (error) => {
       console.error('Error subscribing to sent messages:', error);
     });
@@ -488,7 +517,8 @@ export class MessageService {
       );
 
       const snapshot = await getDocs(messagesQuery);
-      return snapshot.size;
+      const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
+      return this.filterDeletedMessages(messages, userId).length;
     } catch (error) {
       console.error('Error getting unread count:', error);
       
@@ -504,8 +534,9 @@ export class MessageService {
           const snapshot = await getDocs(fallbackQuery);
           const messages = snapshot.docs.map(doc => this.convertDocToMessage(doc));
           
-          // Filter unread messages in JavaScript
-          return messages.filter(msg => !msg.isRead[userId]).length;
+          // Filter unread and non-deleted messages in JavaScript
+          return this.filterDeletedMessages(messages, userId)
+            .filter(msg => !msg.isRead[userId]).length;
         } catch (fallbackError) {
           console.error('Fallback query for unread count failed:', fallbackError);
           return 0;

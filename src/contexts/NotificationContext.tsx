@@ -158,7 +158,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       user.id,
       (newNotifications) => {
         setNotifications(newNotifications);
-        const unread = newNotifications.filter((n) => !n.isRead).length;
+        // Exclude message-type notifications from this count because
+        // unread messages are already counted separately via
+        // subscribeToInboxMessages. Including them here would double-count.
+        const unread = newNotifications.filter(
+          (n) => !n.isRead && n.type !== 'message'
+        ).length;
         setUnreadNotificationCount(unread);
       }
     );
@@ -202,7 +207,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const userNotifications = await notificationService.getUserNotifications(user.id);
       setNotifications(userNotifications);
-      const unread = userNotifications.filter((n) => !n.isRead).length;
+      const unread = userNotifications.filter(
+        (n) => !n.isRead && n.type !== 'message'
+      ).length;
       setUnreadNotificationCount(unread);
     } catch (error) {
       console.error('Error refreshing notifications:', error);
@@ -214,14 +221,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await notificationService.markAsRead(notificationId);
+      // Find the notification to check its type before updating counts
+      const notification = notifications.find((n) => n.id === notificationId);
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
-      setUnreadNotificationCount((prev: number) => Math.max(0, prev - 1));
+      // Only decrement notification count for non-message types
+      // (message-type notifications are excluded from the count to avoid double-counting)
+      if (notification && notification.type !== 'message' && !notification.isRead) {
+        setUnreadNotificationCount((prev: number) => Math.max(0, prev - 1));
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  }, []);
+  }, [notifications]);
 
   const markAllAsRead = useCallback(async () => {
     if (!user) return;
@@ -261,6 +274,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       const prefs = await notificationService.getUserPreferences(user.id);
+      if (prefs) {
+        // Override enablePushNotifications based on this device's actual
+        // browser permission. The Firestore preference is shared across
+        // devices, but each device may have a different permission state.
+        const localPermission =
+          Platform.OS === 'web' &&
+          typeof window !== 'undefined' &&
+          'Notification' in window
+            ? Notification.permission === 'granted'
+            : false;
+        prefs.enablePushNotifications =
+          prefs.enablePushNotifications && localPermission;
+      }
       setPreferences(prefs);
     } catch (error) {
       console.error('Error loading preferences:', error);

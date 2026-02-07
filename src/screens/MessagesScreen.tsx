@@ -312,10 +312,10 @@ export const MessagesScreen: React.FC<{ navigation: any; route?: any }> = ({ nav
       const service = getMessageService();
       let deletedCount = 0;
 
-      // Delete only selected messages
+      // Soft-delete: only removes messages from this user's view
       for (const messageId of selectedMessages) {
         try {
-          await service.deleteMessage(messageId);
+          await service.deleteMessage(messageId, user.id);
           deletedCount++;
         } catch (error) {
           console.error(`Error deleting message ${messageId}:`, error);

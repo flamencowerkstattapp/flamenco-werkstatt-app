@@ -114,6 +114,7 @@ export interface Message {
   readTracking: { [userId: string]: ReadTracking };
   lastReplyId?: string; // Track if this message has been replied to
   replyChain?: string[]; // Array of message IDs in the reply chain
+  deletedBy?: string[]; // Soft-delete: user IDs who have deleted this message from their view
   createdAt: Date;
   updatedAt: Date;
 }
