@@ -7,7 +7,6 @@ import {
   User as FirebaseUser,
   sendPasswordResetEmail,
   sendEmailVerification,
-  ActionCodeSettings,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, limit } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
@@ -144,12 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let firestoreError: any = null;
 
     try {
-      const actionCodeSettings: ActionCodeSettings = {
-        url: `${window.location.origin}/?verified=true`,
-        handleCodeInApp: false,
-      };
-      
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      await sendEmailVerification(userCredential.user);
     } catch (emailError: any) {
       verificationError = emailError;
       console.error('Failed to send verification email:', emailError);
