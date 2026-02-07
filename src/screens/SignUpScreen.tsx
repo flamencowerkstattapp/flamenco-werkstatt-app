@@ -383,9 +383,10 @@ const styles = StyleSheet.create({
   // Verification screen styles
   verificationContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     padding: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
   },
   verificationInfo: {
     backgroundColor: theme.colors.background,

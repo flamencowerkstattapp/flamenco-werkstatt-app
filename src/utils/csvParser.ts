@@ -216,7 +216,24 @@ export const generateCSVTemplate = (): string => {
     'preferredLanguage'
   ];
 
-  const exampleRow = [
+  // Row with only required fields (firstName, lastName, email) - all others are optional
+  const minimalRow = [
+    'Maria',
+    'Garcia',
+    'maria.garcia@example.com',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    ''
+  ];
+
+  // Row with all fields filled in as a reference
+  const fullRow = [
     'John',
     'Doe',
     'john.doe@example.com',
@@ -231,5 +248,5 @@ export const generateCSVTemplate = (): string => {
     'en'
   ];
 
-  return `${headers.join(',')}\n${exampleRow.join(',')}`;
+  return `${headers.join(',')}\n${minimalRow.join(',')}\n${fullRow.join(',')}`;
 };
