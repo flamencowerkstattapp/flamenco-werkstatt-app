@@ -375,14 +375,16 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
               size={20}
               color={formData.type === type ? '#FFFFFF' : theme.colors.text}
             />
-            <Text
-              style={[
-                styles.typeButtonText,
-                formData.type === type && styles.typeButtonTextActive,
-              ]}
-            >
-              {t(`groups.type.${type}`)}
-            </Text>
+            {!isMobileScreen && (
+              <Text
+                style={[
+                  styles.typeButtonText,
+                  formData.type === type && styles.typeButtonTextActive,
+                ]}
+              >
+                {t(`groups.type.${type}`)}
+              </Text>
+            )}
           </TouchableOpacity>
         ))}
       </View>
