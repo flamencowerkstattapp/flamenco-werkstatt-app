@@ -27,26 +27,21 @@ export const ForgotPasswordScreen: React.FC<{ navigation: any }> = ({ navigation
 
   const handleResetPassword = async () => {
     setError('');
-    console.log('Password Reset: Starting reset for email:', email);
 
     if (!email) {
-      console.log('Password Reset: No email provided');
       setError(t('auth.emailRequired'));
       return;
     }
 
     if (!validateEmail(email)) {
-      console.log('Password Reset: Invalid email format');
       setError(t('errors.invalidEmail'));
       return;
     }
 
     setLoading(true);
-    console.log('Password Reset: Calling resetPassword function');
 
     try {
       await resetPassword(email);
-      console.log('Password Reset: Email sent successfully to', email);
       
       Alert.alert(
         t('auth.resetPasswordSuccessTitle'),
@@ -59,10 +54,6 @@ export const ForgotPasswordScreen: React.FC<{ navigation: any }> = ({ navigation
         ]
       );
     } catch (error: any) {
-      console.error('Password Reset Error:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      
       let errorMessage = t('auth.resetPasswordError');
       
       if (error.code === 'auth/user-not-found') {
@@ -79,7 +70,6 @@ export const ForgotPasswordScreen: React.FC<{ navigation: any }> = ({ navigation
       Alert.alert(t('common.error'), errorMessage);
     } finally {
       setLoading(false);
-      console.log('Password Reset: Process complete');
     }
   };
 

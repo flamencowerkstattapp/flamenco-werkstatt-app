@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,6 +47,9 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const [isMobileScreen, setIsMobileScreen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [membersSearchQuery, setMembersSearchQuery] = useState('');
+  const lastScrollY = useRef(0);
+  const searchBarVisible = useRef(true);
+  const searchBarAnim = useRef(new Animated.Value(1)).current;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -282,6 +286,19 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const handleScroll = (event: any) => {
     const yOffset = event.nativeEvent?.contentOffset?.y || 0;
     setShowScrollTop(yOffset > 200);
+
+    const isScrollingDown = yOffset > lastScrollY.current && yOffset > 50;
+    const shouldShow = !isScrollingDown || yOffset <= 50;
+    lastScrollY.current = yOffset;
+
+    if (shouldShow !== searchBarVisible.current) {
+      searchBarVisible.current = shouldShow;
+      Animated.timing(searchBarAnim, {
+        toValue: shouldShow ? 1 : 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    }
   };
 
   const handleMembersScroll = (event: any) => {
@@ -413,6 +430,7 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
               style={styles.membersList}
               onScroll={handleMembersScroll}
               scrollEventThrottle={16}
+              nestedScrollEnabled
             >
               {users
                 .filter(user => {
@@ -485,6 +503,43 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
     <View style={styles.container}>
       <AppHeader title={t('groups.title')} />
 
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('groups.manageGroups')}</Text>
+        <Button
+          title={t('groups.createGroup')}
+          onPress={handleCreateGroup}
+          style={styles.createButton}
+        />
+      </View>
+
+      {/* Search Bar */}
+      <Animated.View style={[
+        styles.searchContainer,
+        {
+          maxHeight: searchBarAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 50] }),
+          opacity: searchBarAnim,
+          marginBottom: searchBarAnim.interpolate({ inputRange: [0, 1], outputRange: [0, theme.spacing.md] }),
+          overflow: 'hidden' as const,
+        },
+      ]}>
+        <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t('groups.searchGroups')}
+          placeholderTextColor={theme.colors.textSecondary}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearSearchButton}
+            onPress={() => setSearchQuery('')}
+          >
+            <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </Animated.View>
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
@@ -492,35 +547,6 @@ export const ManageGroupsScreen: React.FC<{ navigation: any }> = ({ navigation }
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t('groups.manageGroups')}</Text>
-          <Button
-            title={t('groups.createGroup')}
-            onPress={handleCreateGroup}
-            style={styles.createButton}
-          />
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={t('groups.searchGroups')}
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              style={styles.clearSearchButton}
-              onPress={() => setSearchQuery('')}
-            >
-              <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
-            </TouchableOpacity>
-          )}
-        </View>
-
         {groups.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={64} color={theme.colors.textSecondary} />
@@ -731,7 +757,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
   },
   headerTitle: {
     fontSize: 24,
@@ -855,7 +883,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     width: '90%',
     maxWidth: 600,
-    maxHeight: '80%',
+    maxHeight: '85%',
+    overflow: 'hidden',
     ...theme.shadows.large,
   },
   modalHeader: {
@@ -959,10 +988,11 @@ const styles = StyleSheet.create({
   },
   membersListContainer: {
     position: 'relative',
-    maxHeight: 400,
+    flex: 1,
+    minHeight: 0,
   },
   membersList: {
-    maxHeight: 400,
+    flex: 1,
     padding: theme.spacing.md,
   },
   memberItem: {
@@ -1009,7 +1039,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     marginHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
   },
   searchIcon: {

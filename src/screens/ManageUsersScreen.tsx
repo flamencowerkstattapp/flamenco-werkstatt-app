@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl, SafeAreaView, TextInput, Modal, TouchableOpacity, ViewStyle, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, RefreshControl, SafeAreaView, TextInput, Modal, TouchableOpacity, ViewStyle, Dimensions, ActivityIndicator, Animated } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, getDocs, where, updateDoc, doc } from 'firebase/firestore';
@@ -54,6 +54,9 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const [expandedPaymentHistory, setExpandedPaymentHistory] = useState<Set<string>>(new Set()); // Track completed actions
   const [searchQuery, setSearchQuery] = useState('');
   const [sessionCardCounts, setSessionCardCounts] = useState<{ [userId: string]: number }>({});
+  const lastScrollY = useRef(0);
+  const searchBarVisible = useRef(true);
+  const searchBarAnim = useRef(new Animated.Value(1)).current;
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -582,6 +585,19 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
   const handleScroll = (event: any) => {
     const yOffset = event.nativeEvent?.contentOffset?.y || 0;
     setShowScrollTop(yOffset > 200);
+
+    const isScrollingDown = yOffset > lastScrollY.current && yOffset > 50;
+    const shouldShow = !isScrollingDown || yOffset <= 50;
+    lastScrollY.current = yOffset;
+
+    if (shouldShow !== searchBarVisible.current) {
+      searchBarVisible.current = shouldShow;
+      Animated.timing(searchBarAnim, {
+        toValue: shouldShow ? 1 : 0,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    }
   };
 
   return (
@@ -636,7 +652,15 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        <Animated.View style={[
+          styles.searchContainer,
+          {
+            maxHeight: searchBarAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 50] }),
+            opacity: searchBarAnim,
+            marginBottom: searchBarAnim.interpolate({ inputRange: [0, 1], outputRange: [0, theme.spacing.md] }),
+            overflow: 'hidden' as const,
+          },
+        ]}>
           <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
@@ -653,7 +677,7 @@ export const ManageUsersScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           )}
-        </View>
+        </Animated.View>
 
         {loading ? (
           <FlamencoLoading 
@@ -2061,7 +2085,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     marginHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
   },
   searchIcon: {
