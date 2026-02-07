@@ -81,19 +81,21 @@ export const importUsersFromCSV = async (
             firstName: csvRow.firstName.trim(),
             lastName: csvRow.lastName.trim(),
             role: csvRow.role || 'member',
-            phone: csvRow.phone || undefined,
             memberSince: now,
             isActive: true,
             preferredLanguage: csvRow.preferredLanguage || 'de',
-            membershipType: csvRow.membershipType || undefined,
             noMembership: csvRow.noMembership || false,
-            emergencyContact: csvRow.emergencyContact || undefined,
-            emergencyPhone: csvRow.emergencyPhone || undefined,
-            danceLevel: csvRow.danceLevel || undefined,
-            preferredStyles: csvRow.preferredStyles || undefined,
             createdAt: now,
             updatedAt: now,
           };
+
+          // Only include optional fields if they have values (Firestore rejects undefined)
+          if (csvRow.phone) userData.phone = csvRow.phone;
+          if (csvRow.membershipType) userData.membershipType = csvRow.membershipType;
+          if (csvRow.emergencyContact) userData.emergencyContact = csvRow.emergencyContact;
+          if (csvRow.emergencyPhone) userData.emergencyPhone = csvRow.emergencyPhone;
+          if (csvRow.danceLevel) userData.danceLevel = csvRow.danceLevel;
+          if (csvRow.preferredStyles) userData.preferredStyles = csvRow.preferredStyles;
 
           batch.set(userRef, userData);
           result.imported++;
