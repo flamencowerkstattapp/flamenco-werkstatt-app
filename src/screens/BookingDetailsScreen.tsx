@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/Button';
@@ -127,16 +127,41 @@ export const BookingDetailsScreen: React.FC<{ route: any; navigation: any }> = (
     setShowEditModal(true);
   };
 
-  const handleSaveBooking = async (updatedBooking: Partial<Booking>) => {
+  const handleSaveBooking = async (updatedBooking: Partial<Booking>, updateSeries?: boolean) => {
     if (!booking) return;
 
     try {
-      await updateDoc(doc(db!, 'bookings', bookingId), {
-        ...updatedBooking,
-        updatedAt: new Date(),
-      });
+      if (updateSeries && booking.isRecurring && booking.recurringGroupId) {
+        // Update all bookings in the recurring series
+        const seriesQuery = query(
+          collection(db!, 'bookings'),
+          where('recurringGroupId', '==', booking.recurringGroupId)
+        );
+        const seriesSnapshot = await getDocs(seriesQuery);
+        const batch = writeBatch(db!);
 
-      Alert.alert(t('common.success'), 'Booking updated successfully');
+        seriesSnapshot.docs.forEach((bookingDoc) => {
+          batch.update(bookingDoc.ref, {
+            purpose: updatedBooking.purpose,
+            studioId: updatedBooking.studioId,
+            updatedAt: new Date(),
+          });
+        });
+
+        await batch.commit();
+        Alert.alert(
+          t('common.success'),
+          t('calendar.seriesUpdated', { count: seriesSnapshot.size })
+        );
+      } else {
+        // Update only this single booking
+        await updateDoc(doc(db!, 'bookings', bookingId), {
+          ...updatedBooking,
+          updatedAt: new Date(),
+        });
+        Alert.alert(t('common.success'), t('calendar.bookingUpdated'));
+      }
+
       await loadBookingDetails();
     } catch (error) {
       console.error('Error updating booking:', error);

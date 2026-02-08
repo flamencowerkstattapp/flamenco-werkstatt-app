@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
   Dimensions,
   Alert,
 } from 'react-native';
@@ -22,7 +23,7 @@ interface EditBookingModalProps {
   visible: boolean;
   booking: Booking;
   onClose: () => void;
-  onSave: (updatedBooking: Partial<Booking>) => Promise<void>;
+  onSave: (updatedBooking: Partial<Booking>, updateSeries?: boolean) => Promise<void>;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -38,6 +39,7 @@ export const EditBookingModal: React.FC<EditBookingModalProps> = ({
   const [purpose, setPurpose] = useState(booking.purpose || '');
   const [selectedStudio, setSelectedStudio] = useState<StudioType>(booking.studioId);
   const [saving, setSaving] = useState(false);
+  const [updateSeries, setUpdateSeries] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -45,6 +47,7 @@ export const EditBookingModal: React.FC<EditBookingModalProps> = ({
       setEndTime(booking.endTime);
       setPurpose(booking.purpose || '');
       setSelectedStudio(booking.studioId);
+      setUpdateSeries(false);
     }
   }, [visible, booking]);
 
@@ -61,7 +64,7 @@ export const EditBookingModal: React.FC<EditBookingModalProps> = ({
         endTime,
         purpose: purpose.trim(),
         studioId: selectedStudio,
-      });
+      }, updateSeries);
       onClose();
     } catch (error) {
       console.error('Error saving booking:', error);
@@ -153,6 +156,26 @@ export const EditBookingModal: React.FC<EditBookingModalProps> = ({
                 numberOfLines={3}
               />
             </View>
+
+            {booking.isRecurring && booking.recurringGroupId && (
+              <View style={styles.updateSeriesSection}>
+                <View style={styles.updateSeriesToggle}>
+                  <View style={styles.updateSeriesLeft}>
+                    <Ionicons name="repeat-outline" size={20} color={theme.colors.primary} style={styles.updateSeriesIcon} />
+                    <Text style={styles.updateSeriesLabel}>{t('calendar.updateSeries')}</Text>
+                  </View>
+                  <Switch
+                    value={updateSeries}
+                    onValueChange={setUpdateSeries}
+                    trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                    thumbColor={updateSeries ? theme.colors.surface : theme.colors.textSecondary}
+                  />
+                </View>
+                {updateSeries && (
+                  <Text style={styles.updateSeriesHint}>{t('calendar.updateSeriesHint')}</Text>
+                )}
+              </View>
+            )}
           </ScrollView>
 
           <View style={styles.actions}>
@@ -255,5 +278,37 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginHorizontal: theme.spacing.xs,
+  },
+  updateSeriesSection: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  updateSeriesToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  updateSeriesLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  updateSeriesIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  updateSeriesLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  updateSeriesHint: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.sm,
+    fontStyle: 'italic',
   },
 });

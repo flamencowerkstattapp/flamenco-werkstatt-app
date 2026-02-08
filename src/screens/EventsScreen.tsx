@@ -54,30 +54,28 @@ export const EventsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return (100 - gap * (columns - 1)) / columns;
   };
 
-  useEffect(() => {
-    // Set up real-time listener for published events
-    const unsubscribe = eventsService.subscribeToPublishedEvents((eventsData) => {
-      setEvents(eventsData);
-      setLoading(false);
-    });
-
-    // Cleanup listener on unmount
-    return () => unsubscribe();
-  }, []);
-
-  // Scroll to top when screen gains focus
+  // Re-subscribe every time the screen gains focus so the Firestore query
+  // uses a fresh "now" timestamp. This ensures expired events disappear
+  // when the user navigates back to the screen.
   useFocusEffect(
     React.useCallback(() => {
-      const scrollToTop = () => {
+      // Scroll to top
+      const timeoutId = setTimeout(() => {
         if (scrollViewRef.current) {
           scrollViewRef.current.scrollTo({ y: 0, animated: false });
         }
+      }, 100);
+
+      // Fresh subscription with current timestamp
+      const unsubscribe = eventsService.subscribeToPublishedEvents((eventsData) => {
+        setEvents(eventsData);
+        setLoading(false);
+      });
+
+      return () => {
+        clearTimeout(timeoutId);
+        unsubscribe();
       };
-      
-      // Small delay to ensure the component is fully mounted
-      const timeoutId = setTimeout(scrollToTop, 100);
-      
-      return () => clearTimeout(timeoutId);
     }, [])
   );
 
