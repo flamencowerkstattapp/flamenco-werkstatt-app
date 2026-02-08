@@ -149,7 +149,7 @@ export default {
     booking: '📅 Wird gebucht...',
     booked: '✅ Gebucht!',
     recurringEvent: 'Wiederkehrende Veranstaltung',
-    recurringBooking: 'Wiederkehrende Buchung',
+    recurringBooking: 'Serienbuchung',
     recurringEndDate: 'Enddatum',
     recurringPattern: {
       label: 'Wiederholungsmuster',
