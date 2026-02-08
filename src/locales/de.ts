@@ -154,9 +154,9 @@ export default {
     recurringPattern: {
       label: 'Wiederholungsmuster',
       daily: 'Täglich',
-      weekly: 'Wöchentlich',
-      biweekly: 'Zweiwöchentlich',
-      monthly: 'Monatlich',
+      weekly: '1 Woche',
+      biweekly: '2 Wochen',
+      monthly: '1 Monat',
     },
     recurringBookingSubmittedBody: '{{count}} wiederkehrende Buchungen für {{studio}} wurden eingereicht.\n\n📅 Muster: {{pattern}}\n📆 Von: {{startDate}} bis {{endDate}}\n⏰ Zeit: {{startTime}} - {{endTime}}\n\nAlle Buchungen warten auf Genehmigung.',
     pending: 'ausstehend',
